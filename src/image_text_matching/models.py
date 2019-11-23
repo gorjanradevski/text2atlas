@@ -77,3 +77,4 @@ class ImageTextMatchingModel(nn.Module):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
 
         return (self.image_projector(images), self.sentence_projector(sentences))
+
