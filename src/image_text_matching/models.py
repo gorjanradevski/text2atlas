@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torchvision.models import resnet152
+from transformers import BertModel
 
 from typing import Tuple
 
@@ -18,19 +19,37 @@ class L2Normalize(nn.Module):
 
 
 class ImageEncoder(nn.Module):
-    def __init__(self, finetune: bool):
+    def __init__(self):
         super(ImageEncoder, self).__init__()
         self.resnet = torch.nn.Sequential(
             *(list(resnet152(pretrained=True).children())[:-1])
         )
 
         for param in self.resnet.parameters():
-            param.requires_grad = finetune
+            param.requires_grad = False
 
     def forward(self, images: torch.Tensor) -> torch.Tensor:
         embedded_images = torch.flatten(self.resnet(images), start_dim=1)
 
         return embedded_images
+
+
+class SentenceEncoder(nn.Module):
+    def __init__(self):
+        super(SentenceEncoder, self).__init__()
+        self.bert = BertModel.from_pretrained("bert-base-uncased")
+
+        for param in self.bert.parameters():
+            param.requires_grad = False
+
+    def forward(self, sentences: torch.Tensor):
+        hidden_states = self.bert(sentences)
+        max_pooled = torch.max(hidden_states[0], dim=1)[0]
+        mean_pooled = torch.mean(hidden_states[0], dim=1)
+        last_state = hidden_states[0][:, 0, :]
+        embedded_sentences = torch.cat([last_state, max_pooled, mean_pooled], dim=1)
+
+        return embedded_sentences
 
 
 class Projector(nn.Module):
