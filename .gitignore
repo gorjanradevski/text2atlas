@@ -3,3 +3,4 @@ data/
 notebooks/
 .vscode/
 __pycache__/
+.idea/
