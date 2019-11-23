@@ -1,7 +1,8 @@
 from torch.utils.data import Dataset
 import os
 from PIL import Image
-from typing import List
+from typing import Tuple
+import torch
 
 
 class ImagesDataset(Dataset):
@@ -16,7 +17,7 @@ class ImagesDataset(Dataset):
     def __len__(self):
         return len(self.images_paths)
 
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         image_path = self.images_paths[idx]
         image_name = image_path.split("/")[-1][:-4]
         image = Image.open(image_path)
