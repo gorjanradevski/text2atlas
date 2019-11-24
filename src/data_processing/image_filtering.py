@@ -7,7 +7,7 @@ from utils.constants import natural_images_dir, figures_dir
 from utils.general import get_doc_filenames
 
 
-def entropy(array):
+def entropy(array: np.ndarray) -> float:
     if array.sum():
         probs = array / array.sum()
         ent = -np.nansum(probs * np.log(probs))
@@ -16,14 +16,14 @@ def entropy(array):
     return ent
 
 
-def image_hist_entropy(image):
+def image_hist_entropy(image: np.ndarray) -> float:
     hist_image = np.bincount(image.ravel(), minlength=256)
     return entropy(hist_image)
 
 
 def calculate_entropy_threshold(
     images_path: str, figures_path: str, plot_stats: bool = False
-):
+) -> float:
 
     natural_images_files = get_doc_filenames(images_path, extension=".ppm")
     figures_files = get_doc_filenames(
