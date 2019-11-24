@@ -9,7 +9,7 @@ def get_doc_filenames(folder: str, extension: str = ".txt") -> list:
         folder: str - folder name
         :param extension: str - file extension
     """
-    extensions = (".vtt", ".srt", ".txt", ".pdf", ".json")
+    extensions = (".vtt", ".srt", ".txt", ".pdf", ".json", ".ppm", ".pbm")
     assert extension in extensions, "Wrong extension provided, expected one of {}".format(extensions)
     return natsort.natsorted(
         [
