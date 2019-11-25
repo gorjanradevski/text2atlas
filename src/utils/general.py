@@ -1,5 +1,11 @@
 import os
+import sys
 import natsort
+
+
+def eprint(*args, **kwargs) -> None:
+    print(*args, file=sys.stderr, **kwargs)
+    return
 
 
 def get_doc_filenames(folder: str, extension: str = ".txt") -> list:
