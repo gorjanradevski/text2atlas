@@ -27,8 +27,11 @@ class Evaluator:
         self.cur_text2image_recall_at_k = (-1.0, -1.0, -1.0)
         self.cur_image2text_recall_at_k = (-1.0, -1.0, -1.0)
 
-    def update_embeddings(
-        self, embedded_images: np.ndarray, embedded_sentences: np.ndarray
+    def update_embeddings_labels(
+        self,
+        embedded_images: np.ndarray,
+        embedded_sentences: np.ndarray,
+        labels: np.ndarray,
     ) -> None:
         num_samples = embedded_images.shape[0]
         self.embedded_images[
@@ -38,6 +41,7 @@ class Evaluator:
             self.index_update : self.index_update + num_samples, :
         ] = embedded_sentences
         self.index_update += num_samples
+        self.labels[self.index_update : self.index_update + num_samples] = labels
 
     def is_best_recall_at_k(self) -> bool:
         # Update current
