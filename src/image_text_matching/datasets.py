@@ -25,3 +25,17 @@ class ImagesDataset(Dataset):
             image = self.transform(image)
 
         return image, image_name
+
+
+class JsonDataset(Dataset):
+    # Makes assumption that the dataset is a json file that contains objects such as:
+    # {"image_embedding_path": str "image_embedding_path": str, "label":int}
+
+    def __init__(self):
+        pass
+
+    def __len__(self):
+        pass
+
+    def __getitem__(idx: int):
+        pass
