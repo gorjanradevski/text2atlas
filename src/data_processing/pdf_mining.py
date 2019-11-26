@@ -1,6 +1,4 @@
-###
-### general requirements
-###
+""" general requirements """
 
 import sys
 import os
@@ -8,19 +6,17 @@ from binascii import b2a_hex
 
 from utils.general import eprint
 
-###
-### pdf-miner requirements
-###
+""" pdf-miner requirements """
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument, PDFNoOutlines
 from pdfminer.pdfpage import PDFPage
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
-from pdfminer.layout import LAParams, LTTextBox, LTTextLine, LTFigure, LTImage, LTChar
+from pdfminer.layout import LAParams, LTTextBox, LTTextLine, LTFigure, LTImage
 
 
-def with_pdf(pdf_doc, fn, pdf_pwd, *args):
+def with_pdf(pdf_doc, fn, *args):
     """Open the pdf document, and apply the function, returning the results"""
     result = None
     try:
@@ -32,8 +28,6 @@ def with_pdf(pdf_doc, fn, pdf_pwd, *args):
         doc = PDFDocument(parser)
         # connect the parser and document objects
         parser.set_document(doc)
-        # supply the password for initialization
-        #         doc._initialize_password(pdf_pwd)
 
         if doc.is_extractable:
             # apply the function and return the result
@@ -47,9 +41,7 @@ def with_pdf(pdf_doc, fn, pdf_pwd, *args):
     return result
 
 
-###
-### Table of Contents
-###
+"""Table of Contents"""
 
 
 def _parse_toc(doc):
@@ -65,14 +57,12 @@ def _parse_toc(doc):
     return toc
 
 
-def get_toc(pdf_doc, pdf_pwd=""):
+def get_toc(pdf_doc):
     """Return the table of contents (toc), if any, for this pdf file"""
-    return with_pdf(pdf_doc, _parse_toc, pdf_pwd)
+    return with_pdf(pdf_doc, _parse_toc)
 
 
-###
-### Extracting Images
-###
+""" Extracting Images """
 
 
 def write_file(folder, filename, filedata, flags="w"):
@@ -119,9 +109,7 @@ def save_image(lt_image, page_number, images_folder):
     return result
 
 
-###
-### Extracting Text
-###
+""" Extracting Text """
 
 
 def to_bytestring(s, enc="utf-8"):
@@ -160,6 +148,7 @@ def update_page_text_hash(h, lt_obj, pct=0.2):
 
 
 def parse_lt_objs(lt_objs, page_number, images_folder, text_content=None):
+
     """Iterate through the list of LT* objects and capture the text or image data contained in each"""
     if text_content is None:
         text_content = []
@@ -188,7 +177,7 @@ def parse_lt_objs(lt_objs, page_number, images_folder, text_content=None):
         elif isinstance(lt_obj, LTFigure):
             # LTFigure objects are containers for other LT* objects, so recurse through the children
             text_content.append(
-                parse_lt_objs(lt_obj, page_number, images_folder, text_content)
+                parse_lt_objs(lt_obj._objs, page_number, images_folder, text_content)
             )
 
     for k, v in sorted([(key, value) for (key, value) in page_text.items()]):
@@ -199,9 +188,7 @@ def parse_lt_objs(lt_objs, page_number, images_folder, text_content=None):
     return "\n".join(text_content)
 
 
-###
-### Processing Pages
-###
+""" Processing Pages """
 
 
 def _parse_pages(doc, images_folder):
@@ -213,7 +200,9 @@ def _parse_pages(doc, images_folder):
     interpreter = PDFPageInterpreter(rsrcmgr, device)
 
     text_content = []
-    for i, page in enumerate(PDFPage.create_pages(doc)):
+    for i, page in enumerate(PDFPage.create_pages(doc)):  # Skip first page
+        if i == 0:
+            continue
         interpreter.process_page(page)
         # receive the LTPage object for this page
         layout = device.get_result()
@@ -223,12 +212,20 @@ def _parse_pages(doc, images_folder):
     return text_content
 
 
-def get_pages(pdf_doc, pdf_pwd="", images_folder="/tmp"):
+def get_pages(pdf_doc, images_folder="/tmp"):
     """Process each of the pages in this pdf file and return a list of strings representing the text found in each page"""
-    return with_pdf(pdf_doc, _parse_pages, pdf_pwd, *tuple([images_folder]))
+    return with_pdf(pdf_doc, _parse_pages, *tuple([images_folder]))
 
 
 if __name__ == '__main__':
-    pdf_path = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample1.pdf'
-    images_folder = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample2_img'
-    text = get_pages(pdf_path, images_folder=images_folder)
+
+    from utils.loadsave import save_text_file
+
+    pdf_path = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3.pdf'
+    dump_folder = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3_img'
+    if not os.path.exists(dump_folder):
+        os.makedirs(dump_folder)
+    text = get_pages(pdf_path, images_folder=dump_folder)
+    save_text_file('\n\n'.join(text), path=os.path.join(dump_folder, 'text.txt'))
+
+

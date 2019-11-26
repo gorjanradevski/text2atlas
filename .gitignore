@@ -4,3 +4,4 @@ notebooks/
 .vscode/
 __pycache__/
 .idea/
+condor/
