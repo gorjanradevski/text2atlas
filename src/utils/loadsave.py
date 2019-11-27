@@ -72,3 +72,22 @@ def unindent_json(path_in: str) -> None:
     with open(path_in, "w") as write_file:
         json.dump(data, write_file)
     return
+
+
+def merge_jsons(paths_in: List[str], path_out: str) -> None:
+    data = []
+    for path_in in paths_in:
+        data += [load_json(path_in)]
+
+    store_json(data, path_out)
+
+
+def aggregate_jsons(root_path: str, path_out: str) -> List:
+    json_list = []
+
+    for root, dirs, files in os.walk(root_path):
+        for f in files:
+            if os.path.splitext(f)[1].lower() == ".json":
+                json_list.append(os.path.join(root, f))
+
+    merge_jsons(json_list, path_out)
