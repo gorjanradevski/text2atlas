@@ -1,8 +1,9 @@
 import torch
 from torch import nn
+from torch.autograd import Variable
 
 
-class BatchAll(nn.Module):
+class BatchAllLabels(nn.Module):
     # Adapted from: https://github.com/omoindrot/tensorflow-triplet-loss
 
     def __init__(self, margin: float, device: str):
@@ -11,7 +12,7 @@ class BatchAll(nn.Module):
             margin: margin for triplet loss
             device: on which device to compute the loss.
         """
-        super(BatchAll, self).__init__()
+        super(BatchAllLabels, self).__init__()
         self.margin = margin
         self.device = device
 
@@ -67,3 +68,41 @@ def _get_triplet_mask(labels: torch.Tensor) -> torch.Tensor:
     valid_labels = ~i_equal_k & i_equal_j
 
     return valid_labels
+
+
+class TripletLoss(nn.Module):
+    # As per https://github.com/fartashf/vsepp/blob/master/model.py
+
+    def __init__(self, margin: float, batch_hard: bool):
+        super(TripletLoss, self).__init__()
+        self.margin = margin
+        self.batch_hard = batch_hard
+
+    def forward(self, im, s):
+        # compute image-sentence score matrix
+        scores = torch.matmul(im, s.t())
+        diagonal = scores.diag().view(im.size(0), 1)
+        d1 = diagonal.expand_as(scores)
+        d2 = diagonal.t().expand_as(scores)
+
+        # compare every diagonal score to scores in its column
+        # caption retrieval
+        cost_s = (self.margin + scores - d1).clamp(min=0)
+        # compare every diagonal score to scores in its row
+        # image retrieval
+        cost_im = (self.margin + scores - d2).clamp(min=0)
+
+        # clear diagonals
+        mask = torch.eye(scores.size(0)) > 0.5
+        identity = Variable(mask)
+        if torch.cuda.is_available():
+            identity = identity.cuda()
+        cost_s = cost_s.masked_fill_(identity, 0)
+        cost_im = cost_im.masked_fill_(identity, 0)
+
+        # keep the maximum violating negative for each query
+        if self.batch_hard:
+            cost_s = cost_s.max(1)[0]
+            cost_im = cost_im.max(0)[0]
+
+        return cost_s.sum() + cost_im.sum()

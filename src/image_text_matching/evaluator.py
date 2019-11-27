@@ -1,4 +1,3 @@
-import sys
 import logging
 import numpy as np
 
@@ -17,13 +16,11 @@ class Evaluator:
         self.num_features = num_features
         self.embedded_images = np.zeros((self.num_samples, self.num_features))
         self.embedded_sentences = np.zeros((self.num_samples, self.num_features))
-        self.labels = np.zeros(self.num_samples)
 
     def reset_all_vars(self) -> None:
         self.index_update = 0
         self.embedded_images = np.zeros((self.num_samples, self.num_features))
         self.embedded_sentences = np.zeros((self.num_samples, self.num_features))
-        self.labels = np.zeros(self.num_samples)
         self.cur_text2image_recall_at_k = (-1.0, -1.0, -1.0)
         self.cur_image2text_recall_at_k = (-1.0, -1.0, -1.0)
 
@@ -41,7 +38,6 @@ class Evaluator:
             self.index_update : self.index_update + num_samples, :
         ] = embedded_sentences
         self.index_update += num_samples
-        self.labels[self.index_update : self.index_update + num_samples] = labels
 
     def is_best_recall_at_k(self) -> bool:
         # Update current
@@ -67,6 +63,7 @@ class Evaluator:
     def image2text_recall_at_k(self):
         """Computes the recall at K when doing image to text retrieval and updates the
         object variable.
+
         Returns:
             The recall at 1, 5, 10.
 
@@ -80,13 +77,8 @@ class Evaluator:
             similarities = np.dot(query_image, self.sentences.T).flatten()
             indices = np.argsort(similarities)[::-1]
             # Score
-            rank = sys.maxsize
-            true_labels = np.where(self.labels == self.labels[index])[0]
-            for label in true_labels:
-                tmp = np.where(indices == label)[0][0]
-                if tmp < rank:
-                    rank = tmp
-            ranks[index] = rank
+            tmp = np.where(indices == index)[0][0]
+            ranks[index] = tmp
 
         r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
         r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
@@ -110,13 +102,8 @@ class Evaluator:
             similarities = np.dot(query_sentence, self.images.T).flatten()
             indices = np.argsort(similarities)[::-1]
             # Score
-            rank = sys.maxsize
-            true_labels = np.where(self.labels == self.labels[index])[0]
-            for label in true_labels:
-                tmp = np.where(indices == label)[0][0]
-                if tmp < rank:
-                    rank = tmp
-            ranks[index] = rank
+            tmp = np.where(indices == index)[0][0]
+            ranks[index] = tmp
 
         r1 = 100.0 * len(np.where(ranks < 1)[0]) / len(ranks)
         r5 = 100.0 * len(np.where(ranks < 5)[0]) / len(ranks)
