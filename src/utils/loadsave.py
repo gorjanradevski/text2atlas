@@ -1,5 +1,5 @@
-import gzip
 import json
+import ndjson
 import os
 import pickle
 from typing import Any, List, Dict, Union
@@ -52,6 +52,25 @@ def load_json(path: str) -> Union[List, Dict]:
     try:
         with open(path, "r") as read_file:
             data = json.load(read_file)
+    except ValueError as e:
+        print("Invalid json: %s" % e)
+        return None
+    return data
+
+
+def store_ndjson(data, path: str):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            ndjson.dump(data, f, ensure_ascii=False)
+    except ValueError as e:
+        print("Invalid path: %s" % e)
+        return None
+
+
+def load_ndjson(path: str) -> Union[List, Dict]:
+    try:
+        with open(path, "r") as read_file:
+            data = ndjson.load(read_file)
     except ValueError as e:
         print("Invalid json: %s" % e)
         return None
