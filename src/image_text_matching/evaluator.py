@@ -25,10 +25,7 @@ class Evaluator:
         self.cur_image2text_recall_at_k = (-1.0, -1.0, -1.0)
 
     def update_embeddings(
-        self,
-        embedded_images: np.ndarray,
-        embedded_sentences: np.ndarray,
-        labels: np.ndarray,
+        self, embedded_images: np.ndarray, embedded_sentences: np.ndarray
     ) -> None:
         num_samples = embedded_images.shape[0]
         self.embedded_images[
