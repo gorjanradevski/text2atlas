@@ -58,7 +58,7 @@ def main():
     args = parse_args()
     root_path = args.json_root_dir
     path_out = args.dataset_path
-    filt_nnat = args.filter_nnat
+    filt_nnat = args.filt_nnat
     filt_no_title = args.filt_no_title
     filt_no_keywords = args.filt_no_keywords
     filt_no_abstract = args.filt_no_abstract
