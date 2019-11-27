@@ -65,13 +65,13 @@ class Evaluator:
             The recall at 1, 5, 10.
 
         """
-        batch_size = self.images.shape[0]
+        batch_size = self.embedded_images.shape[0]
         ranks = np.zeros(batch_size)
         for index in range(batch_size):
             # Get query image
-            query_image = self.images[index]
+            query_image = self.embedded_images[index]
             # Similarities
-            similarities = np.dot(query_image, self.sentences.T).flatten()
+            similarities = np.dot(query_image, self.embedded_sentences.T).flatten()
             indices = np.argsort(similarities)[::-1]
             # Score
             tmp = np.where(indices == index)[0][0]
@@ -90,13 +90,13 @@ class Evaluator:
             The recall at 1, 5, 10.
 
         """
-        batch_size = self.images.shape[0]
+        batch_size = self.embedded_images.shape[0]
         ranks = np.zeros(batch_size)
         for index in range(batch_size):
             # Get query image
-            query_sentence = self.sentences[index]
+            query_sentence = self.embedded_sentences[index]
             # Similarities
-            similarities = np.dot(query_sentence, self.images.T).flatten()
+            similarities = np.dot(query_sentence, self.embedded_images.T).flatten()
             indices = np.argsort(similarities)[::-1]
             # Score
             tmp = np.where(indices == index)[0][0]
