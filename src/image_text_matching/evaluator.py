@@ -24,7 +24,7 @@ class Evaluator:
         self.cur_text2image_recall_at_k = (-1.0, -1.0, -1.0)
         self.cur_image2text_recall_at_k = (-1.0, -1.0, -1.0)
 
-    def update_embeddings_labels(
+    def update_embeddings(
         self,
         embedded_images: np.ndarray,
         embedded_sentences: np.ndarray,
