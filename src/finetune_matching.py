@@ -11,12 +11,13 @@ from image_text_matching.models import ImageTextMatchingModel
 from image_text_matching.losses import TripletLoss
 
 
-def train(
+def finetune(
     json_path: str,
     images_dir_path: str,
     train_size: int,
     epochs: int,
     batch_size: int,
+    checkpoint_path: str,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -24,6 +25,7 @@ def train(
     joint_space: int,
     margin: float,
     batch_hard: bool,
+    accumulation_steps: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,9 +45,11 @@ def train(
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
     )
-    model = nn.DataParallel(ImageTextMatchingModel(joint_space, finetune=False)).to(
+    model = nn.DataParallel(ImageTextMatchingModel(joint_space, finetune=True)).to(
         device
     )
+    # Load model
+    model.load_state_dict(torch.load(checkpoint_path))
     criterion = TripletLoss(margin, batch_hard)
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -59,19 +63,26 @@ def train(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for images, sentences in train_loader:
+            for i, (images, sentences) in enumerate(train_loader):
                 # remove past gradients
                 optimizer.zero_grad()
-                # forward
+                # As per: https://gist.github.com/thomwolf/ac7a7da6b1888c2eeac8ac8b9b05d3d3
                 images, sentences = images.to(device), sentences.to(device)
+                # forward
                 embedded_images, embedded_sentences = model(images, sentences)
+                # Nor averaging over batch, hence not normalizing loss
                 loss = criterion(embedded_images, embedded_sentences)
                 # backward
                 loss.backward()
-                # clip the gradients
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_val)
-                # update weights
-                optimizer.step()
+                # Wait for several backward steps
+                if (i + 1) % accumulation_steps == 0:
+                    # clip the gradients
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), clip_val)
+                    # update weights
+                    optimizer.step()
+                    # Remove gradients
+                    optimizer.zero_grad()
+
                 # Update progress bar
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
@@ -115,7 +126,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    train(
+    finetune(
         args.json_path,
         args.images_dir_path,
         args.train_size,
@@ -158,8 +169,14 @@ def parse_args():
     parser.add_argument(
         "--save_model_path",
         type=str,
-        default="models/pretrained.pt",
+        default="models/finetuned.pt",
         help="Where to save the model.",
+    )
+    parser.add_argument(
+        "--checkpoint_path",
+        type=str,
+        default="models/pretrained.pt",
+        help="From where to load the model.",
     )
     parser.add_argument(
         "--epochs",
@@ -190,6 +207,12 @@ def parse_args():
     )
     parser.add_argument(
         "--batch_hard", action="store_true", help="Whether to train on hard negatives."
+    )
+    parser.add_argument(
+        "--accumulation_steps",
+        type=int,
+        default=4,
+        help="For how many steps to accumulate gradients.",
     )
 
     return parser.parse_args()
