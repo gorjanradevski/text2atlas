@@ -1,6 +1,6 @@
 import argparse
 import os
-from data_processing.image_extraction import get_pdf_tree
+from data_processing.pdf_tree_extraction import get_pdf_tree
 from utils.general import get_doc_filenames, ensure_dir
 from utils.constants import trees_data_dir, html_data_dir
 from utils.loadsave import store_json
@@ -31,8 +31,10 @@ def main():
     for pdf_path in tqdm(pdf_files):
         filename = os.path.splitext(os.path.basename(pdf_path))[0]
         html_path = os.path.join(html_data_dir, os.path.basename(dirname), filename)
-        tree = get_pdf_tree(pdf_path, html_path)
-        store_json(tree, os.path.join(tree_root, filename + ".json"))
+        tree_path = os.path.join(tree_root, filename + ".json")
+        if not os.path.exists(tree_path):
+            tree = get_pdf_tree(pdf_path, html_path)
+            store_json(tree, tree_path)
 
 
 if __name__ == '__main__':

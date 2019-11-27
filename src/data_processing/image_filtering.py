@@ -66,6 +66,12 @@ def calculate_entropy_threshold(
     return opt_threshold
 
 
+def is_natural(image_path: str, entropy_threshold: float = 3.0026) -> bool:
+    image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+    histogram_entropy = image_hist_entropy(image)
+    return histogram_entropy > entropy_threshold
+
+
 if __name__ == "__main__":
     print(
         "Optimal threshold: {}".format(
