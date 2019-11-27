@@ -5,9 +5,8 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 
-from image_text_matching.datasets import JsonDataset, Subset
+from image_text_matching.datasets import JsonDataset, Subset, collate_pad_batch
 from image_text_matching.evaluator import Evaluator
-from image_text_matching.datasets import collate_pad_batch
 from image_text_matching.models import ImageTextMatchingModel
 from image_text_matching.losses import TripletLoss
 
@@ -29,8 +28,10 @@ def train(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = JsonDataset(json_path, images_dir_path)
+    print(f"The training size is {train_size}")
+    print(f"The validation size is {len(dataset) - train_size}")
     train_dataset = Subset(dataset, list(range(train_size)))
-    val_dataset = Subset(dataset, list(range(len(dataset) - train_size)))
+    val_dataset = Subset(dataset, list(range(train_size, len(dataset), 1)))
 
     train_loader = DataLoader(
         train_dataset,
@@ -57,7 +58,6 @@ def train(
 
         # Set model in train mode
         model.train(True)
-
         with tqdm(total=len(train_loader)) as pbar:
             for images, sentences in train_loader:
                 # remove past gradients
