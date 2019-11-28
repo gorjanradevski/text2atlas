@@ -49,7 +49,7 @@ def finetune(
         device
     )
     # Load model
-    model.load_state_dict(torch.load(checkpoint_path))
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     criterion = TripletLoss(margin, batch_hard)
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -132,6 +132,7 @@ def main():
         args.train_size,
         args.epochs,
         args.batch_size,
+        args.checkpoint_path,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -139,6 +140,7 @@ def main():
         args.joint_space,
         args.margin,
         args.batch_hard,
+        args.accumulation_steps,
     )
 
 
@@ -188,7 +190,7 @@ def parse_args():
         "--batch_size", type=int, default=64, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=0.0002, help="The learning rate."
+        "--learning_rate", type=float, default=0.00002, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
