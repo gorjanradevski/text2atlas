@@ -1,11 +1,20 @@
 import os
 import sys
 import natsort
+from typing import List
 
 
 def eprint(*args, **kwargs) -> None:
     print(*args, file=sys.stderr, **kwargs)
     return
+
+
+def flatten_list(lst: List[List]) -> List:
+    """
+    :param lst: list containing sublists
+    :return: flattened list
+    """
+    return [item for sublist in lst for item in sublist]
 
 
 def get_doc_filenames(folder: str, extension: str = ".txt") -> list:

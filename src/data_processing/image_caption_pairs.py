@@ -1,6 +1,6 @@
 from typing import Tuple, List
 
-import pdftotree
+import PdfToTree
 import subprocess
 
 from math import floor, ceil
@@ -13,7 +13,7 @@ def get_figure_bbs(
     if not tree:
         if not html_path:
             html_path = "./data_dump_"
-        tree = pdftotree.parse(
+        tree = PdfToTree.parse(
             pdf_path,
             html_path=html_path,
             model_type=None,

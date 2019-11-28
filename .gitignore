@@ -5,3 +5,5 @@ notebooks/
 __pycache__/
 .idea/
 condor/
+src/PdfToTree/
+!src/PdfToTree/.gitkeep
