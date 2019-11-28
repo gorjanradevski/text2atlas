@@ -3,3 +3,7 @@ data/
 notebooks/
 .vscode/
 __pycache__/
+.idea/
+condor/
+src/PdfToTree/
+!src/PdfToTree/.gitkeep
