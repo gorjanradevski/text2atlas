@@ -6,7 +6,7 @@ from typing import Tuple
 import random
 
 
-class VoxelMappingDataset(Dataset):
+class VoxelMappingDataset:
     # Assumes that the dataset is: {
     # "sentence": str,
     # "keywords": set,
@@ -21,6 +21,11 @@ class VoxelMappingDataset(Dataset):
         self.bounding_boxes = [element["bounding_box"] for element in self.json_data]
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
+
+class VoxelMappingTrainDataset(VoxelMappingDataset, Dataset):
+    def __init__(self, json_path: str):
+        super().__init__(json_path)
+
     def __len__(self):
         return len(self.sentences)
 
@@ -31,6 +36,46 @@ class VoxelMappingDataset(Dataset):
                 "[MASK]" if word in mask and mask[word] == 1 else word
                 for word in self.sentences[idx].split()
             ]
+        )
+        tokenized_sentence = torch.tensor(
+            self.tokenizer.encode(masked_sentence, add_special_tokens=True)
+        )
+        mapping = torch.tensor(self.mappings[idx])
+        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        num_organs = len(mapping)
+
+        return (tokenized_sentence, mapping, num_organs, bounding_box)
+
+
+class VoxelMappingTestDataset(VoxelMappingDataset, Dataset):
+    def __init__(self, json_path: str):
+        super().__init__(json_path)
+
+    def __len__(self):
+        return len(self.sentences)
+
+    def __getitem__(self, idx: int):
+        tokenized_sentence = torch.tensor(
+            self.tokenizer.encode(self.sentences[idx], add_special_tokens=True)
+        )
+        mapping = torch.tensor(self.mappings[idx])
+        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        num_organs = len(mapping)
+
+        return (tokenized_sentence, mapping, num_organs, bounding_box)
+
+
+class VoxelMappingTestMaskedDataset(VoxelMappingDataset, Dataset):
+    def __init__(self, json_path: str):
+        super().__init__(json_path)
+
+    def __len__(self):
+        return len(self.sentences)
+
+    def __getitem__(self, idx: int):
+        mask = {word for word in self.keywords[idx]}
+        masked_sentence = " ".join(
+            ["[MASK]" if word in mask else word for word in self.sentences[idx].split()]
         )
         tokenized_sentence = torch.tensor(
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)

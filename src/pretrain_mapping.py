@@ -5,7 +5,12 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 
-from voxel_mapping.datasets import VoxelMappingDataset, collate_pad_batch
+from voxel_mapping.datasets import (
+    VoxelMappingTrainDataset,
+    VoxelMappingTestDataset,
+    VoxelMappingTestMaskedDataset,
+    collate_pad_batch,
+)
 from voxel_mapping.models import MappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
 
@@ -23,8 +28,9 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelMappingDataset(train_json_path)
-    val_dataset = VoxelMappingDataset(val_json_path)
+    train_dataset = VoxelMappingTrainDataset(train_json_path)
+    val_dataset = VoxelMappingTestDataset(val_json_path)
+    val_masked_dataset = VoxelMappingTestMaskedDataset(val_json_path)
 
     train_loader = DataLoader(
         train_dataset,
@@ -35,6 +41,12 @@ def pretrain(
     )
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
+    )
+    val_masked_loader = DataLoader(
+        val_masked_dataset,
+        batch_size=batch_size,
+        num_workers=4,
+        collate_fn=collate_pad_batch,
     )
     model = nn.DataParallel(MappingsProducer(joint_space, finetune=False)).to(device)
     criterion = MinDistanceLoss()
@@ -78,7 +90,15 @@ def pretrain(
                     true_mappings.to(device),
                 )
                 output_mappings = model(sentences).cpu().numpy()
-                # TODO: Model validation and saving
+            for sentences, true_mappings, num_organs, bounding_boxes in tqdm(
+                val_masked_loader
+            ):
+                sentences, true_mappings = (
+                    sentences.to(device),
+                    true_mappings.to(device),
+                )
+                output_mappings = model(sentences).cpu().numpy()
+            # TODO: Model validation and saving
 
 
 def main():
