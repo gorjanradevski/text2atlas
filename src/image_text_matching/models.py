@@ -37,7 +37,7 @@ class ImageEncoder(nn.Module):
 class SentenceEncoder(nn.Module):
     def __init__(self, finetune: bool):
         super(SentenceEncoder, self).__init__()
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        self.bert = BertModel.from_pretrained("models/biobert_v1.1_pubmed")
         #  https://arxiv.org/abs/1801.06146
 
         for param in self.bert.parameters():
