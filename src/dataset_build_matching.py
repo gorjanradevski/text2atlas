@@ -7,7 +7,7 @@ from data_processing.text_filtering import process_caption
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Collects image-caption pairs from jsons in json root dir.")
     parser.add_argument(
         "--dataset-path",
         "-d",
