@@ -12,6 +12,7 @@ jupyter = "^1.0"
 transformers = "^2.1"
 tqdm = "^4.39"
 Pillow = "^6.2"
+scikit-learn = "^0.21.3"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allows-prereleases = true}
