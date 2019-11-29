@@ -14,7 +14,8 @@ def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):
     corrects = (
         np.concatenate((pred - bboxes[:, :, 0], bboxes[:, :, 1] - pred), axis=-1) >= 0
     ).all(axis=-1)
-    return np.count_nonzero(corrects)
+
+    return 1 if np.count_nonzero(corrects) > 0 else 0
 
 
 def bbox_distance(

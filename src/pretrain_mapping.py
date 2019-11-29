@@ -124,12 +124,12 @@ def pretrain(
             if cur_avg_accuracy > best_avg_accuracy:
                 best_avg_accuracy = cur_avg_accuracy
                 print(
-                    f"Found new best with avg accuracy{best_avg_accuracy} on epoch {epoch}."
-                    "Saving model!!!"
+                    f"Found new best with avg accuracy {best_avg_accuracy} on epoch"
+                    f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
             else:
-                print(f"Avg accuracy on epoch {epoch} is: {cur_avg_accuracy}")
+                print(f"Avg accuracy on epoch {epoch+1} is: {cur_avg_accuracy}")
 
 
 def main():
