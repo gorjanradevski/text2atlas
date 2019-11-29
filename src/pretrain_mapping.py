@@ -103,6 +103,7 @@ def pretrain(
                 # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
                 bounding_boxes_copy = deepcopy(bounding_boxes)
                 del bounding_boxes
+                del sentences
                 for output_mapping, bounding_box in zip(
                     output_mappings, bounding_boxes_copy
                 ):
@@ -120,6 +121,7 @@ def pretrain(
                 # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
                 bounding_boxes_copy = deepcopy(bounding_boxes)
                 del bounding_boxes
+                del sentences
                 for output_mapping, bounding_box in zip(
                     output_mappings, bounding_boxes_copy
                 ):
@@ -132,11 +134,13 @@ def pretrain(
 
             if cur_avg_accuracy > best_avg_accuracy:
                 best_avg_accuracy = cur_avg_accuracy
+                print("======================")
                 print(
                     f"Found new best with avg accuracy {best_avg_accuracy} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
+                print("======================")
             else:
                 print(f"Avg accuracy on epoch {epoch+1} is: {cur_avg_accuracy}")
 

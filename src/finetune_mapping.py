@@ -4,6 +4,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+from copy import deepcopy
 
 from voxel_mapping.datasets import (
     VoxelMappingTrainDataset,
@@ -16,7 +17,7 @@ from voxel_mapping.losses import MinDistanceLoss
 from voxel_mapping.evaluator import bbox_inside
 
 
-def pretrain(
+def finetune(
     train_json_path: str,
     val_json_path: str,
     epochs: int,
@@ -28,7 +29,6 @@ def pretrain(
     weight_decay: float,
     clip_val: float,
     joint_space: int,
-    accumulation_steps: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -101,8 +101,12 @@ def pretrain(
             for sentences, _, _, bounding_boxes in tqdm(val_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
+                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
+                bounding_boxes_copy = deepcopy(bounding_boxes)
+                del bounding_boxes
+                del sentences
                 for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes
+                    output_mappings, bounding_boxes_copy
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
@@ -115,8 +119,12 @@ def pretrain(
             for sentences, _, _, bounding_boxes in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
+                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
+                bounding_boxes_copy = deepcopy(bounding_boxes)
+                del bounding_boxes
+                del sentences
                 for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes
+                    output_mappings, bounding_boxes_copy
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
@@ -127,10 +135,12 @@ def pretrain(
 
             if cur_avg_accuracy > best_avg_accuracy:
                 best_avg_accuracy = cur_avg_accuracy
+                print("======================")
                 print(
                     f"Found new best with avg accuracy {best_avg_accuracy} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
+                print("======================")
                 torch.save(model.state_dict(), save_model_path)
             else:
                 print(f"Avg accuracy on epoch {epoch+1} is: {cur_avg_accuracy}")
@@ -140,7 +150,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    pretrain(
+    finetune(
         args.train_json_path,
         args.val_json_path,
         args.epochs,
