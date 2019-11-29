@@ -4,6 +4,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+from copy import deepcopy
+# https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
 
 from voxel_mapping.datasets import (
     VoxelMappingTrainDataset,
@@ -98,7 +100,7 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
                 for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes
+                    output_mappings, deepcopy(bounding_boxes)
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
@@ -112,7 +114,7 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
                 for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes
+                    output_mappings, deepcopy(bounding_boxes)
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
