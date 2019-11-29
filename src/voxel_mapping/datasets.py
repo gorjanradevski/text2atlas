@@ -15,10 +15,10 @@ class VoxelMappingDataset:
     # }
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         self.json_data = json.load(open(json_path))
-        self.sentences = [element["sentence"] for element in self.json_data]
-        self.mappings = [element["location_map"] for element in self.json_data]
+        self.sentences = [element["text"] for element in self.json_data]
+        self.mappings = [element["centers"] for element in self.json_data]
         self.keywords = [set(element["keywords"]) for element in self.json_data]
-        self.bounding_boxes = [element["bounding_box"] for element in self.json_data]
+        self.bounding_boxes = [element["bboxes"] for element in self.json_data]
         self.tokenizer = self.tokenizer = BertTokenizer.from_pretrained(
             bert_tokenizer_path_or_name
         )
@@ -97,5 +97,5 @@ def collate_pad_batch(
     padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
     num_organs = torch.tensor([*num_organs])
 
-    # IDK why num_organs is a Tuple
+    # IDK why num_organs and bounding_boxes is a Tuple
     return padded_sentences, padded_mappings, num_organs, bounding_boxes

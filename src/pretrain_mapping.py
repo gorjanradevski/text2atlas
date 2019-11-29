@@ -13,6 +13,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import MappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
+from voxel_mapping.evaluator import bbox_inside
 
 
 def pretrain(
@@ -57,6 +58,7 @@ def pretrain(
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
+    # TODO: Save model
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -85,23 +87,32 @@ def pretrain(
         # Set model in evaluation mode
         model.train(False)
         with torch.no_grad():
-            for sentences, true_mappings, num_organs, bounding_boxes in tqdm(
-                val_loader
-            ):
-                sentences, true_mappings = (
-                    sentences.to(device),
-                    true_mappings.to(device),
-                )
+            # Restart counters
+            total = 0
+            correct = 0
+            for sentences, _, _, bounding_boxes in tqdm(val_loader):
+                sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
-            for sentences, true_mappings, num_organs, bounding_boxes in tqdm(
-                val_masked_loader
-            ):
-                sentences, true_mappings = (
-                    sentences.to(device),
-                    true_mappings.to(device),
-                )
+                for output_mapping, bounding_box in zip(
+                    output_mappings, bounding_boxes
+                ):
+                    total += 1
+                    correct += bbox_inside(output_mapping, bounding_box.numpy())
+
+            print(f"The accuracy on the non maksed validation set is {correct/total}")
+            # Restart counters
+            total = 0
+            correct = 0
+            for sentences, _, _, bounding_boxes in tqdm(val_masked_loader):
+                sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
-            # TODO: Model validation and saving
+                for output_mapping, bounding_box in zip(
+                    output_mappings, bounding_boxes
+                ):
+                    total += 1
+                    correct += bbox_inside(output_mapping, bounding_box.numpy())
+
+            print(f"The accuracy on the maksed validation set is {correct/total}")
 
 
 def main():
