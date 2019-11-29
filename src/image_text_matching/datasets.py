@@ -35,7 +35,12 @@ class TextsDataset(Dataset):
 
 
 class JsonDataset(Dataset):
-    def __init__(self, json_file_path: str, images_dir_path: str):
+    def __init__(
+        self,
+        json_file_path: str,
+        images_dir_path: str,
+        bert_tokenizer_path_or_name: str,
+    ):
         data = json.load(open(json_file_path))
         self.images_dir_path = images_dir_path
         self.image_paths = [element["figure"] for element in data]
@@ -49,7 +54,7 @@ class JsonDataset(Dataset):
                 ),
             ]
         )
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
 
     def __len__(self):
         return len(self.image_paths)
