@@ -2,8 +2,8 @@ import os
 import argparse
 from utils.constants import dataset_dir, json_data_dir
 from utils.loadsave import aggregate_jsons, load_json, store_json
-from data_processing.image_filtering import is_natural
-from data_processing.text_filtering import process_caption
+from data_processing_matching.image_filtering import is_natural
+from data_processing_matching.text_filtering import process_caption
 
 
 def parse_args():

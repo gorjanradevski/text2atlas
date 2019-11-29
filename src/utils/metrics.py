@@ -1,5 +1,45 @@
 import torch
 import numpy as np
+from typing import List
+
+
+def bbox_volume(bbox: np.ndarray):
+    """
+        Return
+        :param bbox: bounding box (3, 2)
+        :return: Volume of bounding box
+        """
+    return (bbox[:, 1] - bbox[:, 0]).prod()
+
+
+# def bbox_intersection_volume(bbox1: np.ndarray, bbox2: np.ndarray):
+#     """
+#         Return
+#         :param bbox1: first bounding box (3, 2)
+#         :param bbox2: second bounding box (3, 2)
+#         :return: Volume of intersection (0.0 if bounding boxes do not intersect)
+#         """
+#     intersection = np.concatenate(
+#         (
+#             np.concatenate((bbox1[:, 0][..., None], bbox2[:, 0][..., None]), axis=1).max(axis=1)[..., None],
+#             np.concatenate((bbox1[:, 1][..., None], bbox2[:, 1][..., None]), axis=1).min(axis=1)[..., None]
+#         ),
+#         axis=1
+#     )
+#     return max((float(bbox_volume(intersection))), 0.0)
+
+
+def bbox_intersection_volume(bboxes: List[np.ndarray]):
+    mins = np.empty((3, 0))
+    maxs = np.empty((3, 0))
+
+    for bbox in bboxes:
+        mins = np.concatenate((mins, bbox[:, 0][..., None]), axis=1)
+        maxs = np.concatenate((maxs, bbox[:, 1][..., None]), axis=1)
+
+    intersection = np.concatenate((mins.max(axis=1)[..., None], maxs.min(axis=1)[..., None]), axis=1)
+
+    return max((float(bbox_volume(intersection))), 0.0)
 
 
 def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):

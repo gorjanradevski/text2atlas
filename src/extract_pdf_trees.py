@@ -1,6 +1,6 @@
 import argparse
 import os
-from data_processing.pdf_tree_extraction import get_pdf_tree
+from data_processing_matching.pdf_tree_extraction import get_pdf_tree
 from utils.general import get_doc_filenames, ensure_dir
 from utils.constants import trees_data_dir, html_data_dir
 from utils.loadsave import store_json

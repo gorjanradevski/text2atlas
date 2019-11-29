@@ -2,7 +2,7 @@ import os
 import argparse
 from tqdm import tqdm
 from typing import List
-from data_processing.image_caption_pairs import get_bb_img, get_bb_text, get_figure_bbs
+from data_processing_matching.image_caption_pairs import get_bb_img, get_bb_text, get_figure_bbs
 from utils.general import get_doc_filenames, ensure_dir, ensure_parent_dir
 from utils.constants import trees_data_dir, image_data_dir, json_data_dir
 from utils.loadsave import load_json, store_json

@@ -1,6 +1,6 @@
 import os
 import natsort
-from data_processing.image_extraction import extract_images
+from data_processing_matching.image_extraction import extract_images
 from utils.constants import pdf_data_dir, image_data_dir
 from utils.general import get_doc_filenames
 
