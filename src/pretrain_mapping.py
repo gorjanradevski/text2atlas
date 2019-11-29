@@ -68,9 +68,10 @@ def pretrain(
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                sentences, true_mappings = (
+                sentences, true_mappings, num_organs = (
                     sentences.to(device),
                     true_mappings.to(device),
+                    num_organs.to(device),
                 )
                 output_mappings = model(sentences)
                 loss = criterion(output_mappings, true_mappings, num_organs)
