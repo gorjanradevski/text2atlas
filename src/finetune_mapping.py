@@ -22,6 +22,7 @@ def pretrain(
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
+    checkpoint_path: str,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -51,8 +52,10 @@ def pretrain(
         collate_fn=collate_pad_batch,
     )
     model = nn.DataParallel(
-        MappingsProducer(bert_path_or_name, joint_space, finetune=False)
+        MappingsProducer(bert_path_or_name, joint_space, finetune=True)
     ).to(device)
+    # Load model
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     criterion = MinDistanceLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -103,7 +106,7 @@ def pretrain(
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
-            print(f"The accuracy on the non maksed validation set is {correct/total}")
+            print(f"The accuracy on the non masked validation set is {correct/total}")
             cur_avg_accuracy += correct / total
             # Restart counters
             total = 0
@@ -117,7 +120,7 @@ def pretrain(
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
-            print(f"The accuracy on the maksed validation set is {correct/total}")
+            print(f"The accuracy on the masked validation set is {correct/total}")
             cur_avg_accuracy += correct / total
             cur_avg_accuracy /= 2
 
@@ -142,6 +145,7 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
+        args.checkpoint_path,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -171,7 +175,7 @@ def parse_args():
     parser.add_argument(
         "--save_model_path",
         type=str,
-        default="models/pretrained.pt",
+        default="models/finetuned.pt",
         help="Where to save the model.",
     )
     parser.add_argument(
@@ -184,7 +188,7 @@ def parse_args():
         "--batch_size", type=int, default=64, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=0.0002, help="The learning rate."
+        "--learning_rate", type=float, default=0.00002, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
@@ -203,6 +207,12 @@ def parse_args():
         type=str,
         default="bert-base-uncased",
         help="The name or path to a pretrained bert model.",
+    )
+    parser.add_argument(
+        "--checkpoint_path",
+        type=str,
+        default="pretrained.pt",
+        help="Path to a pretrained checkpoint.",
     )
 
     return parser.parse_args()
