@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 from copy import deepcopy
+
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
 
 from voxel_mapping.datasets import (
@@ -99,8 +100,11 @@ def pretrain(
             for sentences, _, _, bounding_boxes in tqdm(val_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
+                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
+                bounding_boxes_copy = deepcopy(bounding_boxes)
+                del bounding_boxes
                 for output_mapping, bounding_box in zip(
-                    output_mappings, deepcopy(bounding_boxes)
+                    output_mappings, bounding_boxes_copy
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
@@ -113,8 +117,11 @@ def pretrain(
             for sentences, _, _, bounding_boxes in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
+                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
+                bounding_boxes_copy = deepcopy(bounding_boxes)
+                del bounding_boxes
                 for output_mapping, bounding_box in zip(
-                    output_mappings, deepcopy(bounding_boxes)
+                    output_mappings, bounding_boxes_copy
                 ):
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())

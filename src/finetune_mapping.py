@@ -28,6 +28,7 @@ def pretrain(
     weight_decay: float,
     clip_val: float,
     joint_space: int,
+    accumulation_steps: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
