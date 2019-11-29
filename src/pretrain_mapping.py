@@ -58,7 +58,8 @@ def pretrain(
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
-    # TODO: Save model
+
+    best_avg_accuracy = -1
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -87,6 +88,8 @@ def pretrain(
 
         # Set model in evaluation mode
         model.train(False)
+        # Reset current average loss
+        cur_avg_accuracy = 0
         with torch.no_grad():
             # Restart counters
             total = 0
@@ -101,6 +104,7 @@ def pretrain(
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
             print(f"The accuracy on the non maksed validation set is {correct/total}")
+            cur_avg_accuracy += correct / total
             # Restart counters
             total = 0
             correct = 0
@@ -114,6 +118,18 @@ def pretrain(
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
             print(f"The accuracy on the maksed validation set is {correct/total}")
+            cur_avg_accuracy += correct / total
+            cur_avg_accuracy /= 2
+
+            if cur_avg_accuracy > best_avg_accuracy:
+                best_avg_accuracy = cur_avg_accuracy
+                print(
+                    f"Found new best with avg accuracy{best_avg_accuracy} on epoch {epoch}."
+                    "Saving model!!!"
+                )
+                torch.save(model.state_dict(), save_model_path)
+            else:
+                print(f"Avg accuracy on epoch {epoch} is: {cur_avg_accuracy}")
 
 
 def main():
