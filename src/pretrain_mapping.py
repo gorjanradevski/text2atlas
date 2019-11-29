@@ -74,7 +74,7 @@ def pretrain(
                     num_organs.to(device),
                 )
                 output_mappings = model(sentences)
-                loss = criterion(output_mappings, true_mappings, num_organs)
+                loss = criterion(output_mappings, true_mappings, num_organs, device)
                 # backward
                 loss.backward()
                 # clip the gradients

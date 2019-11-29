@@ -8,7 +8,11 @@ class MinDistanceLoss(nn.Module):
         super(MinDistanceLoss, self).__init__()
 
     def forward(
-        self, predictions: torch.Tensor, labels: torch.Tensor, lengths: torch.Tensor
+        self,
+        predictions: torch.Tensor,
+        labels: torch.Tensor,
+        lengths: torch.Tensor,
+        device,
     ):
         """Computes the minimum distance to organ loss.
 
@@ -16,9 +20,12 @@ class MinDistanceLoss(nn.Module):
             predictions: Tensor with shape [batch_size, 3]
             labels: Tensor with shape [batch_size, num_keywords, 3]
             lengths: Tensor with shape [batch_size]
+            devce: torch.device
         """
         mask = (
-            torch.arange(torch.max(lengths)).expand(len(lengths), torch.max(lengths))
+            torch.arange(torch.max(lengths))
+            .expand(len(lengths), torch.max(lengths))
+            .to(device)
             < lengths.unsqueeze(1)
         ).float()
         mask[torch.where(mask == 0)] = 1e15

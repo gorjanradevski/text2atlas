@@ -15,10 +15,19 @@ class VoxelMappingDataset:
     # }
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         self.json_data = json.load(open(json_path))
-        self.sentences = [element["text"] for element in self.json_data]
-        self.mappings = [element["centers"] for element in self.json_data]
-        self.keywords = [set(element["keywords"]) for element in self.json_data]
-        self.bounding_boxes = [element["bboxes"] for element in self.json_data]
+        self.sentences, self.mappings, self.keywords, self.bounding_boxes = (
+            [],
+            [],
+            [],
+            [],
+        )
+        for element in self.json_data:
+            if len(element["text"]) > 200:
+                continue
+            self.sentences.append(element["text"])
+            self.mappings.append(element["centers"])
+            self.keywords.append(element["keywords"])
+            self.bounding_boxes.append(element["bboxes"])
         self.tokenizer = self.tokenizer = BertTokenizer.from_pretrained(
             bert_tokenizer_path_or_name
         )
