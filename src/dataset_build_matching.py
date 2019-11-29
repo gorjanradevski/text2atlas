@@ -12,7 +12,7 @@ def parse_args():
         "--dataset-path",
         "-d",
         type=str,
-        default=os.path.join(dataset_dir, "dataset.json"),
+        default=os.path.join(dataset_dir, "dataset_2.json"),
         help="specify folder to save dataset in",
     )
     parser.add_argument(
@@ -33,7 +33,7 @@ def parse_args():
         "--filt-no-title",
         "--fnt",
         type=bool,
-        default=False,
+        default=True,
         help="whether to filter out samples with no title, by default False"
     )
     parser.add_argument(
@@ -47,7 +47,7 @@ def parse_args():
         "--filt-no-abstract",
         "--fna",
         type=bool,
-        default=False,
+        default=True,
         help="whether to filter out samples with no abstract, by default False"
     )
 
@@ -65,7 +65,7 @@ def main():
     aggregate_jsons(root_path=root_path, path_out=path_out)
 
     data = load_json(path_out)
-
+    print(len(data))
     if filt_nnat:
         data = [item for item in data if is_natural(item["figure"])]
     if filt_no_title:
@@ -74,12 +74,12 @@ def main():
         data = [item for item in data if item["keywords"]]
     if filt_no_abstract:
         data = [item for item in data if item["abstract"]]
-
+    print(len(data))
     for item in data:
         item["pdf"] = os.path.join('data', '/'.join(item["pdf"].split('/')[5:]))
         item["figure"] = os.path.join('data', '/'.join(item["figure"].split('/')[5:]))
+        item["abstract"] = item["abstract"]
         item["caption"] = process_caption(item["caption"])
-
     store_json(data, path_out)
 
 
