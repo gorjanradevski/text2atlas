@@ -13,18 +13,20 @@ class VoxelMappingDataset:
     # "location_map": List[[float, float, float], [float, float, float],...],
     # "bounding_box": List[[float, float], [float, float], [float, float]]
     # }
-    def __init__(self, json_path: str):
+    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         self.json_data = json.load(open(json_path))
         self.sentences = [element["sentence"] for element in self.json_data]
         self.mappings = [element["location_map"] for element in self.json_data]
         self.keywords = [set(element["keywords"]) for element in self.json_data]
         self.bounding_boxes = [element["bounding_box"] for element in self.json_data]
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.tokenizer = self.tokenizer = BertTokenizer.from_pretrained(
+            bert_tokenizer_path_or_name
+        )
 
 
 class VoxelMappingTrainDataset(VoxelMappingDataset, Dataset):
-    def __init__(self, json_path: str):
-        super().__init__(json_path)
+    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+        super().__init__(json_path, bert_tokenizer_path_or_name)
 
     def __len__(self):
         return len(self.sentences)
@@ -48,8 +50,8 @@ class VoxelMappingTrainDataset(VoxelMappingDataset, Dataset):
 
 
 class VoxelMappingTestDataset(VoxelMappingDataset, Dataset):
-    def __init__(self, json_path: str):
-        super().__init__(json_path)
+    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+        super().__init__(json_path, bert_tokenizer_path_or_name)
 
     def __len__(self):
         return len(self.sentences)
@@ -66,8 +68,8 @@ class VoxelMappingTestDataset(VoxelMappingDataset, Dataset):
 
 
 class VoxelMappingTestMaskedDataset(VoxelMappingDataset, Dataset):
-    def __init__(self, json_path: str):
-        super().__init__(json_path)
+    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+        super().__init__(json_path, bert_tokenizer_path_or_name)
 
     def __len__(self):
         return len(self.sentences)

@@ -20,6 +20,7 @@ def pretrain(
     val_json_path: str,
     epochs: int,
     batch_size: int,
+    bert_path_or_name: str,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -28,9 +29,9 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelMappingTrainDataset(train_json_path)
-    val_dataset = VoxelMappingTestDataset(val_json_path)
-    val_masked_dataset = VoxelMappingTestMaskedDataset(val_json_path)
+    train_dataset = VoxelMappingTrainDataset(train_json_path, bert_path_or_name)
+    val_dataset = VoxelMappingTestDataset(val_json_path, bert_path_or_name)
+    val_masked_dataset = VoxelMappingTestMaskedDataset(val_json_path, bert_path_or_name)
 
     train_loader = DataLoader(
         train_dataset,
@@ -48,7 +49,9 @@ def pretrain(
         num_workers=4,
         collate_fn=collate_pad_batch,
     )
-    model = nn.DataParallel(MappingsProducer(joint_space, finetune=False)).to(device)
+    model = nn.DataParallel(
+        MappingsProducer(bert_path_or_name, joint_space, finetune=False)
+    ).to(device)
     criterion = MinDistanceLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -110,6 +113,7 @@ def main():
         args.val_json_path,
         args.epochs,
         args.batch_size,
+        args.bert_path_or_name,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -165,6 +169,12 @@ def parse_args():
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
+    )
+    parser.add_argument(
+        "--bert_path_or_name",
+        type=str,
+        default="bert-base-uncased",
+        help="The name or path to a pretrained bert model.",
     )
 
     return parser.parse_args()

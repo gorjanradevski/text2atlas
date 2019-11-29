@@ -5,9 +5,11 @@ import torch.nn.functional as F
 
 
 class MappingsProducer(nn.Module):
-    def __init__(self, joint_space, finetune: bool = False):
+    def __init__(
+        self, bert_path_or_name: str, joint_space: int, finetune: bool = False
+    ):
         super(MappingsProducer, self).__init__()
-        self.bert = BertModel.from_pretrained("models/biobert_v1.1_pubmed")
+        self.bert = BertModel.from_pretrained(bert_path_or_name)
         self.bert.eval()
         self.projector = Projector(768, joint_space)
         self.finetune = finetune

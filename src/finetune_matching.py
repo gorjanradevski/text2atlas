@@ -17,6 +17,7 @@ def finetune(
     train_size: int,
     epochs: int,
     batch_size: int,
+    bert_path_or_name: str,
     checkpoint_path: str,
     save_model_path: str,
     learning_rate: float,
@@ -29,7 +30,7 @@ def finetune(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = JsonDataset(json_path, images_dir_path)
+    dataset = JsonDataset(json_path, images_dir_path, bert_path_or_name)
     print(f"The training size is {train_size}")
     print(f"The validation size is {len(dataset) - train_size}")
     train_dataset = Subset(dataset, list(range(train_size)))
@@ -45,9 +46,9 @@ def finetune(
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
     )
-    model = nn.DataParallel(ImageTextMatchingModel(joint_space, finetune=True)).to(
-        device
-    )
+    model = nn.DataParallel(
+        ImageTextMatchingModel(bert_path_or_name, joint_space, finetune=True)
+    ).to(device)
     # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     criterion = TripletLoss(margin, batch_hard)
@@ -132,6 +133,7 @@ def main():
         args.train_size,
         args.epochs,
         args.batch_size,
+        args.bert_path_or_name,
         args.checkpoint_path,
         args.save_model_path,
         args.learning_rate,
@@ -215,6 +217,12 @@ def parse_args():
         type=int,
         default=4,
         help="For how many steps to accumulate gradients.",
+    )
+    parser.add_argument(
+        "--bert_path_or_name",
+        type=str,
+        default="bert-base-uncased",
+        help="The name or path to a pretrained bert model.",
     )
 
     return parser.parse_args()

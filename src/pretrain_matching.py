@@ -17,6 +17,7 @@ def pretrain(
     train_size: int,
     epochs: int,
     batch_size: int,
+    bert_path_or_name: str,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -27,7 +28,7 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = JsonDataset(json_path, images_dir_path)
+    dataset = JsonDataset(json_path, images_dir_path, bert_path_or_name)
     print(f"The training size is {train_size}")
     print(f"The validation size is {len(dataset) - train_size}")
     train_dataset = Subset(dataset, list(range(train_size)))
@@ -43,9 +44,9 @@ def pretrain(
     val_loader = DataLoader(
         val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
     )
-    model = nn.DataParallel(ImageTextMatchingModel(joint_space, finetune=False)).to(
-        device
-    )
+    model = nn.DataParallel(
+        ImageTextMatchingModel(bert_path_or_name, joint_space, finetune=False)
+    ).to(device)
     criterion = TripletLoss(margin, batch_hard)
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -121,6 +122,7 @@ def main():
         args.train_size,
         args.epochs,
         args.batch_size,
+        args.bert_path_or_name,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -190,6 +192,12 @@ def parse_args():
     )
     parser.add_argument(
         "--batch_hard", action="store_true", help="Whether to train on hard negatives."
+    )
+    parser.add_argument(
+        "--bert_path_or_name",
+        type=str,
+        default="bert-base-uncased",
+        help="The name or path to a pretrained bert model.",
     )
 
     return parser.parse_args()
