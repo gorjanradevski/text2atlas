@@ -7,23 +7,22 @@ from tqdm import tqdm
 from copy import deepcopy
 
 from voxel_mapping.datasets import (
-    VoxelMappingTrainDataset,
-    VoxelMappingTestDataset,
-    VoxelMappingTestMaskedDataset,
-    collate_pad_batch,
+    VoxelSentenceMappingTrainDataset,
+    VoxelSentenceMappingTestDataset,
+    VoxelSentenceMappingTestMaskedDataset,
+    collate_pad_sentence_batch,
 )
-from voxel_mapping.models import MappingsProducer
+from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
 from voxel_mapping.evaluator import bbox_inside
 
 
-def finetune(
+def pretrain(
     train_json_path: str,
     val_json_path: str,
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
-    checkpoint_path: str,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -32,31 +31,34 @@ def finetune(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelMappingTrainDataset(train_json_path, bert_path_or_name)
-    val_dataset = VoxelMappingTestDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelMappingTestMaskedDataset(val_json_path, bert_path_or_name)
+    train_dataset = VoxelSentenceMappingTrainDataset(train_json_path, bert_path_or_name)
+    val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
+    val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
+        val_json_path, bert_path_or_name
+    )
 
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
         num_workers=4,
-        collate_fn=collate_pad_batch,
+        collate_fn=collate_pad_sentence_batch,
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=4,
+        collate_fn=collate_pad_sentence_batch,
     )
     val_masked_loader = DataLoader(
         val_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_batch,
+        collate_fn=collate_pad_sentence_batch,
     )
     model = nn.DataParallel(
-        MappingsProducer(bert_path_or_name, joint_space, finetune=True)
+        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
     ).to(device)
-    # Load model
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     criterion = MinDistanceLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -140,8 +142,8 @@ def finetune(
                     f"Found new best with avg accuracy {best_avg_accuracy} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                print("======================")
                 torch.save(model.state_dict(), save_model_path)
+                print("======================")
             else:
                 print(f"Avg accuracy on epoch {epoch+1} is: {cur_avg_accuracy}")
 
@@ -150,13 +152,12 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    finetune(
+    pretrain(
         args.train_json_path,
         args.val_json_path,
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
-        args.checkpoint_path,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -170,7 +171,9 @@ def parse_args():
     Returns:
         Arguments
     """
-    parser = argparse.ArgumentParser(description="Trains an image-text matching model.")
+    parser = argparse.ArgumentParser(
+        description="Trains a sentence voxel mapping model."
+    )
     parser.add_argument(
         "--train_json_path",
         type=str,
@@ -186,20 +189,17 @@ def parse_args():
     parser.add_argument(
         "--save_model_path",
         type=str,
-        default="models/finetuned.pt",
+        default="models/sentence_pretrained.pt",
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--epochs",
-        type=int,
-        default=5,
-        help="The number of epochs to train the model excluding the vgg.",
+        "--epochs", type=int, default=5, help="The number of epochs to train the model."
     )
     parser.add_argument(
         "--batch_size", type=int, default=64, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=0.00002, help="The learning rate."
+        "--learning_rate", type=float, default=0.0002, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
@@ -218,12 +218,6 @@ def parse_args():
         type=str,
         default="bert-base-uncased",
         help="The name or path to a pretrained bert model.",
-    )
-    parser.add_argument(
-        "--checkpoint_path",
-        type=str,
-        default="pretrained.pt",
-        help="Path to a pretrained checkpoint.",
     )
 
     return parser.parse_args()

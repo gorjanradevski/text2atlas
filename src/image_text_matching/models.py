@@ -4,8 +4,6 @@ from torch.nn import functional as F
 from torchvision.models import resnet152
 from transformers import BertModel
 
-from typing import Tuple
-
 
 class L2Normalize(nn.Module):
     def __init__(self):
@@ -66,19 +64,6 @@ class Projector(nn.Module):
         projected_embeddings = self.fc2(self.bn(F.relu(self.fc1(embeddings))))
 
         return self.l2_normalize(projected_embeddings)
-
-
-class ImageEmbeddingTextEmbeddingMatchingModel(nn.Module):
-    def __init__(self, image_space: int, sentence_space: int, joint_space: int):
-        super(ImageEmbeddingTextEmbeddingMatchingModel, self).__init__()
-        self.image_projector = Projector(image_space, joint_space)
-        self.sentence_projector = Projector(sentence_space, joint_space)
-
-    def forward(
-        self, images: torch.Tensor, sentences: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-
-        return (self.image_projector(images), self.sentence_projector(sentences))
 
 
 class ImageTextMatchingModel(nn.Module):

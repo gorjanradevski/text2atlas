@@ -13,6 +13,9 @@ transformers = "^2.1"
 tqdm = "^4.39"
 Pillow = "^6.2"
 scikit-learn = "^0.21.3"
+matplotlib = "=3.0.2"
+ndjson = "^0.2.0"
+natsort = "^6.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allows-prereleases = true}
