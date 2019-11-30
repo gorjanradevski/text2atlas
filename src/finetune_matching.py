@@ -151,18 +151,17 @@ def parse_args():
     Returns:
         Arguments
     """
-    parser = argparse.ArgumentParser(description="Finetunes an image-text matching model.")
+    parser = argparse.ArgumentParser(
+        description="Finetunes an image-text matching model."
+    )
     parser.add_argument(
         "--json_path",
         type=str,
         default="data/dataset.json",
-        help="Path where all images are.",
+        help="Path to the image-caption pairs dataset.",
     )
     parser.add_argument(
-        "--images_dir_path",
-        type=str,
-        default=".",
-        help="Path to the file where the image to caption mappings are.",
+        "--images_dir_path", type=str, default=".", help="Path to the images directory."
     )
     parser.add_argument(
         "--train_size",

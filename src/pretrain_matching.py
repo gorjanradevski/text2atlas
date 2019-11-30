@@ -143,13 +143,13 @@ def parse_args():
         "--json_path",
         type=str,
         default="data/dataset.json",
-        help="Path where all images are.",
+        help="Path to the json file that contains image-text pairs.",
     )
     parser.add_argument(
         "--images_dir_path",
         type=str,
         default=".",
-        help="Path to the file where the image to caption mappings are.",
+        help="Path to the directory with images.",
     )
     parser.add_argument(
         "--train_size",

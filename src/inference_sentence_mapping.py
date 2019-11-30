@@ -15,7 +15,7 @@ from voxel_mapping.evaluator import bbox_inside
 
 
 def inference(
-    val_json_path: str,
+    test_json_path: str,
     batch_size: int,
     bert_path_or_name: str,
     checkpoint_path: str,
@@ -23,22 +23,23 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
-        val_json_path, bert_path_or_name
+    test_dataset = VoxelSentenceMappingTestDataset(test_json_path, bert_path_or_name)
+    test_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
+        test_json_path, bert_path_or_name
     )
-    val_loader = DataLoader(
-        val_dataset,
+    test_loader = DataLoader(
+        test_dataset,
         batch_size=batch_size,
         num_workers=4,
         collate_fn=collate_pad_sentence_batch,
     )
-    val_masked_loader = DataLoader(
-        val_masked_dataset,
+    test_masked_loader = DataLoader(
+        test_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
         collate_fn=collate_pad_sentence_batch,
     )
+    # Create model
     model = nn.DataParallel(
         SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=True)
     ).to(device)
@@ -50,7 +51,7 @@ def inference(
         # Restart counters
         total = 0
         correct = 0
-        for sentences, _, _, bounding_boxes in tqdm(val_loader):
+        for sentences, _, _, bounding_boxes in tqdm(test_loader):
             sentences = sentences.to(device)
             output_mappings = model(sentences).cpu().numpy()
             # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
@@ -67,7 +68,7 @@ def inference(
         # Restart counters
         total = 0
         correct = 0
-        for sentences, _, _, bounding_boxes in tqdm(val_masked_loader):
+        for sentences, _, _, bounding_boxes in tqdm(test_masked_loader):
             sentences = sentences.to(device)
             output_mappings = model(sentences).cpu().numpy()
             # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
@@ -88,7 +89,7 @@ def main():
     # imported as a module.
     args = parse_args()
     inference(
-        args.val_json_path,
+        args.test_json_path,
         args.batch_size,
         args.bert_path_or_name,
         args.checkpoint_path,
@@ -103,7 +104,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Performs mapping inference.")
     parser.add_argument(
-        "--val_json_path",
+        "--test_json_path",
         type=str,
         default="data/val_dataset.json",
         help="Path to the validation set",
