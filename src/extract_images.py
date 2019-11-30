@@ -11,7 +11,7 @@ if __name__ == "__main__":
         [os.path.join(pdf_data_dir, dirname) for dirname in os.listdir(pdf_data_dir)]
     )
 
-    for dirname in dirnames[-18:-14]:
+    for dirname in dirnames[-22:-18]:
         pdf_files = get_doc_filenames(dirname, extension=".pdf")
         for pdf_path in pdf_files:
             filename = os.path.splitext(os.path.basename(pdf_path))[0]
