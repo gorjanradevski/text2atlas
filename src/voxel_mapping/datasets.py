@@ -137,18 +137,15 @@ class VoxelImageMappingDataset:
         self.organs = [element["organ"] for element in self.json_data]
         self.organ_per_image = [element["organ"] for element in self.json_data]
         # TODO: Currently taking max, use threshold
+        # TODO: There can be more mappings thats why we have [[]]
         self.mappings = [
-            # TODO: There can be more mappings thats why we have [[]]
-            [self.organ2center[organ]
+            [self.organ2center[organ]]
             for organ in [self.ind2organ[str(index)] for index in self.organs]
         ]
         self.bounding_boxes = [
             self.organ2bbox[organ]
             for organ in [self.ind2organ[str(index)] for index in self.organs]
         ]
-        print(self.mappings[0])
-        print("--------------")
-        print(self.bounding_boxes[0])
         self.all_transforms = transforms.Compose(
             [
                 transforms.ToTensor(),
