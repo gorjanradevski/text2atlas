@@ -11,7 +11,7 @@ from PIL import Image
 class VoxelSentenceMappingDataset:
     # Assumes that the dataset is: {
     # "sentence": str,
-    # "keywords": set,
+    # "keywords": List[str, str, ...],
     # "location_map": List[[float, float, float], [float, float, float],...],
     # "bounding_box": List[[float, float], [float, float], [float, float]]
     # }
@@ -100,7 +100,7 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
         return (tokenized_sentence, mapping, num_organs, bounding_box)
 
 
-def collate_pad_batch(
+def collate_pad_sentence_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 ):
     sentences, mappings, num_organs, bounding_boxes = zip(*batch)
@@ -167,3 +167,15 @@ class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
         image_all_transformed = self.all_transforms(image_test_transformed)
 
         return image_all_transformed
+
+
+def collate_pad_image_batch(
+    batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
+):
+    images, mappings, num_organs, bounding_boxes = zip(*batch)
+    images = torch.stack(images, 0)
+    padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
+    num_organs = torch.tensor([*num_organs])
+
+    # IDK why num_organs and bounding_boxes is a Tuple
+    return images, padded_mappings, num_organs, bounding_boxes

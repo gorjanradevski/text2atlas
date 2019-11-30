@@ -8,7 +8,7 @@ from copy import deepcopy
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestDataset,
     VoxelSentenceMappingTestMaskedDataset,
-    collate_pad_batch,
+    collate_pad_sentence_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.evaluator import bbox_inside
@@ -28,13 +28,16 @@ def inference(
         val_json_path, bert_path_or_name
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=batch_size, num_workers=4, collate_fn=collate_pad_batch
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=4,
+        collate_fn=collate_pad_sentence_batch,
     )
     val_masked_loader = DataLoader(
         val_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_batch,
+        collate_fn=collate_pad_sentence_batch,
     )
     model = nn.DataParallel(
         SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=True)
