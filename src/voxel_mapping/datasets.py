@@ -115,6 +115,7 @@ def collate_pad_sentence_batch(
 class VoxelImageMappingDataset:
     # Assumes that the dataset is: {
     # "image_path": str,
+    # "keywords": List[str, str, ...],
     # "centers": List[[float, float, float], [float, float, float],...],
     # "bboxes": List[[float, float], [float, float], [float, float]]
     # }
@@ -148,7 +149,11 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
         image_train_transformed = self.train_transforms(image)
         image_all_transformed = self.all_transforms(image_train_transformed)
 
-        return image_all_transformed
+        mapping = torch.tensor(self.mappings[idx])
+        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        num_organs = len(mapping)
+
+        return (image_all_transformed, mapping, num_organs, bounding_box)
 
 
 class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
@@ -166,7 +171,11 @@ class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
         image_test_transformed = self.test_transforms(image)
         image_all_transformed = self.all_transforms(image_test_transformed)
 
-        return image_all_transformed
+        mapping = torch.tensor(self.mappings[idx])
+        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        num_organs = len(mapping)
+
+        return (image_all_transformed, mapping, num_organs, bounding_box)
 
 
 def collate_pad_image_batch(
