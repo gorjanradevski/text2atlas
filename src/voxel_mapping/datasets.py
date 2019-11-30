@@ -4,9 +4,11 @@ import json
 import torch
 from typing import Tuple
 import random
+from torchvision import transforms
+from PIL import Image
 
 
-class VoxelMappingDataset:
+class VoxelSentenceMappingDataset:
     # Assumes that the dataset is: {
     # "sentence": str,
     # "keywords": set,
@@ -33,7 +35,7 @@ class VoxelMappingDataset:
         )
 
 
-class VoxelMappingTrainDataset(VoxelMappingDataset, Dataset):
+class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         super().__init__(json_path, bert_tokenizer_path_or_name)
 
@@ -58,7 +60,7 @@ class VoxelMappingTrainDataset(VoxelMappingDataset, Dataset):
         return (tokenized_sentence, mapping, num_organs, bounding_box)
 
 
-class VoxelMappingTestDataset(VoxelMappingDataset, Dataset):
+class VoxelSentenceMappingTestDataset(VoxelSentenceMappingDataset, Dataset):
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         super().__init__(json_path, bert_tokenizer_path_or_name)
 
@@ -76,7 +78,7 @@ class VoxelMappingTestDataset(VoxelMappingDataset, Dataset):
         return (tokenized_sentence, mapping, num_organs, bounding_box)
 
 
-class VoxelMappingTestMaskedDataset(VoxelMappingDataset, Dataset):
+class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset):
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         super().__init__(json_path, bert_tokenizer_path_or_name)
 
@@ -108,3 +110,60 @@ def collate_pad_batch(
 
     # IDK why num_organs and bounding_boxes is a Tuple
     return padded_sentences, padded_mappings, num_organs, bounding_boxes
+
+
+class VoxelImageMappingDataset:
+    # Assumes that the dataset is: {
+    # "image_path": str,
+    # "centers": List[[float, float, float], [float, float, float],...],
+    # "bboxes": List[[float, float], [float, float], [float, float]]
+    # }
+    def __init__(self, json_path: str):
+        self.json_data = json.load(open(json_path))
+        self.image_paths = [element["image_path"] for element in self.json_data]
+        self.mappings = [element["centers"] for element in self.json_data]
+        self.bounding_boxes = [element["bboxes"] for element in self.json_data]
+        self.all_transforms = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
+            ]
+        )
+
+
+class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
+    def __init__(self, json_path: str):
+        super().__init__(json_path)
+        self.train_transforms = transforms.Compose(
+            [transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip()]
+        )
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx: int):
+        image = Image.open(self.image_paths[idx])
+        image_train_transformed = self.train_transforms(image)
+        image_all_transformed = self.all_transforms(image_train_transformed)
+
+        return image_all_transformed
+
+
+class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
+    def __init__(self, json_path: str):
+        super().__init__(json_path)
+        self.test_transforms = transforms.Compose(
+            [transforms.Resize(256), transforms.CenterCrop(224)]
+        )
+
+    def __len__(self):
+        return len(self.image_paths)
+
+    def __getitem__(self, idx: int):
+        image = Image.open(self.image_paths[idx])
+        image_test_transformed = self.test_transforms(image)
+        image_all_transformed = self.all_transforms(image_test_transformed)
+
+        return image_all_transformed

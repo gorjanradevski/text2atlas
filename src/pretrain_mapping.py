@@ -9,12 +9,12 @@ from copy import deepcopy
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
 
 from voxel_mapping.datasets import (
-    VoxelMappingTrainDataset,
-    VoxelMappingTestDataset,
-    VoxelMappingTestMaskedDataset,
+    VoxelSentenceMappingTrainDataset,
+    VoxelSentenceMappingTestDataset,
+    VoxelSentenceMappingTestMaskedDataset,
     collate_pad_batch,
 )
-from voxel_mapping.models import MappingsProducer
+from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
 from voxel_mapping.evaluator import bbox_inside
 
@@ -33,9 +33,11 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelMappingTrainDataset(train_json_path, bert_path_or_name)
-    val_dataset = VoxelMappingTestDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelMappingTestMaskedDataset(val_json_path, bert_path_or_name)
+    train_dataset = VoxelSentenceMappingTrainDataset(train_json_path, bert_path_or_name)
+    val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
+    val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
+        val_json_path, bert_path_or_name
+    )
 
     train_loader = DataLoader(
         train_dataset,
@@ -54,7 +56,7 @@ def pretrain(
         collate_fn=collate_pad_batch,
     )
     model = nn.DataParallel(
-        MappingsProducer(bert_path_or_name, joint_space, finetune=False)
+        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
     ).to(device)
     criterion = MinDistanceLoss()
     # noinspection PyUnresolvedReferences
@@ -110,7 +112,7 @@ def pretrain(
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
-            print(f"The accuracy on the non maksed validation set is {correct/total}")
+            print(f"The accuracy on the non masked validation set is {correct/total}")
             cur_avg_accuracy += correct / total
             # Restart counters
             total = 0
@@ -128,7 +130,7 @@ def pretrain(
                     total += 1
                     correct += bbox_inside(output_mapping, bounding_box.numpy())
 
-            print(f"The accuracy on the maksed validation set is {correct/total}")
+            print(f"The accuracy on the masked validation set is {correct/total}")
             cur_avg_accuracy += correct / total
             cur_avg_accuracy /= 2
 
@@ -168,7 +170,7 @@ def parse_args():
     Returns:
         Arguments
     """
-    parser = argparse.ArgumentParser(description="Trains an image-text matching model.")
+    parser = argparse.ArgumentParser(description="Trains a voxel mapping model.")
     parser.add_argument(
         "--train_json_path",
         type=str,
@@ -188,10 +190,7 @@ def parse_args():
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--epochs",
-        type=int,
-        default=5,
-        help="The number of epochs to train the model excluding the vgg.",
+        "--epochs", type=int, default=5, help="The number of epochs to train the model."
     )
     parser.add_argument(
         "--batch_size", type=int, default=64, help="The size of the batch."
