@@ -176,7 +176,7 @@ def remove_citations(text: str) -> str:
     return text
 
 
-def replace_numbers_with_token(text: str, token: str = " number ") -> str:
+def replace_numbers_with_token(text: str, token: str = " <num> ") -> str:
     text = re.sub(NUMBER_PATTERN, token, text)
     return text
 
