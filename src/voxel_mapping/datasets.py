@@ -142,8 +142,9 @@ class VoxelImageMappingDataset:
             [self.organ2center[organ]]
             for organ in [self.ind2organ[str(index)] for index in self.organs]
         ]
+        # TODO: There can be more mappings thats why we have [[]]
         self.bounding_boxes = [
-            self.organ2bbox[organ]
+            [self.organ2bbox[organ]]
             for organ in [self.ind2organ[str(index)] for index in self.organs]
         ]
         self.all_transforms = transforms.Compose(
