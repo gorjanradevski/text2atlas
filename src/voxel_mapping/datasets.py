@@ -6,8 +6,7 @@ from typing import Tuple
 import random
 from torchvision import transforms
 from PIL import Image
-import numpy as np
-import os
+import re
 
 
 class VoxelSentenceMappingDataset:
@@ -49,7 +48,7 @@ class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask and mask[word] == 1 else word
-                for word in self.sentences[idx].split()
+                for word in re.findall(r"[\w']+|[.,!?;]", self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(
@@ -90,7 +89,10 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
     def __getitem__(self, idx: int):
         mask = {word for word in self.keywords[idx]}
         masked_sentence = " ".join(
-            ["[MASK]" if word in mask else word for word in self.sentences[idx].split()]
+            [
+                "[MASK]" if word in mask else word
+                for word in re.findall(r"[\w']+|[.,!?;]", self.sentences[idx])
+            ]
         )
         tokenized_sentence = torch.tensor(
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)
