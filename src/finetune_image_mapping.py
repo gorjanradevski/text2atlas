@@ -16,7 +16,7 @@ from voxel_mapping.losses import MinDistanceLoss
 from voxel_mapping.evaluator import bbox_inside
 
 
-def pretrain(
+def finetune(
     train_json_path: str,
     val_json_path: str,
     ind2organ_path: str,
@@ -126,7 +126,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    pretrain(
+    finetune(
         args.train_json_path,
         args.val_json_path,
         args.ind2organ_path,
