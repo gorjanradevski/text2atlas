@@ -23,6 +23,7 @@ def finetune(
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
+    mask_probability: float,
     checkpoint_path: str,
     save_model_path: str,
     learning_rate: float,
@@ -32,7 +33,9 @@ def finetune(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelSentenceMappingTrainDataset(train_json_path, bert_path_or_name)
+    train_dataset = VoxelSentenceMappingTrainDataset(
+        train_json_path, bert_path_or_name, mask_probability
+    )
     val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
     val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
         val_json_path, bert_path_or_name
@@ -161,6 +164,7 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
+        args.mask_probability,
         args.checkpoint_path,
         args.save_model_path,
         args.learning_rate,
@@ -228,6 +232,9 @@ def parse_args():
         type=str,
         default="pretrained.pt",
         help="Path to a pretrained checkpoint.",
+    )
+    parser.add_argument(
+        "--mask_probability", type=float, default=0.5, help="The mask probability."
     )
 
     return parser.parse_args()

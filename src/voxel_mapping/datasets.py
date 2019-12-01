@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import json
 import torch
 from typing import Tuple
-import random
+import numpy as np
 from torchvision import transforms
 from PIL import Image
 import re
@@ -37,14 +37,22 @@ class VoxelSentenceMappingDataset:
 
 
 class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
-    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+    def __init__(
+        self, json_path: str, bert_tokenizer_path_or_name: str, mask_probability: float
+    ):
         super().__init__(json_path, bert_tokenizer_path_or_name)
+        self.mask_probability = mask_probability
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        mask = {word: random.choice([0, 1]) for word in self.keywords[idx]}
+        mask = {
+            word: np.random.choice(
+                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
+            )
+            for word in self.keywords[idx]
+        }
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask and mask[word] == 1 else word
