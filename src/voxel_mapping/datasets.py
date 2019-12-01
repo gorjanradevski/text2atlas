@@ -99,7 +99,7 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask else word
-                for word in re.findall(r"[\w']+|[.,!?;]", self.sentences[idx])
+                for word in re.findall(r"[\w']+|[.,!?;()\[\]{}]", self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(
