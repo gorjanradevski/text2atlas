@@ -71,9 +71,14 @@ def is_natural(image_path: str, entropy_threshold: float = 3.0026) -> bool:
     return histogram_entropy > entropy_threshold
 
 
+def is_normal_dimensions(image_path: str, min_ratio: int = 3) -> bool:
+    image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+    return min(image.shape) * min_ratio > max(image.shape)
+
+
 if __name__ == "__main__":
     natural_images_dir = None
-    figure_dir = None
+    figures_dir = None
     print(
         "Optimal threshold: {}".format(
             calculate_entropy_threshold(natural_images_dir, figures_dir)

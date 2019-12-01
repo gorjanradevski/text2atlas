@@ -217,15 +217,15 @@ def get_pages(pdf_doc, images_folder="/tmp"):
     return with_pdf(pdf_doc, _parse_pages, *tuple([images_folder]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     from utils.loadsave import save_text_file
 
-    pdf_path = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3.pdf'
-    dump_folder = '/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3_img'
+    pdf_path = "/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3.pdf"
+    dump_folder = (
+        "/users/visics/dgrujici/PycharmProjects/macchina/notebooks/sample3_img"
+    )
     if not os.path.exists(dump_folder):
         os.makedirs(dump_folder)
     text = get_pages(pdf_path, images_folder=dump_folder)
-    save_text_file('\n\n'.join(text), path=os.path.join(dump_folder, 'text.txt'))
-
-
+    save_text_file("\n\n".join(text), path=os.path.join(dump_folder, "text.txt"))

@@ -11,10 +11,7 @@ from tqdm import tqdm
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pdf-dir",
-        "-pd",
-        type=str,
-        help="specify folder with pdf files",
+        "--pdf-dir", "-pd", type=str, help="specify folder with pdf files"
     )
 
     return parser.parse_args()
@@ -37,7 +34,5 @@ def main():
             store_json(tree, tree_path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
