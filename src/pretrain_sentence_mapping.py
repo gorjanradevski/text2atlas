@@ -23,6 +23,7 @@ def pretrain(
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
+    mask_probability: float,
     save_model_path: str,
     learning_rate: float,
     weight_decay: float,
@@ -31,7 +32,9 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelSentenceMappingTrainDataset(train_json_path, bert_path_or_name)
+    train_dataset = VoxelSentenceMappingTrainDataset(
+        train_json_path, bert_path_or_name, mask_probability
+    )
     val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
     val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
         val_json_path, bert_path_or_name
@@ -158,6 +161,7 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
+        args.mask_probability,
         args.save_model_path,
         args.learning_rate,
         args.weight_decay,
@@ -218,6 +222,9 @@ def parse_args():
         type=str,
         default="bert-base-uncased",
         help="The name or path to a pretrained bert model.",
+    )
+    parser.add_argument(
+        "--mask_probability", type=float, default=0.5, help="The mask probability."
     )
 
     return parser.parse_args()

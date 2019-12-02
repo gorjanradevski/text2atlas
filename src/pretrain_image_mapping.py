@@ -19,6 +19,9 @@ from voxel_mapping.evaluator import bbox_inside
 def pretrain(
     train_json_path: str,
     val_json_path: str,
+    ind2organ_path: str,
+    organ2center_path: str,
+    organ2bbox_path: str,
     epochs: int,
     batch_size: int,
     save_model_path: str,
@@ -29,8 +32,12 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelImageMappingTrainDataset(train_json_path)
-    val_dataset = VoxelImageMappingTestDataset(val_json_path)
+    train_dataset = VoxelImageMappingTrainDataset(
+        train_json_path, ind2organ_path, organ2center_path, organ2bbox_path
+    )
+    val_dataset = VoxelImageMappingTestDataset(
+        val_json_path, ind2organ_path, organ2center_path, organ2bbox_path
+    )
 
     train_loader = DataLoader(
         train_dataset,
@@ -120,6 +127,9 @@ def main():
     pretrain(
         args.train_json_path,
         args.val_json_path,
+        args.ind2organ_path,
+        args.organ2center_path,
+        args.organ2bbox_path,
         args.epochs,
         args.batch_size,
         args.save_model_path,
@@ -147,6 +157,24 @@ def parse_args():
         type=str,
         default="data/val_dataset.json",
         help="Path to the validation set",
+    )
+    parser.add_argument(
+        "--ind2organ_path",
+        type=str,
+        default="data/data_organs/ind2organ.json",
+        help="Path to the ind2organ json file.",
+    )
+    parser.add_argument(
+        "--organ2center_path",
+        type=str,
+        default="data/data_organs/organ2center.json",
+        help="Path to the organ2center json file.",
+    )
+    parser.add_argument(
+        "--organ2bbox_path",
+        type=str,
+        default="data/data_organs/organ2bbox.json",
+        help="Path to the organ2bbow json file.",
     )
     parser.add_argument(
         "--save_model_path",

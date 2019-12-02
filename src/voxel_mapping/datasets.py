@@ -3,9 +3,10 @@ from torch.utils.data import Dataset
 import json
 import torch
 from typing import Tuple
-import random
+import numpy as np
 from torchvision import transforms
 from PIL import Image
+import re
 
 
 class VoxelSentenceMappingDataset:
@@ -36,18 +37,26 @@ class VoxelSentenceMappingDataset:
 
 
 class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
-    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+    def __init__(
+        self, json_path: str, bert_tokenizer_path_or_name: str, mask_probability: float
+    ):
         super().__init__(json_path, bert_tokenizer_path_or_name)
+        self.mask_probability = mask_probability
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        mask = {word: random.choice([0, 1]) for word in self.keywords[idx]}
+        mask = {
+            word: np.random.choice(
+                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
+            )
+            for word in self.keywords[idx]
+        }
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask and mask[word] == 1 else word
-                for word in self.sentences[idx].split()
+                for word in re.findall(r"[\w']+|[.,!?;()\[\]{}]", self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(
@@ -88,7 +97,10 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
     def __getitem__(self, idx: int):
         mask = {word for word in self.keywords[idx]}
         masked_sentence = " ".join(
-            ["[MASK]" if word in mask else word for word in self.sentences[idx].split()]
+            [
+                "[MASK]" if word in mask else word
+                for word in re.findall(r"[\w']+|[.,!?;()\[\]{}]", self.sentences[idx])
+            ]
         )
         tokenized_sentence = torch.tensor(
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)
@@ -115,15 +127,37 @@ def collate_pad_sentence_batch(
 class VoxelImageMappingDataset:
     # Assumes that the dataset is: {
     # "image_path": str,
-    # "keywords": List[str, str, ...],
     # "centers": List[[float, float, float], [float, float, float],...],
     # "bboxes": List[[float, float], [float, float], [float, float]]
     # }
-    def __init__(self, json_path: str):
+    def __init__(
+        self,
+        json_path: str,
+        ind2organ_path: str,
+        organ2center_path: str,
+        organ2bbox_path: str,
+    ):
+        # Load json files
         self.json_data = json.load(open(json_path))
+        self.ind2organ = json.load(open(ind2organ_path))
+        self.organ2center = json.load(open(organ2center_path))
+        self.organ2bbox = json.load(open(organ2bbox_path))
+        # Obtain image_paths, mappings, bounding_boxes
         self.image_paths = [element["image_path"] for element in self.json_data]
-        self.mappings = [element["centers"] for element in self.json_data]
-        self.bounding_boxes = [element["bboxes"] for element in self.json_data]
+        self.organs = [element["organ"] for element in self.json_data]
+        self.organ_per_image = [element["organ"] for element in self.json_data]
+
+        self.mappings = []
+        self.bounding_boxes = []
+        for indexes in self.organs:
+            tmp_mappings = []
+            tmp_bbox = []
+            for index in indexes:
+                tmp_mappings.append(self.organ2center[self.ind2organ[str(index)]])
+                tmp_bbox.append(self.organ2bbox[self.ind2organ[str(index)]])
+            self.mappings.append(tmp_mappings)
+            self.bounding_boxes.append(tmp_bbox)
+
         self.all_transforms = transforms.Compose(
             [
                 transforms.ToTensor(),
@@ -135,8 +169,14 @@ class VoxelImageMappingDataset:
 
 
 class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
-    def __init__(self, json_path: str):
-        super().__init__(json_path)
+    def __init__(
+        self,
+        json_path: str,
+        ind2organ_path: str,
+        organ2center_path: str,
+        organ2bbox_path: str,
+    ):
+        super().__init__(json_path, ind2organ_path, organ2center_path, organ2bbox_path)
         self.train_transforms = transforms.Compose(
             [transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip()]
         )
@@ -145,7 +185,7 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx: int):
-        image = Image.open(self.image_paths[idx])
+        image = Image.open(self.image_paths[idx]).convert("RGB")
         image_train_transformed = self.train_transforms(image)
         image_all_transformed = self.all_transforms(image_train_transformed)
 
@@ -157,8 +197,14 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
 
 
 class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
-    def __init__(self, json_path: str):
-        super().__init__(json_path)
+    def __init__(
+        self,
+        json_path: str,
+        ind2organ_path: str,
+        organ2center_path: str,
+        organ2bbox_path: str,
+    ):
+        super().__init__(json_path, ind2organ_path, organ2center_path, organ2bbox_path)
         self.test_transforms = transforms.Compose(
             [transforms.Resize(256), transforms.CenterCrop(224)]
         )
@@ -167,7 +213,7 @@ class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
         return len(self.image_paths)
 
     def __getitem__(self, idx: int):
-        image = Image.open(self.image_paths[idx])
+        image = Image.open(self.image_paths[idx]).convert("RGB")
         image_test_transformed = self.test_transforms(image)
         image_all_transformed = self.all_transforms(image_test_transformed)
 
