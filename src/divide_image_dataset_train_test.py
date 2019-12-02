@@ -32,7 +32,7 @@ def create_train_test_datasets(
             center = organ2center[organ_name]
             bbox = organ2bbox[organ_name]
             train_dataset.append(
-                {"image_path": image_path, "center": [center], "bbox": [bbox]}
+                {"image_path": image_path, "centers": [center], "bboxes": [bbox]}
             )
         for image_name in test_names:
             image_path = os.path.join(os.path.join(directory, "frames"), image_name)
@@ -40,7 +40,7 @@ def create_train_test_datasets(
             center = organ2center[organ_name]
             bbox = organ2bbox[organ_name]
             test_dataset.append(
-                {"image_path": image_path, "center": [center], "bbox": [bbox]}
+                {"image_path": image_path, "centers": [center], "bboxes": [bbox]}
             )
     json.dump(
         train_dataset,

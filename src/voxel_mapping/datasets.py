@@ -7,6 +7,7 @@ import numpy as np
 from torchvision import transforms
 from PIL import Image
 import re
+import os
 
 
 class VoxelSentenceMappingDataset:
@@ -130,33 +131,19 @@ class VoxelImageMappingDataset:
     # "centers": List[[float, float, float], [float, float, float],...],
     # "bboxes": List[[float, float], [float, float], [float, float]]
     # }
-    def __init__(
-        self,
-        json_path: str,
-        ind2organ_path: str,
-        organ2center_path: str,
-        organ2bbox_path: str,
-    ):
+    def __init__(self, json_path: str, images_location: str):
         # Load json files
         self.json_data = json.load(open(json_path))
-        self.ind2organ = json.load(open(ind2organ_path))
-        self.organ2center = json.load(open(organ2center_path))
-        self.organ2bbox = json.load(open(organ2bbox_path))
         # Obtain image_paths, mappings, bounding_boxes
-        self.image_paths = [element["image_path"] for element in self.json_data]
-        self.organs = [element["organ"] for element in self.json_data]
-        self.organ_per_image = [element["organ"] for element in self.json_data]
-
+        self.image_paths = []
         self.mappings = []
         self.bounding_boxes = []
-        for indexes in self.organs:
-            tmp_mappings = []
-            tmp_bbox = []
-            for index in indexes:
-                tmp_mappings.append(self.organ2center[self.ind2organ[str(index)]])
-                tmp_bbox.append(self.organ2bbox[self.ind2organ[str(index)]])
-            self.mappings.append(tmp_mappings)
-            self.bounding_boxes.append(tmp_bbox)
+        for element in self.json_data:
+            self.image_paths.append(
+                os.path.join(images_location, element["image_path"])
+            )
+            self.mappings.append(element["centers"])
+            self.bounding_boxes.append(element["bboxes"])
 
         self.all_transforms = transforms.Compose(
             [
@@ -169,14 +156,8 @@ class VoxelImageMappingDataset:
 
 
 class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
-    def __init__(
-        self,
-        json_path: str,
-        ind2organ_path: str,
-        organ2center_path: str,
-        organ2bbox_path: str,
-    ):
-        super().__init__(json_path, ind2organ_path, organ2center_path, organ2bbox_path)
+    def __init__(self, json_path: str, images_location: str):
+        super().__init__(json_path, images_location)
         self.train_transforms = transforms.Compose(
             [transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip()]
         )
@@ -197,14 +178,8 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
 
 
 class VoxelImageMappingTestDataset(VoxelImageMappingDataset, Dataset):
-    def __init__(
-        self,
-        json_path: str,
-        ind2organ_path: str,
-        organ2center_path: str,
-        organ2bbox_path: str,
-    ):
-        super().__init__(json_path, ind2organ_path, organ2center_path, organ2bbox_path)
+    def __init__(self, json_path: str, images_location: str):
+        super().__init__(json_path, images_location)
         self.test_transforms = transforms.Compose(
             [transforms.Resize(256), transforms.CenterCrop(224)]
         )
