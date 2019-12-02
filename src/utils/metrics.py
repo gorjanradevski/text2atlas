@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from typing import List
+from typing import List, Union
 
 
 def bbox_volume(bbox: np.ndarray):
@@ -10,23 +10,6 @@ def bbox_volume(bbox: np.ndarray):
         :return: Volume of bounding box
         """
     return (bbox[:, 1] - bbox[:, 0]).prod()
-
-
-# def bbox_intersection_volume(bbox1: np.ndarray, bbox2: np.ndarray):
-#     """
-#         Return
-#         :param bbox1: first bounding box (3, 2)
-#         :param bbox2: second bounding box (3, 2)
-#         :return: Volume of intersection (0.0 if bounding boxes do not intersect)
-#         """
-#     intersection = np.concatenate(
-#         (
-#             np.concatenate((bbox1[:, 0][..., None], bbox2[:, 0][..., None]), axis=1).max(axis=1)[..., None],
-#             np.concatenate((bbox1[:, 1][..., None], bbox2[:, 1][..., None]), axis=1).min(axis=1)[..., None]
-#         ),
-#         axis=1
-#     )
-#     return max((float(bbox_volume(intersection))), 0.0)
 
 
 def bbox_intersection_volume(bboxes: List[np.ndarray]):
@@ -57,6 +40,15 @@ def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):
         np.concatenate((pred - bboxes[:, :, 0], bboxes[:, :, 1] - pred), axis=-1) >= 0
     ).all(axis=-1)
     return corrects.astype(float)
+
+
+def bbox_shrink(bboxes: Union[List[List], List[np.ndarray], np.ndarray], bbox_shrink: float = 0.0) -> np.ndarray:
+    bboxes = np.array(bboxes)
+    for bbox in bboxes:
+        dims = bbox[:, 1] - bbox[:, 0]
+        bbox[:, 0] += (bbox_shrink / 2) * dims
+        bbox[:, 1] -= (bbox_shrink / 2) * dims
+    return bboxes
 
 
 def bbox_distance(
