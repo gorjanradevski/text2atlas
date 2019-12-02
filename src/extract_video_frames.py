@@ -24,16 +24,16 @@ def extract_single_video_frames(
         raise ValueError("The path does not exists")
 
 
-def extract_frames_for_organ(videos_folder: str, every_n_frame: int = 15):
-    frames_dir = os.path.join(videos_folder, "frames")
+def extract_frames_for_organ(videos_directory: str, every_n_frame: int = 15):
+    frames_dir = os.path.join(videos_directory, "frames")
     if not os.path.exists(frames_dir):
         os.mkdir(frames_dir)
     else:
-        print(f"Frames directory exists for {videos_folder}! Skipping...")
+        print(f"Frames directory exists for {videos_directory}! Skipping...")
         return
-    for file in tqdm(os.listdir(videos_folder)):
+    for file in tqdm(os.listdir(videos_directory)):
         if file.endswith(".mp4"):
-            video_file_path = os.path.join(videos_folder, file)
+            video_file_path = os.path.join(videos_directory, file)
             extract_single_video_frames(video_file_path, frames_dir, every_n_frame)
 
 
