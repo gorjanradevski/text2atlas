@@ -11,19 +11,15 @@ from voxel_mapping.evaluator import bbox_inside
 
 
 def inference(
+    images_location: str,
     test_json_path: str,
-    ind2organ_path: str,
-    organ2center_path: str,
-    organ2bbox_path: str,
     batch_size: int,
     checkpoint_path: str,
     joint_space: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    test_dataset = VoxelImageMappingTestDataset(
-        test_json_path, ind2organ_path, organ2center_path, organ2bbox_path
-    )
+    test_dataset = VoxelImageMappingTestDataset(test_json_path, images_location)
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -61,10 +57,8 @@ def main():
     # imported as a module.
     args = parse_args()
     inference(
+        args.images_location,
         args.test_json_path,
-        args.ind2organ_path,
-        args.organ2center_path,
-        args.organ2bbox_path,
         args.batch_size,
         args.checkpoint_path,
         args.joint_space,
@@ -78,28 +72,16 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Trains an image voxel mapping model.")
     parser.add_argument(
+        "--images_location",
+        type=str,
+        default="data/videos",
+        help="Path where all images are.",
+    )
+    parser.add_argument(
         "--test_json_path",
         type=str,
         default="data/test_dataset.json",
         help="Path to the test set",
-    )
-    parser.add_argument(
-        "--ind2organ_path",
-        type=str,
-        default="data/data_organs/ind2organ.json",
-        help="Path to the ind2organ json file.",
-    )
-    parser.add_argument(
-        "--organ2center_path",
-        type=str,
-        default="data/data_organs/organ2center.json",
-        help="Path to the organ2center json file.",
-    )
-    parser.add_argument(
-        "--organ2bbox_path",
-        type=str,
-        default="data/data_organs/organ2bbox.json",
-        help="Path to the organ2bbow json file.",
     )
     parser.add_argument(
         "--checkpoint_path",

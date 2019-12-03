@@ -3,6 +3,7 @@ import math
 import os
 from tqdm import tqdm
 import argparse
+from natsort import natsorted
 
 
 def create_train_test_datasets(
@@ -22,7 +23,7 @@ def create_train_test_datasets(
             print(f"{dir_path} is not a directory")
             continue
         frames_dir_path = os.path.join(dir_path, "frames")
-        image_names = os.listdir(frames_dir_path)
+        image_names = natsorted(os.listdir(frames_dir_path))
         train_size = math.floor(len(image_names) * train_percentage)
         train_names = image_names[:train_size]
         test_names = image_names[train_size:]
