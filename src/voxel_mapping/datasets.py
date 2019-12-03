@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 from torchvision import transforms
 from PIL import Image
-import re
+import nltk
 import os
 
 
@@ -57,7 +57,7 @@ class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask and mask[word] == 1 else word
-                for word in re.findall(r"[\w']+|[.,!?;()\[\]{}]", self.sentences[idx])
+                for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(
@@ -100,7 +100,7 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask else word
-                for word in re.findall(r"[\w']+|[.,!?;()\[\]{}]", self.sentences[idx])
+                for word in nltk.word_tokenize((self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(

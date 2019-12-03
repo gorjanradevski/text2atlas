@@ -17,6 +17,7 @@ matplotlib = "=3.0.2"
 ndjson = "^0.2.0"
 natsort = "^6.2"
 opencv-python = "^4.1"
+nltk = "^3.4"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allows-prereleases = true}
