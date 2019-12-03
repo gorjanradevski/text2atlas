@@ -16,6 +16,9 @@ from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
 from voxel_mapping.evaluator import bbox_inside
 
+torch.multiprocessing.set_sharing_strategy("file_system")
+# https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
+
 
 def pretrain(
     train_json_path: str,
