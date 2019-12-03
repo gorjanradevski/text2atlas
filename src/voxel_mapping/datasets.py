@@ -100,7 +100,7 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
         masked_sentence = " ".join(
             [
                 "[MASK]" if word in mask else word
-                for word in nltk.word_tokenize((self.sentences[idx])
+                for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(
