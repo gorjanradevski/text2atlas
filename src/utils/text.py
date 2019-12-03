@@ -13,7 +13,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import TweetTokenizer
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
 
-add_stop = ['', ' ', 'say', 's', 'u', 'ap', 'afp', '...', 'n', '\\']
+add_stop = ["", " ", "say", "s", "u", "ap", "afp", "...", "n", "\\"]
 
 stop_words = ENGLISH_STOP_WORDS.union(add_stop)
 
@@ -26,20 +26,21 @@ punc = list(set(string.punctuation))
 
 
 def casual_tokenizer(
-        text):  # Splits words on white spaces (leaves contractions intact) and splits out trailing punctuation
+    text
+):  # Splits words on white spaces (leaves contractions intact) and splits out trailing punctuation
     tokens = tokenizer.tokenize(text)
     return tokens
 
 
 # Function to replace the nltk pos tags with the corresponding wordnet pos tag to use the wordnet lemmatizer
 def get_word_net_pos(treebank_tag):
-    if treebank_tag.startswith('J'):
+    if treebank_tag.startswith("J"):
         return wordnet.ADJ
-    elif treebank_tag.startswith('V'):
+    elif treebank_tag.startswith("V"):
         return wordnet.VERB
-    elif treebank_tag.startswith('N'):
+    elif treebank_tag.startswith("N"):
         return wordnet.NOUN
-    elif treebank_tag.startswith('R'):
+    elif treebank_tag.startswith("R"):
         return wordnet.ADV
     else:
         return None
@@ -57,7 +58,7 @@ def lemma_wordnet(tagged_text):
 
 
 def word_count(text):
-    return len(str(text).split(' '))
+    return len(str(text).split(" "))
 
 
 def word_freq(clean_text_list, top_n):
@@ -117,9 +118,13 @@ def count_occurrences_vec(text: str, sub_list: List[str]) -> List[int]:
             count[index] += 1
 
 
-def replace_occurrences(text: str, sub_list: List[str], replacement_token: str = " ", sorting: bool = True) -> str:
+def replace_occurrences(
+    text: str, sub_list: List[str], replacement_token: str = " ", sorting: bool = True
+) -> str:
     if sorting:
-        sub_list = sorted(sub_list, key=len, reverse=True)  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
+        sub_list = sorted(
+            sub_list, key=len, reverse=True
+        )  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
     for sub in sub_list:
         text = re.sub(pattern=sub, repl=replacement_token, string=text)
     return text
@@ -127,22 +132,32 @@ def replace_occurrences(text: str, sub_list: List[str], replacement_token: str =
 
 def delimit_occurrences(text: str, sub_list: List[str], sorting: bool = True) -> str:
     if sorting:
-        sub_list = sorted(sub_list, key=len, reverse=True)  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
+        sub_list = sorted(
+            sub_list, key=len, reverse=True
+        )  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
     for sub in sub_list:
-        text = re.sub(pattern=sub, repl=" "+sub+" ", string=text)
+        text = re.sub(pattern=sub, repl=" " + sub + " ", string=text)
     return text
 
 
-def detect_occurrences(text: str, word_list: List[str], sorting: bool = True) -> List[str]:
+def detect_occurrences(
+    text: str, word_list: List[str], sorting: bool = True
+) -> List[str]:
     if sorting:
-        word_list = sorted(word_list, key=len, reverse=True)  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
+        word_list = sorted(
+            word_list, key=len, reverse=True
+        )  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
     hit_list = []
     for word in word_list:
-        if word.startswith(' ') or word.endswith(' '):
-            matches.extend(re.findall(pattern=re.compile('\s*({})\s*'.format(word)), string=text))
+        if word.startswith(" ") or word.endswith(" "):
+            matches.extend(
+                re.findall(pattern=re.compile("\s*({})\s*".format(word)), string=text)
+            )
             matches = [match.strip() for match in matches]
         else:
-            matches = re.findall(pattern=re.compile('\s*(\w*{}\w*)\s*'.format(word)), string=text)
+            matches = re.findall(
+                pattern=re.compile("\s*(\w*{}\w*)\s*".format(word)), string=text
+            )
             matches = [match.strip() for match in matches]
         hit_list.extend(matches)
     hit_list = flatten_list([word.split() for word in hit_list])
@@ -150,7 +165,6 @@ def detect_occurrences(text: str, word_list: List[str], sorting: bool = True) ->
     return hit_list
 
 
-def change_num_token(text: str, new_token='number') -> str:
-    text = re.sub('<num>', new_token, text)
+def change_num_token(text: str, new_token="number") -> str:
+    text = re.sub("<num>", new_token, text)
     return text
-

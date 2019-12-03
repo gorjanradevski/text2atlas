@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import precision_recall_fscore_support
 
-from utils.constants import natural_images_dir, figures_dir
 from utils.general import get_doc_filenames
 
 
@@ -27,7 +26,7 @@ def calculate_entropy_threshold(
 
     natural_images_files = get_doc_filenames(images_path, extension=".ppm")
     figures_files = get_doc_filenames(
-        figures_dir, extension=".ppm"
+        figures_path, extension=".ppm"
     ) + get_doc_filenames(figures_path, extension=".pbm")
 
     images = [
@@ -72,7 +71,14 @@ def is_natural(image_path: str, entropy_threshold: float = 3.0026) -> bool:
     return histogram_entropy > entropy_threshold
 
 
+def is_normal_dimensions(image_path: str, min_ratio: int = 3) -> bool:
+    image = cv.imread(image_path, cv.IMREAD_GRAYSCALE)
+    return min(image.shape) * min_ratio > max(image.shape)
+
+
 if __name__ == "__main__":
+    natural_images_dir = None
+    figures_dir = None
     print(
         "Optimal threshold: {}".format(
             calculate_entropy_threshold(natural_images_dir, figures_dir)

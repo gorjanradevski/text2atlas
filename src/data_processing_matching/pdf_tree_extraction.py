@@ -7,5 +7,5 @@ def get_pdf_tree(pdf_path: str, html_path: str) -> dict:
         html_path=html_path,
         model_type=None,
         model_path=None,
-        favor_figures=True
+        favor_figures=True,
     )
