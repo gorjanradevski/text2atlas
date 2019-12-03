@@ -162,8 +162,9 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
             [
                 transforms.RandomResizedCrop(224),
                 transforms.RandomHorizontalFlip(),
-                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
-                transforms.RandomGrayscale(p=0.2),
+                transforms.RandomRotation([0, 360]),
+                transforms.ColorJitter(brightness=0.6, contrast=0.6, saturation=0.6),
+                transforms.RandomGrayscale(p=0.3),
             ]
         )
 
