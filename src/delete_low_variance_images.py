@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 
 def delete_images(directory_path: str, threshold: float):
+    count = 0
     for file in os.listdir(directory_path):
         file_path = os.path.join(directory_path, file)
         if not os.path.isdir(file_path):
@@ -21,9 +22,11 @@ def delete_images(directory_path: str, threshold: float):
             variance = cv2.Laplacian(image, cv2.CV_64F).var()
             if variance <= threshold:
                 frame_variances.append((frame_path, variance))
+        count += len(frame_variances)
         print(f"Will remove {len(frame_variances)} frames...")
         for frame_path, variance in frame_variances:
             os.remove(frame_path)
+    print(f"Total frames removed: {count}")
 
 
 def main():
