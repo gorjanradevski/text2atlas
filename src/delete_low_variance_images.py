@@ -23,7 +23,7 @@ def delete_images(directory_path: str, threshold: float):
             if variance <= threshold:
                 frame_variances.append((frame_path, variance))
         count += len(frame_variances)
-        print(f"Will remove {len(frame_variances)} frames...")
+        print(f"Will remove {len(frame_variances)} frames from organ {file}...")
         for frame_path, variance in frame_variances:
             os.remove(frame_path)
     print(f"Total frames removed: {count}")

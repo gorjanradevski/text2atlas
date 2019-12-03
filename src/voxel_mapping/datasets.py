@@ -159,7 +159,12 @@ class VoxelImageMappingTrainDataset(VoxelImageMappingDataset, Dataset):
     def __init__(self, json_path: str, images_location: str):
         super().__init__(json_path, images_location)
         self.train_transforms = transforms.Compose(
-            [transforms.RandomResizedCrop(224), transforms.RandomHorizontalFlip()]
+            [
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4),
+                transforms.RandomGrayscale(p=0.2),
+            ]
         )
 
     def __len__(self):
