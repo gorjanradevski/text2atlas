@@ -1,5 +1,7 @@
 import re
 
+VOXELMAN_CENTER = [165., 286.5, 387.]
+
 pdf_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_PDF"
 image_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_IMG"
 trees_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_TREE"
