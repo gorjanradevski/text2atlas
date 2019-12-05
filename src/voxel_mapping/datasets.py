@@ -33,7 +33,14 @@ class VoxelSentenceMappingDataset:
             self.keywords.append(element["keywords"])
             self.bounding_boxes.append(element["bboxes"])
 
-        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
+        try:
+            self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
+        except OSError:
+            print(
+                f"Tokenizer name {bert_tokenizer_path_or_name} not found! "
+                "Using the bert-base-uncased tokenizer!"
+            )
+            self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 
 class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
