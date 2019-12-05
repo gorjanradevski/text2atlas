@@ -1,4 +1,4 @@
-from transformers import BertModel, BertConfig
+from transformers import BertModel
 from torch import nn
 import torch
 import torch.nn.functional as F
@@ -11,16 +11,8 @@ class SentenceMappingsProducer(nn.Module):
     ):
         super(SentenceMappingsProducer, self).__init__()
         self.finetune = finetune
-        try:
-            self.bert = BertModel.from_pretrained(bert_path_or_name)
-            self.bert.eval()
-        except OSError:
-            print(
-                f"Model name {bert_path_or_name} not found! Training BERT from scratch!"
-            )
-            self.bert = BertModel(BertConfig())
-            self.bert.train()
-            self.finetune = True
+        self.bert = BertModel.from_pretrained(bert_path_or_name)
+        self.bert.eval()
         self.projector = Projector(768, joint_space)
 
         for param in self.bert.parameters():
