@@ -1,5 +1,4 @@
 from transformers import BertModel
-from transformers import BertConfig
 from torch import nn
 import torch
 import torch.nn.functional as F
