@@ -41,7 +41,7 @@ def inference(
     )
     # Create model
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=True)
+        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
     ).to(device)
     # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
