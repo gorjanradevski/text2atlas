@@ -69,6 +69,3 @@ def bbox_distance(
     )
     return dists
 
-
-if __name__ == "__main__":
-    pass
