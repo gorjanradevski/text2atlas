@@ -11,12 +11,6 @@ import os
 
 
 class VoxelSentenceMappingDataset:
-    # Assumes that the dataset is: {
-    # "sentence": str,
-    # "keywords": List[str, str, ...],
-    # "location_map": List[[float, float, float], [float, float, float],...],
-    # "bounding_box": List[[float, float], [float, float], [float, float]]
-    # }
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         self.json_data = json.load(open(json_path))
         self.sentences, self.mappings, self.keywords, self.bounding_boxes = (
@@ -31,7 +25,7 @@ class VoxelSentenceMappingDataset:
             self.sentences.append(element["text"])
             self.mappings.append(element["centers"])
             self.keywords.append(element["keywords"])
-            self.bounding_boxes.append(element["bboxes"])
+            self.bounding_boxes.append(element["organ_indices"])
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 
