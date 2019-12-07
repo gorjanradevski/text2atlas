@@ -26,7 +26,7 @@ class VoxelSentenceMappingDataset:
             self.mappings.append(element["centers"])
             self.keywords.append(element["keywords"])
             self.organs_indices.append(element["organ_indices"])
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
 
 
 class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):

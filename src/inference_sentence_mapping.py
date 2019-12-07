@@ -3,7 +3,6 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
-from copy import deepcopy
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestDataset,
