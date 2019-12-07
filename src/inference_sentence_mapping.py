@@ -57,24 +57,24 @@ def inference(
         evaluator.reset_counters()
         for sentences, _, _, organs_indices in tqdm(test_loader):
             sentences = sentences.to(device)
-            output_mappings = model(sentences).cpu().numpy()            
-            for output_mapping, organ_indices in zip(
-                output_mappings, organs_indices
-            ):
+            output_mappings = model(sentences).cpu().numpy()
+            for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-       print(f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}")
+        print(
+            f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+        )
         # Restart counters
         evaluator.reset_counters()
         for sentences, _, _, organs_indices in tqdm(test_masked_loader):
             sentences = sentences.to(device)
             output_mappings = model(sentences).cpu().numpy()
-            for output_mapping, organ_indices in zip(
-                output_mappings, organs_indices
-            ):
+            for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}")
+        print(
+            f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+        )
 
 
 def main():
