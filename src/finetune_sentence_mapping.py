@@ -151,7 +151,7 @@ def finetune(
                 torch.save(model.state_dict(), save_model_path)
             else:
                 print(
-                    f"Avg accuracy on epoch {epoch+1} is: {evaluator.current_avg_accuracy}"
+                    f"Avg accuracy on epoch {epoch+1} is: {evaluator.current_average_accuracy}"
                 )
 
 
