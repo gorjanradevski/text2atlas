@@ -72,7 +72,6 @@ def pretrain(
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
-
     # Create evaluator
     evaluator = Evaluator(ind2organ_path, organ2label_path, voxelman_images_path)
     for epoch in range(epochs):

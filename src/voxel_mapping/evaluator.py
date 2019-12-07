@@ -39,7 +39,7 @@ class Evaluator:
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
         self.total += 1
-        self.correct = self.voxels_inside(output_mapping, organ_indices)
+        self.correct += self.voxels_inside(output_mapping, organ_indices)
 
     def voxels_inside(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
@@ -54,11 +54,9 @@ class Evaluator:
         organ_indices = np.array(organ_indices)
         corrects = np.zeros(organ_indices.size)
         pred = np.round(pred + VOXELMAN_CENTER)
-        """
         pred = np.clip(
             pred, a_min=np.array([0, 0, 0]), a_max=(np.array(VOXELMAN_CENTER) * 2 - 1)
         )
-        """
         for i, organ_index in enumerate(organ_indices):
             labels = self.organ2label[self.ind2organ[str(organ_index)]]
             x, y, z = pred.astype(int)
@@ -81,21 +79,21 @@ class Evaluator:
     def update_best_avg_accuracy(self):
         self.best_avg_accuracy = self.current_average_accuracy
 
+    def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):
+        """
+        Return
+        :param pred: prediction for one sample, shape (3,)
+        :param bboxes: set of bounding boxes of k organs inside the sample sentence, shape (k, 3, 2)
+        :return: Array with k entries
+        1.0 at i-th entry - pred is inside the i-th bounding box,
+        0.0 at i-th entry - prediction is outside of the i-th bounding box
+        """
+        corrects = (
+            np.concatenate((pred - bboxes[:, :, 0], bboxes[:, :, 1] - pred), axis=-1)
+            >= 0
+        ).all(axis=-1)
 
-def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):
-    """
-    Return
-    :param pred: prediction for one sample, shape (3,)
-    :param bboxes: set of bounding boxes of k organs inside the sample sentence, shape (k, 3, 2)
-    :return: Array with k entries
-     1.0 at i-th entry - pred is inside the i-th bounding box,
-     0.0 at i-th entry - prediction is outside of the i-th bounding box
-    """
-    corrects = (
-        np.concatenate((pred - bboxes[:, :, 0], bboxes[:, :, 1] - pred), axis=-1) >= 0
-    ).all(axis=-1)
-
-    return 1 if np.count_nonzero(corrects) > 0 else 0
+        return 1 if np.count_nonzero(corrects) > 0 else 0
 
 
 def bbox_distance(

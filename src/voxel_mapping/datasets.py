@@ -13,7 +13,7 @@ import os
 class VoxelSentenceMappingDataset:
     def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
         self.json_data = json.load(open(json_path))
-        self.sentences, self.mappings, self.keywords, self.bounding_boxes = (
+        self.sentences, self.mappings, self.keywords, self.organs_indices = (
             [],
             [],
             [],
@@ -25,7 +25,7 @@ class VoxelSentenceMappingDataset:
             self.sentences.append(element["text"])
             self.mappings.append(element["centers"])
             self.keywords.append(element["keywords"])
-            self.bounding_boxes.append(element["organ_indices"])
+            self.organs_indices.append(element["organ_indices"])
         self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
 
 
@@ -56,10 +56,10 @@ class VoxelSentenceMappingTrainDataset(VoxelSentenceMappingDataset, Dataset):
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)
         )
         mapping = torch.tensor(self.mappings[idx])
-        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, bounding_box)
+        return (tokenized_sentence, mapping, num_organs, organ_indices)
 
 
 class VoxelSentenceMappingTestDataset(VoxelSentenceMappingDataset, Dataset):
@@ -74,10 +74,10 @@ class VoxelSentenceMappingTestDataset(VoxelSentenceMappingDataset, Dataset):
             self.tokenizer.encode(self.sentences[idx], add_special_tokens=True)
         )
         mapping = torch.tensor(self.mappings[idx])
-        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, bounding_box)
+        return (tokenized_sentence, mapping, num_organs, organ_indices)
 
 
 class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset):
@@ -99,22 +99,22 @@ class VoxelSentenceMappingTestMaskedDataset(VoxelSentenceMappingDataset, Dataset
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)
         )
         mapping = torch.tensor(self.mappings[idx])
-        bounding_box = torch.tensor(self.bounding_boxes[idx])
+        organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, bounding_box)
+        return (tokenized_sentence, mapping, num_organs, organ_indices)
 
 
 def collate_pad_sentence_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 ):
-    sentences, mappings, num_organs, bounding_boxes = zip(*batch)
+    sentences, mappings, num_organs, organ_indices = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
     num_organs = torch.tensor([*num_organs])
 
     # IDK why num_organs and bounding_boxes is a Tuple
-    return padded_sentences, padded_mappings, num_organs, bounding_boxes
+    return padded_sentences, padded_mappings, num_organs, organ_indices
 
 
 class VoxelImageMappingDataset:
