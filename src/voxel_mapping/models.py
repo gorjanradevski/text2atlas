@@ -74,9 +74,10 @@ class Projector(nn.Module):
         super(Projector, self).__init__()
         self.fc1 = nn.Linear(input_space, joint_space)
         self.bn = nn.BatchNorm1d(joint_space)
+        self.dp = nn.Dropout(0.4)
         self.fc2 = nn.Linear(joint_space, 3)
 
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
-        projected_embeddings = self.fc2(self.bn(F.relu(self.fc1(embeddings))))
+        projected_embeddings = self.fc2(self.dp(self.bn(F.relu(self.fc1(embeddings)))))
 
         return projected_embeddings
