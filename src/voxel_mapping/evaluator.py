@@ -54,9 +54,11 @@ class Evaluator:
         organ_indices = np.array(organ_indices)
         corrects = np.zeros(organ_indices.size)
         pred = np.round(pred + VOXELMAN_CENTER)
+        """
         pred = np.clip(
             pred, a_min=np.array([0, 0, 0]), a_max=(np.array(VOXELMAN_CENTER) * 2 - 1)
         )
+        """
         for i, organ_index in enumerate(organ_indices):
             labels = self.organ2label[self.ind2organ[str(organ_index)]]
             x, y, z = pred.astype(int)
