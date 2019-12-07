@@ -4,7 +4,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
-from copy import deepcopy
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainDataset,
@@ -14,13 +13,16 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
-from voxel_mapping.evaluator import bbox_inside
+from voxel_mapping.evaluator import Evaluator
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
 
 
 def pretrain(
+    ind2organ_path: str,
+    organ2label_path: str,
+    voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
     epochs: int,
@@ -71,7 +73,8 @@ def pretrain(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
 
-    best_avg_accuracy = -1
+    # Create evaluator
+    evaluator = Evaluator(ind2organ_path, organ2label_path, voxelman_images_path)
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -100,58 +103,52 @@ def pretrain(
 
         # Set model in evaluation mode
         model.train(False)
-        # Reset current average loss
-        cur_avg_accuracy = 0
+        # Reset current average accuracy
+        evaluator.reset_current_average_accuracy()
         with torch.no_grad():
             # Restart counters
-            total = 0
-            correct = 0
-            for sentences, _, _, bounding_boxes in tqdm(val_loader):
+            evaluator.reset_counters()
+            for sentences, _, _, organs_indices in tqdm(val_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
-                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
-                bounding_boxes_copy = deepcopy(bounding_boxes)
-                del bounding_boxes
-                del sentences
-                for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes_copy
+                for output_mapping, organ_indices in zip(
+                    output_mappings, organs_indices
                 ):
-                    total += 1
-                    correct += bbox_inside(output_mapping, bounding_box.numpy())
+                    evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-            print(f"The accuracy on the non masked validation set is {correct/total}")
-            cur_avg_accuracy += correct / total
+            print(
+                f"The accuracy on the non masked validation set is {evaluator.get_current_accuracy()}"
+            )
+            evaluator.update_current_average_accuracy()
             # Restart counters
-            total = 0
-            correct = 0
-            for sentences, _, _, bounding_boxes in tqdm(val_masked_loader):
+            evaluator.reset_counters()
+            for sentences, _, _, organs_indices in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
-                # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
-                bounding_boxes_copy = deepcopy(bounding_boxes)
-                del bounding_boxes
-                del sentences
-                for output_mapping, bounding_box in zip(
-                    output_mappings, bounding_boxes_copy
+                for output_mapping, organ_indices in zip(
+                    output_mappings, organs_indices
                 ):
-                    total += 1
-                    correct += bbox_inside(output_mapping, bounding_box.numpy())
+                    evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-            print(f"The accuracy on the masked validation set is {correct/total}")
-            cur_avg_accuracy += correct / total
-            cur_avg_accuracy /= 2
+            print(
+                f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+            )
+            evaluator.update_current_average_accuracy()
+            evaluator.finalize_current_average_accuracy()
 
-            if cur_avg_accuracy > best_avg_accuracy:
-                best_avg_accuracy = cur_avg_accuracy
+            if evaluator.is_best_avg_accuracy():
+                evaluator.update_best_avg_accuracy()
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy {best_avg_accuracy} on epoch "
+                    f"Found new best with avg accuracy {evaluator.best_avg_accuracy} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
                 print("======================")
             else:
-                print(f"Avg accuracy on epoch {epoch+1} is: {cur_avg_accuracy}")
+                print(
+                    f"Avg accuracy on epoch {epoch+1} is: {evaluator.current_average_accuracy}"
+                )
 
 
 def main():
@@ -159,6 +156,9 @@ def main():
     # imported as a module.
     args = parse_args()
     pretrain(
+        args.ind2organ_path,
+        args.organ2label_path,
+        args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
         args.epochs,
@@ -180,6 +180,24 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(
         description="Trains a sentence voxel mapping model."
+    )
+    parser.add_argument(
+        "--ind2organ_path",
+        type=str,
+        default="data/data_organs/ind2organ.json",
+        help="Path to the ind2organ path.",
+    )
+    parser.add_argument(
+        "--organ2label_path",
+        type=str,
+        default="data/data_organs/organ2label.json",
+        help="Path to the organ2label path.",
+    )
+    parser.add_argument(
+        "--voxelman_images_path",
+        type=str,
+        default="data/voxelman/",
+        help="Path to the voxel-man images",
     )
     parser.add_argument(
         "--train_json_path",

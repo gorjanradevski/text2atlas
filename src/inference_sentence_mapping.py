@@ -11,10 +11,13 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.evaluator import bbox_inside
+from voxel_mapping.evaluator import Evaluator
 
 
 def inference(
+    ind2organ_path: str,
+    organ2label_path: str,
+    voxelman_images_path: str,
     test_json_path: str,
     batch_size: int,
     bert_path_or_name: str,
@@ -47,41 +50,31 @@ def inference(
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode
     model.train(False)
+    # Create evaluator
+    evaluator = Evaluator(ind2organ_path, organ2label_path, voxelman_images_path)
     with torch.no_grad():
         # Restart counters
-        total = 0
-        correct = 0
-        for sentences, _, _, bounding_boxes in tqdm(test_loader):
+        evaluator.reset_counters()
+        for sentences, _, _, organs_indices in tqdm(test_loader):
             sentences = sentences.to(device)
-            output_mappings = model(sentences).cpu().numpy()
-            # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
-            bounding_boxes_copy = deepcopy(bounding_boxes)
-            del bounding_boxes
-            del sentences
-            for output_mapping, bounding_box in zip(
-                output_mappings, bounding_boxes_copy
+            output_mappings = model(sentences).cpu().numpy()            
+            for output_mapping, organ_indices in zip(
+                output_mappings, organs_indices
             ):
-                total += 1
-                correct += bbox_inside(output_mapping, bounding_box.numpy())
+                evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(f"The accuracy on the non masked validation set is {correct/total}")
+       print(f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}")
         # Restart counters
-        total = 0
-        correct = 0
-        for sentences, _, _, bounding_boxes in tqdm(test_masked_loader):
+        evaluator.reset_counters()
+        for sentences, _, _, organs_indices in tqdm(test_masked_loader):
             sentences = sentences.to(device)
             output_mappings = model(sentences).cpu().numpy()
-            # https://github.com/pytorch/pytorch/issues/973#issuecomment-459398189
-            bounding_boxes_copy = deepcopy(bounding_boxes)
-            del bounding_boxes
-            del sentences
-            for output_mapping, bounding_box in zip(
-                output_mappings, bounding_boxes_copy
+            for output_mapping, organ_indices in zip(
+                output_mappings, organs_indices
             ):
-                total += 1
-                correct += bbox_inside(output_mapping, bounding_box.numpy())
+                evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(f"The accuracy on the masked validation set is {correct/total}")
+        print(f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}")
 
 
 def main():
@@ -89,6 +82,9 @@ def main():
     # imported as a module.
     args = parse_args()
     inference(
+        args.ind2organ_path,
+        args.organ2label_path,
+        args.voxelman_images_path,
         args.test_json_path,
         args.batch_size,
         args.bert_path_or_name,
@@ -103,6 +99,24 @@ def parse_args():
         Arguments
     """
     parser = argparse.ArgumentParser(description="Performs mapping inference.")
+    parser.add_argument(
+        "--ind2organ_path",
+        type=str,
+        default="data/data_organs/ind2organ.json",
+        help="Path to the ind2organ path.",
+    )
+    parser.add_argument(
+        "--organ2label_path",
+        type=str,
+        default="data/data_organs/organ2label.json",
+        help="Path to the organ2label path.",
+    )
+    parser.add_argument(
+        "--voxelman_images_path",
+        type=str,
+        default="data/voxelman/",
+        help="Path to the voxel-man images",
+    )
     parser.add_argument(
         "--test_json_path",
         type=str,
