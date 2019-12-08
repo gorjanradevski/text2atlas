@@ -3,11 +3,7 @@ import argparse
 import time
 
 
-def query_image_download(
-    query: str,
-    images_per_query: int,
-    output_directory: str,
-):
+def query_image_download(query: str, images_per_query: int, output_directory: str):
     response = google_images_download.googleimagesdownload()  # class instantiation
 
     arguments = {
@@ -30,11 +26,7 @@ def parse_args():
         Arguments
     """
     parser = argparse.ArgumentParser(description="Downloads images from google.")
-    parser.add_argument(
-        "--query",
-        type=str,
-        help="Query term.",
-    )
+    parser.add_argument("--query", type=str, help="Query term.")
     parser.add_argument(
         "--images-per-query",
         type=int,
@@ -55,11 +47,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    query_image_download(
-        args.query,
-        args.images_per_query,
-        args.output_directory,
-    )
+    query_image_download(args.query, args.images_per_query, args.output_directory)
 
 
 if __name__ == "__main__":
