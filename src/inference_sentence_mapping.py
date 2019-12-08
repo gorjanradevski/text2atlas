@@ -64,7 +64,10 @@ def inference(
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
         print(
-            f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+            f"The accuracy on the non-masked validation set is {evaluator.get_current_accuracy()}"
+        )
+        print(
+            f"The avg distance on the non-masked validation set is {evaluator.get_current_distance()}"
         )
         # Restart counters
         evaluator.reset_counters()
@@ -76,6 +79,9 @@ def inference(
 
         print(
             f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+        )
+        print(
+            f"The avg distance on the masked validation set is {evaluator.get_current_distance()}"
         )
 
 
