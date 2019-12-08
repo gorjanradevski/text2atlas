@@ -79,7 +79,7 @@ class InferenceEvaluator:
          0.0 at i-th entry - pred is inside of the voxels of the i-th organ
         """
         organ_indices = np.array(organ_indices)
-        distances = np.zeros(organ_indices.size)
+        distances = np.zeros(organ_indices.size).astype(float)
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(
             pred_ind, a_min=np.array([0, 0, 0]), a_max=(np.array(VOXELMAN_CENTER) * 2 - 1)
