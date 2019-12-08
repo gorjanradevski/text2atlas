@@ -14,6 +14,8 @@ cachetools==3.1.1
 certifi==2019.9.11
 chardet==3.0.4
 Click==7.0
+connected-components-3d==1.5.0
+contractions==0.0.23
 cycler==0.10.0
 decorator==4.4.1
 defusedxml==0.6.0
@@ -28,10 +30,12 @@ future==0.18.2
 gast==0.2.2
 google-auth==1.7.1
 google-auth-oauthlib==0.4.1
+google-images-download==2.8.0
 google-pasta==0.1.8
 grpcio==1.25.0
 h5py==2.10.0
 idna==2.8
+imagecodecs-lite==2019.12.3
 imageio==2.6.1
 IMAPClient==2.1.0
 importlib-metadata==0.23
@@ -91,6 +95,7 @@ prompt-toolkit==2.0.10
 protobuf==3.10.0
 ptyprocess==0.6.0
 py==1.8.0
+pyahocorasick==1.4.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.7
 pycodestyle==2.5.0
@@ -117,7 +122,9 @@ sacremoses==0.0.35
 scikit-image==0.16.2
 scikit-learn==0.21.3
 scipy==1.3.3
+seaborn==0.9.0
 selectivesearch==0.4
+selenium==3.141.0
 Send2Trash==1.5.0
 sentencepiece==0.1.83
 six==1.12.0
@@ -133,6 +140,9 @@ termcolor==1.1.0
 terminado==0.8.3
 testpath==0.4.4
 textract==1.6.3
+textsearch==0.0.17
+tifffile==2019.7.26.2
+tiffile==2018.10.18
 toml==0.10.0
 torch==1.3.1
 torchvision==0.4.2
@@ -148,6 +158,7 @@ wcwidth==0.1.7
 webencodings==0.5.1
 Werkzeug==0.16.0
 widgetsnbextension==3.5.1
+wikipedia==1.4.0
 wrapt==1.11.2
 xlrd==1.2.0
 XlsxWriter==1.2.6
