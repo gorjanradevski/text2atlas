@@ -113,7 +113,9 @@ def main():
         random_naive(test_samples, mode, bbox_shrink)
     else:
         train_samples = load_json(train_samples_path)
-        assert train_samples, "Invalid train data provided: {}".format(train_samples_path)
+        assert train_samples, "Invalid train data provided: {}".format(
+            train_samples_path
+        )
         test_samples = load_json(test_samples_path)
         assert test_samples, "Invalid test data provided: {}".format(test_samples_path)
         center_naive(train_samples, test_samples, mode, bbox_shrink)
@@ -126,10 +128,17 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Trains an image-text matching model.")
     parser.add_argument(
-        "--train-samples-path", "-trp", type=str, default='', help="Path to the json with data samples"
+        "--train-samples-path",
+        "-trp",
+        type=str,
+        default="",
+        help="Path to the json with data samples",
     )
     parser.add_argument(
-        "--test-samples-path", "-tsp", type=str, help="Path to the json with data samples"
+        "--test-samples-path",
+        "-tsp",
+        type=str,
+        help="Path to the json with data samples",
     )
     parser.add_argument(
         "--mode",
@@ -142,7 +151,7 @@ def parse_args():
         "-bs",
         type=float,
         default=0.0,
-        help='Fraction (from 0.0 to 1.0) by which we decrease each dimension of the bounding boxes',
+        help="Fraction (from 0.0 to 1.0) by which we decrease each dimension of the bounding boxes",
     )
     return parser.parse_args()
 

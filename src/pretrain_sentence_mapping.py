@@ -13,7 +13,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
-from voxel_mapping.evaluator import Evaluator
+from voxel_mapping.evaluator import TrainingEvaluator
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
@@ -73,7 +73,9 @@ def pretrain(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     # Create evaluator
-    evaluator = Evaluator(ind2organ_path, organ2label_path, voxelman_images_path)
+    evaluator = TrainingEvaluator(
+        ind2organ_path, organ2label_path, voxelman_images_path
+    )
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode

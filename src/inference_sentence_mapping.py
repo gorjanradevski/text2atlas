@@ -10,13 +10,14 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.evaluator import Evaluator
+from voxel_mapping.evaluator import InferenceEvaluator
 
 
 def inference(
     ind2organ_path: str,
     organ2label_path: str,
     voxelman_images_path: str,
+    organ2summary_path: str,
     test_json_path: str,
     batch_size: int,
     bert_path_or_name: str,
@@ -50,7 +51,9 @@ def inference(
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
-    evaluator = Evaluator(ind2organ_path, organ2label_path, voxelman_images_path)
+    evaluator = InferenceEvaluator(
+        ind2organ_path, organ2label_path, voxelman_images_path, organ2summary_path
+    )
     with torch.no_grad():
         # Restart counters
         evaluator.reset_counters()
@@ -84,6 +87,7 @@ def main():
         args.ind2organ_path,
         args.organ2label_path,
         args.voxelman_images_path,
+        args.organ2summary_path,
         args.test_json_path,
         args.batch_size,
         args.bert_path_or_name,
@@ -98,6 +102,12 @@ def parse_args():
         Arguments
     """
     parser = argparse.ArgumentParser(description="Performs mapping inference.")
+    parser.add_argument(
+        "--organ2summary_path",
+        type=str,
+        default="data/data_organs/organ2voxels_new.json",
+        help="Path to the organ2voxels path.",
+    )
     parser.add_argument(
         "--ind2organ_path",
         type=str,

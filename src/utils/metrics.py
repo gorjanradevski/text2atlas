@@ -42,7 +42,9 @@ def bbox_inside(pred: np.ndarray, bboxes: np.ndarray):
     return corrects.astype(float)
 
 
-def bbox_shrink(bboxes: Union[List[List], List[np.ndarray], np.ndarray], bbox_shrink: float = 0.0) -> np.ndarray:
+def bbox_shrink(
+    bboxes: Union[List[List], List[np.ndarray], np.ndarray], bbox_shrink: float = 0.0
+) -> np.ndarray:
     bboxes = np.array(bboxes)
     for bbox in bboxes:
         dims = bbox[:, 1] - bbox[:, 0]
@@ -68,4 +70,3 @@ def bbox_distance(
         .norm(p=norm_p, dim=-1)
     )
     return dists
-
