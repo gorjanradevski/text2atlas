@@ -36,6 +36,9 @@ class Evaluator:
         self.total += 1
         self.correct += self.voxels_inside(output_mapping, organ_indices)
 
+    def get_current_accuracy(self):
+        return self.correct / self.total
+
     def voxels_inside(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> int:
@@ -150,9 +153,6 @@ class TrainingEvaluator(Evaluator):
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
         super().update_counters(output_mapping, organ_indices)
-
-    def get_current_accuracy(self):
-        return self.correct / self.total
 
     def update_current_average_accuracy(self):
         self.current_average_accuracy += self.correct / self.total
