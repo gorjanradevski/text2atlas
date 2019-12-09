@@ -79,7 +79,7 @@ def finetune(
 
     # Create evaluator
     evaluator = TrainingEvaluator(
-        ind2organ_path, organ2label_path, voxelman_images_path
+        ind2organ_path, organ2label_path, voxelman_images_path, len(val_dataset)
     )
     for epoch in range(epochs):
         print(f"Starting epoch {epoch + 1}...")
