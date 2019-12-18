@@ -99,6 +99,9 @@ def random_naive(organs_dir_path: str, samples, mode):
     print(
         f"At blind guessing in {mode} mode, the average probability of hitting is: {100 * sum(hit_probs) / len(hit_probs)}%"
     )
+    print(
+        f"Error bound: {np.std(np.array(hit_probs), ddof=1)/np.sqrt(len(hit_probs))}"
+    )
 
 
 def main():
