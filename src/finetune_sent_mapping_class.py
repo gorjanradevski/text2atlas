@@ -151,7 +151,7 @@ def pretrain(
                     f"Found new best with avg accuracy {best_avg_acc} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
                 print("======================")
             else:
                 print(

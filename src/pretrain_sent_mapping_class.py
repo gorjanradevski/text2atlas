@@ -112,9 +112,7 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
-                y_one_hot = torch.zeros(
-                    organ_indices.size()[0], organ_indices.size()[1]
-                )
+                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
                 y_one_hot[torch.where(y_one_hot == 0)] = -100
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
@@ -131,9 +129,7 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
-                y_one_hot = torch.zeros(
-                    organ_indices.size()[0], organ_indices.size()[1]
-                )
+                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
                 y_one_hot[torch.where(y_one_hot == 0)] = -100
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum()
@@ -149,7 +145,7 @@ def pretrain(
                     f"Found new best with avg accuracy {best_avg_acc} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
                 print("======================")
             else:
                 print(
