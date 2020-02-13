@@ -225,10 +225,10 @@ def parse_args():
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--epochs", type=int, default=5, help="The number of epochs to train the model."
+        "--epochs", type=int, default=30, help="The number of epochs to train the model."
     )
     parser.add_argument(
-        "--batch_size", type=int, default=64, help="The size of the batch."
+        "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
         "--learning_rate", type=float, default=0.00002, help="The learning rate."

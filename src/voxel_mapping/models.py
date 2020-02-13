@@ -2,7 +2,6 @@ from transformers import BertModel
 from torch import nn
 import torch
 import torch.nn.functional as F
-from torchvision.models import resnet152
 import logging
 
 logging.basicConfig(level=logging.INFO)
