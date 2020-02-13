@@ -127,7 +127,7 @@ def finetune(
             corrects = 0
             totals = 0
             cur_masked_acc = 0
-            for sentences, organs_indices in tqdm(val_masked_loader):
+            for sentences, organ_indices in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
