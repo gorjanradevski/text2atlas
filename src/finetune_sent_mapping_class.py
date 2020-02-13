@@ -14,9 +14,6 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-# https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
-
 
 def pretrain(
     ind2organ_path: str,
