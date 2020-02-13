@@ -15,7 +15,7 @@ from voxel_mapping.datasets import (
 from voxel_mapping.models import SentenceMappingsProducer
 
 
-def pretrain(
+def finetune(
     ind2organ_path: str,
     train_json_path: str,
     val_json_path: str,
@@ -114,9 +114,7 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
-                y_one_hot = torch.zeros(
-                    organ_indices.size()[0], organ_indices.size()[1]
-                )
+                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
                 y_one_hot[torch.where(y_one_hot == 0)] = -100
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
@@ -133,12 +131,10 @@ def pretrain(
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
-                y_one_hot = torch.zeros(
-                    organ_indices.size()[0], organ_indices.size()[1]
-                )
+                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
                 y_one_hot[torch.where(y_one_hot == 0)] = -100
-                corrects += (y_one_hot == organ_indices).sum(dim=1).sum()
+                corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
                 totals += organ_indices.size()[0]
 
             cur_masked_acc = corrects * 100 / totals
@@ -163,7 +159,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    pretrain(
+    finetune(
         args.ind2organ_path,
         args.train_json_path,
         args.val_json_path,

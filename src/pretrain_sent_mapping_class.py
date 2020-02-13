@@ -137,12 +137,12 @@ def pretrain(
 
             cur_masked_acc = corrects * 100 / totals
 
-            print(f"The accuracy on the masked validation set is {cur_masked_acc}")
+            print(f"The accuracy on the masked validation set is {cur_masked_acc:.2f}%")
             if (cur_unmasked_acc + cur_masked_acc) / 2 > best_avg_acc:
                 best_avg_acc = (cur_unmasked_acc + cur_masked_acc) / 2
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy {best_avg_acc} on epoch "
+                    f"Found new best with avg accuracy {best_avg_acc:.2f}% on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
