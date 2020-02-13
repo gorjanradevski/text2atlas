@@ -11,13 +11,23 @@ logger = logging.getLogger(__name__)
 
 class SentenceMappingsProducer(nn.Module):
     def __init__(
-        self, bert_path_or_name: str, joint_space: int, finetune: bool = False
+        self,
+        bert_path_or_name: str,
+        joint_space: int,
+        finetune: bool = False,
+        reg_or_class: str = "reg",
+        num_classes: int = 43,
     ):
         super(SentenceMappingsProducer, self).__init__()
         self.finetune = finetune
         self.bert = BertModel.from_pretrained(bert_path_or_name)
         self.bert.eval()
-        self.projector = Projector(768, joint_space)
+        if reg_or_class == "reg":
+            self.projector = RegressionProjector(768, joint_space)
+        elif reg_or_class == "class":
+            self.projector = ClassificationProjector(768, joint_space, num_classes)
+        else:
+            raise ValueError("The projector can be regression or classification.")
 
         for param in self.bert.parameters():
             param.requires_grad = finetune
@@ -40,41 +50,25 @@ class SentenceMappingsProducer(nn.Module):
             self.projector.train(False)
 
 
-class ImageMappingsProducer(nn.Module):
-    def __init__(self, joint_space: int, finetune: bool = False):
-        super(ImageMappingsProducer, self).__init__()
-        self.resnet = torch.nn.Sequential(
-            *(list(resnet152(pretrained=True).children())[:-1])
-        )
-        self.resnet.eval()
-        self.projector = Projector(2048, joint_space)
-        self.finetune = finetune
-
-        for param in self.resnet.parameters():
-            param.requires_grad = finetune
-
-    def forward(self, images: torch.Tensor):
-        embedded_images = torch.flatten(self.resnet(images), start_dim=1)
-
-        return self.projector(embedded_images)
-
-    def train(self, mode: bool = True):
-        if self.finetune and mode:
-            self.resnet.train(True)
-            self.projector.train(True)
-        elif mode:
-            self.projector.train(True)
-        else:
-            self.resnet.train(False)
-            self.projector.train(False)
-
-
-class Projector(nn.Module):
+class RegressionProjector(nn.Module):
     def __init__(self, input_space, joint_space: int):
-        super(Projector, self).__init__()
+        super(RegressionProjector, self).__init__()
         self.fc1 = nn.Linear(input_space, joint_space)
         self.bn = nn.BatchNorm1d(joint_space)
         self.fc2 = nn.Linear(joint_space, 3)
+
+    def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
+        projected_embeddings = self.fc2(self.bn(F.relu(self.fc1(embeddings))))
+
+        return projected_embeddings
+
+
+class ClassificationProjector(nn.Module):
+    def __init__(self, input_space, joint_space: int, num_classes):
+        super(ClassificationProjector, self).__init__()
+        self.fc1 = nn.Linear(input_space, joint_space)
+        self.bn = nn.BatchNorm1d(joint_space)
+        self.fc2 = nn.Linear(joint_space, num_classes)
 
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         projected_embeddings = self.fc2(self.bn(F.relu(self.fc1(embeddings))))

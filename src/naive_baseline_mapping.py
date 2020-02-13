@@ -5,7 +5,7 @@ from tqdm import tqdm
 import json
 from typing import List
 
-from voxel_mapping.evaluator import InferenceEvaluator
+from voxel_mapping.evaluator import InferenceRegEvaluator
 
 
 def bbox_volume(bbox: np.ndarray):
@@ -45,7 +45,7 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
     organ2ind = json.load(open(organ2ind_path))
     ind2organ = json.load(open(ind2organ_path))
     # Create evaluator
-    evaluator = InferenceEvaluator(
+    evaluator = InferenceRegEvaluator(
         ind2organ_path,
         organ2label_path,
         voxelman_images_path,

@@ -5,12 +5,12 @@ from torch import nn
 from tqdm import tqdm
 
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTestDataset,
-    VoxelSentenceMappingTestMaskedDataset,
-    collate_pad_sentence_batch,
+    VoxelSentenceMappingTestRegDataset,
+    VoxelSentenceMappingTestMaskedRegDataset,
+    collate_pad_sentence_reg_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.evaluator import InferenceEvaluator
+from voxel_mapping.evaluator import InferenceRegEvaluator
 
 
 def inference(
@@ -26,21 +26,21 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    test_dataset = VoxelSentenceMappingTestDataset(test_json_path, bert_path_or_name)
-    test_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
+    test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, bert_path_or_name)
+    test_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
         test_json_path, bert_path_or_name
     )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_batch,
+        collate_fn=collate_pad_sentence_reg_batch,
     )
     test_masked_loader = DataLoader(
         test_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_batch,
+        collate_fn=collate_pad_sentence_reg_batch,
     )
     # Create model
     model = nn.DataParallel(
@@ -51,7 +51,7 @@ def inference(
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
-    evaluator = InferenceEvaluator(
+    evaluator = InferenceRegEvaluator(
         ind2organ_path,
         organ2label_path,
         voxelman_images_path,

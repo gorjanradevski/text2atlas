@@ -9,7 +9,7 @@ import tifffile
 from utils.constants import VOXELMAN_CENTER
 
 
-class Evaluator:
+class RegEvaluator:
     def __init__(
         self,
         ind2organ_path: str,
@@ -83,7 +83,7 @@ class Evaluator:
         return 1 if np.count_nonzero(corrects) > 0 else 0
 
 
-class InferenceEvaluator(Evaluator):
+class InferenceRegEvaluator(RegEvaluator):
     def __init__(
         self,
         ind2organ_path: str,
@@ -150,7 +150,7 @@ class InferenceEvaluator(Evaluator):
         return np.std(self.distances, ddof=1) / np.sqrt(self.total_samples)
 
 
-class TrainingEvaluator(Evaluator):
+class TrainingRegEvaluator(RegEvaluator):
     def __init__(
         self,
         ind2organ_path: str,

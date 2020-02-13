@@ -6,14 +6,14 @@ from torch import nn
 from tqdm import tqdm
 
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTrainDataset,
-    VoxelSentenceMappingTestDataset,
-    VoxelSentenceMappingTestMaskedDataset,
-    collate_pad_sentence_batch,
+    VoxelSentenceMappingTrainRegDataset,
+    VoxelSentenceMappingTestRegDataset,
+    VoxelSentenceMappingTestMaskedRegDataset,
+    collate_pad_sentence_reg_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss
-from voxel_mapping.evaluator import TrainingEvaluator
+from voxel_mapping.evaluator import TrainingRegEvaluator
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
@@ -37,11 +37,11 @@ def pretrain(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelSentenceMappingTrainDataset(
+    train_dataset = VoxelSentenceMappingTrainRegDataset(
         train_json_path, bert_path_or_name, mask_probability
     )
-    val_dataset = VoxelSentenceMappingTestDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelSentenceMappingTestMaskedDataset(
+    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name)
+    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
         val_json_path, bert_path_or_name
     )
 
@@ -50,19 +50,19 @@ def pretrain(
         batch_size=batch_size,
         shuffle=True,
         num_workers=4,
-        collate_fn=collate_pad_sentence_batch,
+        collate_fn=collate_pad_sentence_reg_batch,
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_batch,
+        collate_fn=collate_pad_sentence_reg_batch,
     )
     val_masked_loader = DataLoader(
         val_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_batch,
+        collate_fn=collate_pad_sentence_reg_batch,
     )
     model = nn.DataParallel(
         SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
@@ -73,7 +73,7 @@ def pretrain(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     # Create evaluator
-    evaluator = TrainingEvaluator(
+    evaluator = TrainingRegEvaluator(
         ind2organ_path, organ2label_path, voxelman_images_path, len(val_dataset)
     )
     for epoch in range(epochs):
