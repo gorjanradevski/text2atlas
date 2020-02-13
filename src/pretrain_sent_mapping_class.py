@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 import json
@@ -33,14 +33,23 @@ def pretrain(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load organ to indices to obtain the number of classes
     num_classes = len([index for index in json.load(open(ind2organ_path)).keys()])
-    train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, bert_path_or_name, mask_probability, num_classes
+    train_dataset = Subset(
+        VoxelSentenceMappingTrainClassDataset(
+            train_json_path, bert_path_or_name, mask_probability, num_classes
+        ),
+        [0, 1, 2, 3, 4, 5],
     )
-    val_dataset = VoxelSentenceMappingTestClassDataset(
-        val_json_path, bert_path_or_name, num_classes
+    val_dataset = Subset(
+        VoxelSentenceMappingTestClassDataset(
+            val_json_path, bert_path_or_name, num_classes
+        ),
+        [0, 1, 2],
     )
-    val_masked_dataset = VoxelSentenceMappingTestMaskedClassDataset(
-        val_json_path, bert_path_or_name, num_classes
+    val_masked_dataset = Subset(
+        VoxelSentenceMappingTestMaskedClassDataset(
+            val_json_path, bert_path_or_name, num_classes
+        ),
+        [0, 1, 2],
     )
 
     train_loader = DataLoader(
@@ -120,19 +129,19 @@ def pretrain(
 
             cur_unmasked_acc = corrects * 100 / totals
             print(
-                f"The accuracy on the non masked validation set is {cur_unmasked_acc}"
+                f"The accuracy on the non-masked validation set is {cur_unmasked_acc}"
             )
             corrects = 0
             totals = 0
             cur_masked_acc = 0
-            for sentences, organs_indices in tqdm(val_masked_loader):
+            for sentences, organ_indices in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
                 y_pred = torch.argmax(output_mappings, dim=1)
                 y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
                 y_one_hot[torch.where(y_one_hot == 0)] = -100
-                corrects += (y_one_hot == organ_indices).sum(dim=1).sum()
+                corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
                 totals += organ_indices.size()[0]
 
             cur_masked_acc = corrects * 100 / totals
