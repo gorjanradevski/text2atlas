@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
@@ -33,23 +33,14 @@ def pretrain(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load organ to indices to obtain the number of classes
     num_classes = len([index for index in json.load(open(ind2organ_path)).keys()])
-    train_dataset = Subset(
-        VoxelSentenceMappingTrainClassDataset(
-            train_json_path, bert_path_or_name, mask_probability, num_classes
-        ),
-        [0, 1, 2, 3, 4, 5],
+    train_dataset = VoxelSentenceMappingTrainClassDataset(
+        train_json_path, bert_path_or_name, mask_probability, num_classes
     )
-    val_dataset = Subset(
-        VoxelSentenceMappingTestClassDataset(
-            val_json_path, bert_path_or_name, num_classes
-        ),
-        [0, 1, 2],
+    val_dataset = VoxelSentenceMappingTestClassDataset(
+        val_json_path, bert_path_or_name, num_classes
     )
-    val_masked_dataset = Subset(
-        VoxelSentenceMappingTestMaskedClassDataset(
-            val_json_path, bert_path_or_name, num_classes
-        ),
-        [0, 1, 2],
+    val_masked_dataset = VoxelSentenceMappingTestMaskedClassDataset(
+        val_json_path, bert_path_or_name, num_classes
     )
 
     train_loader = DataLoader(
