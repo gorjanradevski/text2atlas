@@ -46,7 +46,11 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
     ind2organ = json.load(open(ind2organ_path))
     # Create evaluator
     evaluator = InferenceEvaluator(
-        ind2organ_path, organ2label_path, voxelman_images_path, organ2summary_path
+        ind2organ_path,
+        organ2label_path,
+        voxelman_images_path,
+        organ2summary_path,
+        len(test_samples),
     )
     # Compute frequences
     frequencies = np.zeros(len(organ2ind))
@@ -67,6 +71,13 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
     )
     print(
         f"At {mode} mode the average distance to hit: {evaluator.get_current_distance()}"
+    )
+
+    print(
+        f"At {mode} mode the accuracy error-bar of hitting: {evaluator.get_accuracy_error_bar()}"
+    )
+    print(
+        f"At {mode} mode the distance error-bar to hit: {evaluator.get_distance_error_bar()}"
     )
 
 

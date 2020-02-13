@@ -52,7 +52,11 @@ def inference(
     model.train(False)
     # Create evaluator
     evaluator = InferenceEvaluator(
-        ind2organ_path, organ2label_path, voxelman_images_path, organ2summary_path
+        ind2organ_path,
+        organ2label_path,
+        voxelman_images_path,
+        organ2summary_path,
+        len(test_dataset),
     )
     with torch.no_grad():
         # Restart counters
@@ -64,10 +68,16 @@ def inference(
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
         print(
-            f"The accuracy on the non-masked validation set is {evaluator.get_current_accuracy()}"
+            f"The accuracy on the non-masked test set is {evaluator.get_current_accuracy()}"
         )
         print(
-            f"The avg distance on the non-masked validation set is {evaluator.get_current_distance()}"
+            f"The avg distance on the non-masked test set is {evaluator.get_current_distance()}"
+        )
+        print(
+            f"The error bar of the accuracy on the non-masked test set is {evaluator.get_accuracy_error_bar()}"
+        )
+        print(
+            f"The error bar of the distance on the non-masked test set is {evaluator.get_distance_error_bar()}"
         )
         # Restart counters
         evaluator.reset_counters()
@@ -78,10 +88,16 @@ def inference(
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
         print(
-            f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+            f"The accuracy on the masked test set is {evaluator.get_current_accuracy()}"
         )
         print(
-            f"The avg distance on the masked validation set is {evaluator.get_current_distance()}"
+            f"The avg distance on the masked test set is {evaluator.get_current_distance()}"
+        )
+        print(
+            f"The error bar of the accuracy on the masked test set is {evaluator.get_accuracy_error_bar()}"
+        )
+        print(
+            f"The error bar of the distance on the masked test set is {evaluator.get_distance_error_bar()}"
         )
 
 
@@ -111,25 +127,25 @@ def parse_args():
     parser.add_argument(
         "--organ2summary_path",
         type=str,
-        default="data/data_organs/organ2voxels_new.json",
+        default="data/data_organs_new/organ2voxels_new.json",
         help="Path to the organ2voxels path.",
     )
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs/ind2organ.json",
+        default="data/data_organs_new/ind2organ_new.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs/organ2label.json",
+        default="data/data_organs_new/organ2label_new.json",
         help="Path to the organ2label path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/voxelman/",
+        default="data/data_organs_new/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
