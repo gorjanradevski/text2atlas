@@ -9,7 +9,7 @@ import tifffile
 from utils.constants import VOXELMAN_CENTER
 
 
-class RegEvaluator:
+class Evaluator:
     def __init__(
         self,
         ind2organ_path: str,
@@ -41,7 +41,7 @@ class RegEvaluator:
         self.index += 1
 
     def get_current_accuracy(self):
-        return np.sum(self.corrects) / self.total_samples
+        return np.round((np.sum(self.corrects) / self.total_samples) * 100, decimals=2)
 
     def voxels_inside(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
@@ -83,7 +83,7 @@ class RegEvaluator:
         return 1 if np.count_nonzero(corrects) > 0 else 0
 
 
-class InferenceRegEvaluator(RegEvaluator):
+class InferenceEvaluator(Evaluator):
     def __init__(
         self,
         ind2organ_path: str,
@@ -141,16 +141,22 @@ class InferenceRegEvaluator(RegEvaluator):
         return distances.min()
 
     def get_current_distance(self):
-        return np.sum(self.distances) / self.total_samples
+        return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=2)
 
     def get_accuracy_error_bar(self):
-        return np.std(self.corrects, ddof=1) / np.sqrt(self.total_samples)
+        return np.round(
+            np.std(self.corrects, ddof=1) / np.sqrt(self.total_samples) * 100,
+            decimals=2,
+        )
 
     def get_distance_error_bar(self):
-        return np.std(self.distances, ddof=1) / np.sqrt(self.total_samples)
+        return np.round(
+            np.std(self.distances, ddof=1) / np.sqrt(self.total_samples) / 10,
+            decimals=2,
+        )
 
 
-class TrainingRegEvaluator(RegEvaluator):
+class TrainingRegEvaluator(Evaluator):
     def __init__(
         self,
         ind2organ_path: str,

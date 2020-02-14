@@ -15,7 +15,7 @@ class SentenceMappingsProducer(nn.Module):
         joint_space: int,
         finetune: bool = False,
         reg_or_class: str = "reg",
-        num_classes: int = 43,
+        num_classes: int = 46,
     ):
         super(SentenceMappingsProducer, self).__init__()
         self.finetune = finetune

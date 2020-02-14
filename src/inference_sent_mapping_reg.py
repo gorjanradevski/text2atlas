@@ -10,7 +10,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.evaluator import InferenceRegEvaluator
+from voxel_mapping.evaluator import InferenceEvaluator
 
 
 def inference(
@@ -51,7 +51,7 @@ def inference(
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
-    evaluator = InferenceRegEvaluator(
+    evaluator = InferenceEvaluator(
         ind2organ_path,
         organ2label_path,
         voxelman_images_path,
