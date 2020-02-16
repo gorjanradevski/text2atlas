@@ -60,6 +60,8 @@ class Evaluator:
             pred, a_min=np.array([0, 0, 0]), a_max=(np.array(VOXELMAN_CENTER) * 2 - 1)
         )
         for i, organ_index in enumerate(organ_indices):
+            if organ_index < 0:
+                continue
             labels = self.organ2label[self.ind2organ[str(organ_index)]]
             x, y, z = pred.astype(int)
             corrects[i] = int(self.voxelman[x, y, z] in labels)
