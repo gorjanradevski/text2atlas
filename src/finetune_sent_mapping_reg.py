@@ -212,6 +212,7 @@ def main():
         args.organ2voxels_path,
         args.ind2organ_path,
         args.organ2label_path,
+        args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
         args.epochs,
