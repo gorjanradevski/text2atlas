@@ -109,8 +109,11 @@ def collate_pad_sentence_reg_batch(
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
     num_organs = torch.tensor([*num_organs])
+    padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
+        organ_indices, batch_first=True, padding_value=-1
+    )
 
-    return padded_sentences, padded_mappings, num_organs, organ_indices
+    return padded_sentences, padded_mappings, num_organs, padded_organ_indices
 
 
 class VoxelSentenceMappingClassDataset:

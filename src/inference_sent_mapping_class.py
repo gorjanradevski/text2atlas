@@ -1,7 +1,6 @@
 import argparse
 import torch
-from torch.utils.data import DataLoader, Subset
-from torch import nn
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 import json
 import numpy as np

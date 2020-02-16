@@ -4,6 +4,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+from typing import Dict
+import json
+import numpy as np
+import random
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
@@ -12,19 +16,45 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.losses import MinDistanceLoss
+from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 # https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
 
 
+def create_ind2anchors(
+    organ2ind_path: str, organ2voxels_path: str, num_anchors: int = 1000
+) -> Dict:
+    """CREATING A MAPPING FROM INDEX TO A SET OF ORGAN POINTS"""
+    """RANDOM SAMPLING ORGAN VOXELS - DONE IN THE BEGINING OF EVERY EPOCH"""
+
+    organ2ind = json.load(open(organ2ind_path))
+    organ2voxels = json.load(open(organ2voxels_path))
+    ind2voxels = {}
+
+    for organ, ind in organ2ind.items():
+        if len(organ2voxels[organ]) > num_anchors:
+            ind2voxels[ind] = random.sample(organ2voxels[organ], num_anchors)
+        else:
+            ind2voxels[ind] = np.array(organ2voxels[organ])[
+                np.random.choice(range(len(organ2voxels[organ])), num_anchors)
+            ].tolist()
+
+    ind2voxels[-1] = np.zeros(shape=(num_anchors, 3), dtype=np.float)
+
+    return ind2voxels
+
+
 def pretrain(
+    organ2ind_path: str,
+    organ2voxels_path: str,
     ind2organ_path: str,
     organ2label_path: str,
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
+    use_all_voxels: bool,
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
@@ -67,7 +97,13 @@ def pretrain(
     model = nn.DataParallel(
         SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
     ).to(device)
-    criterion = MinDistanceLoss()
+    if use_all_voxels:
+        ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
+        criterion = OrganDistanceLoss()
+        print("Using all organ points!")
+    else:
+        print("Using only one organ center!")
+        criterion = MinDistanceLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
@@ -81,7 +117,18 @@ def pretrain(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, true_mappings, num_organs, _ in train_loader:
+            for sentences, true_mappings, num_organs, true_labels in train_loader:
+                if use_all_voxels:
+                    anchors_list = [
+                        ind2anchors[item.item()]
+                        for true_label in true_labels
+                        for item in true_label
+                    ]
+                    anchors = (
+                        torch.tensor(anchors_list)
+                        .view(true_labels.shape[0], true_labels.shape[1], 1000, 3)
+                        .to(device)
+                    )
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
@@ -91,7 +138,10 @@ def pretrain(
                     num_organs.to(device),
                 )
                 output_mappings = model(sentences)
-                loss = criterion(output_mappings, true_mappings, num_organs, device)
+                if use_all_voxels:
+                    loss = criterion(output_mappings, anchors, num_organs, device)
+                else:
+                    loss = criterion(output_mappings, true_mappings, num_organs, device)
                 # backward
                 loss.backward()
                 # clip the gradients
@@ -157,11 +207,14 @@ def main():
     # imported as a module.
     args = parse_args()
     pretrain(
+        args.organ2ind_path,
+        args.organ2voxels_path,
         args.ind2organ_path,
         args.organ2label_path,
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
+        args.use_all_voxels,
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
@@ -183,21 +236,36 @@ def parse_args():
         description="Trains a sentence voxel mapping model."
     )
     parser.add_argument(
+        "--organ2voxels_path",
+        type=str,
+        default="data/data_organs_new/organ2voxels_new.json",
+        help="Path to the ind2organ path.",
+    )
+    parser.add_argument(
+        "--organ2ind_path",
+        type=str,
+        default="data/data_organs_new/organ2ind_new.json",
+        help="Path to the ind2organ path.",
+    )
+    parser.add_argument(
+        "--use_all_voxels", action="store_true", help="Whether to use the all voxels."
+    )
+    parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs/ind2organ.json",
+        default="data/data_organs_new/ind2organ_new.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs/organ2label.json",
+        default="data/data_organs_new/organ2label_new.json",
         help="Path to the organ2label path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/voxelman/",
+        default="data/data_organs_new/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
