@@ -215,6 +215,7 @@ def main():
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
+        args.use_all_voxels,
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
