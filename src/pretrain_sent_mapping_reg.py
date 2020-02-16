@@ -19,9 +19,6 @@ from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 
-torch.multiprocessing.set_sharing_strategy("file_system")
-# https://github.com/pytorch/pytorch/issues/973#issuecomment-426559250
-
 
 def create_ind2anchors(
     organ2ind_path: str, organ2voxels_path: str, num_anchors: int = 1000

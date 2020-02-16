@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import json
 import numpy as np
+from torch import nn
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestMaskedClassDataset,
