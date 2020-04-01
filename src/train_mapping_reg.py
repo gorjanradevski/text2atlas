@@ -58,6 +58,7 @@ def finetune(
     mask_probability: float,
     checkpoint_path: str,
     save_model_path: str,
+    save_intermediate_model_path: str,
     learning_rate: float,
     weight_decay: float,
     clip_val: float,
@@ -93,9 +94,8 @@ def finetune(
         collate_fn=collate_pad_sentence_reg_batch,
     )
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=True)
+        SentenceMappingsProducer(bert_path_or_name, joint_space)
     ).to(device)
-    # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     if use_all_voxels:
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
@@ -109,11 +109,32 @@ def finetune(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
 
+    # Load model
+    cur_epoch = 0
+    best_accuracy = None
+    if checkpoint_path is not None:
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        cur_epoch = checkpoint["epoch"]
+        best_accuracy = checkpoint["best_accuracy"]
+        # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
+        del checkpoint
+        print(
+            f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
+        )
+        print(f"The previous best accuracy was: {best_accuracy}!")
+
     # Create evaluator
     evaluator = TrainingRegEvaluator(
-        ind2organ_path, organ2label_path, voxelman_images_path, len(val_dataset)
+        ind2organ_path,
+        organ2label_path,
+        voxelman_images_path,
+        len(val_dataset),
+        best_accuracy,
     )
-    for epoch in range(epochs):
+
+    for epoch in range(cur_epoch, epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -201,6 +222,16 @@ def finetune(
                 print(
                     f"Avg accuracy on epoch {epoch+1} is: {evaluator.current_average_accuracy}"
                 )
+            print("Saving intermediate checkpoint...")
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "best_accuracy": evaluator.best_avg_accuracy,
+                },
+                save_intermediate_model_path,
+            )
 
 
 def main():
@@ -222,6 +253,7 @@ def main():
         args.mask_probability,
         args.checkpoint_path,
         args.save_model_path,
+        args.save_intermediate_model_path,
         args.learning_rate,
         args.weight_decay,
         args.clip_val,
@@ -285,8 +317,14 @@ def parse_args():
     parser.add_argument(
         "--save_model_path",
         type=str,
-        default="models/sentence_finetuned.pt",
+        default="models/sentence_mapping_regressor.pt",
         help="Where to save the model.",
+    )
+    parser.add_argument(
+        "--save_intermediate_model_path",
+        type=str,
+        default="models/intermediate_sentence_mapping_regressor.pt",
+        help="Where to save the intermediate checkpoint model.",
     )
     parser.add_argument(
         "--epochs",
@@ -298,7 +336,7 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=0.00002, help="The learning rate."
+        "--learning_rate", type=float, default=2e-5, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
@@ -321,8 +359,8 @@ def parse_args():
     parser.add_argument(
         "--checkpoint_path",
         type=str,
-        default="pretrained.pt",
-        help="Path to a pretrained checkpoint.",
+        default=None,
+        help="If resuming training, start from here.",
     )
     parser.add_argument(
         "--mask_probability", type=float, default=0.5, help="The mask probability."

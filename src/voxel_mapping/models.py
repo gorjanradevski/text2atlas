@@ -13,14 +13,11 @@ class SentenceMappingsProducer(nn.Module):
         self,
         bert_path_or_name: str,
         joint_space: int,
-        finetune: bool = False,
         reg_or_class: str = "reg",
         num_classes: int = 46,
     ):
         super(SentenceMappingsProducer, self).__init__()
-        self.finetune = finetune
         self.bert = BertModel.from_pretrained(bert_path_or_name)
-        self.bert.eval()
         if reg_or_class == "reg":
             self.projector = RegressionProjector(768, joint_space)
         elif reg_or_class == "class":
@@ -28,25 +25,12 @@ class SentenceMappingsProducer(nn.Module):
         else:
             raise ValueError("The projector can be regression or classification.")
 
-        for param in self.bert.parameters():
-            param.requires_grad = finetune
-
     def forward(self, sentences: torch.Tensor):
         # https://arxiv.org/abs/1801.06146
         hidden_states = self.bert(sentences)
         last_state = hidden_states[0][:, 0, :]
 
         return self.projector(last_state)
-
-    def train(self, mode: bool = True):
-        if self.finetune and mode:
-            self.bert.train(True)
-            self.projector.train(True)
-        elif mode:
-            self.projector.train(True)
-        else:
-            self.bert.train(False)
-            self.projector.train(False)
 
 
 class RegressionProjector(nn.Module):

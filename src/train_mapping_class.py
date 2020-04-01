@@ -25,6 +25,7 @@ def finetune(
     mask_probability: float,
     checkpoint_path: str,
     save_model_path: str,
+    save_intermediate_model_path: str,
     learning_rate: float,
     weight_decay: float,
     clip_val: float,
@@ -79,7 +80,20 @@ def finetune(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     best_avg_acc = -1
-    for epoch in range(epochs):
+    cur_epoch = 0
+    if checkpoint_path is not None:
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        cur_epoch = checkpoint["epoch"]
+        best_accuracy = checkpoint["best_accuracy"]
+        # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
+        del checkpoint
+        print(
+            f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
+        )
+        print(f"The previous best accuracy was: {best_accuracy}!")
+    for epoch in range(cur_epoch, epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -153,6 +167,16 @@ def finetune(
                 print(
                     f"Avg accuracy on epoch {epoch+1} is: {(cur_unmasked_acc + cur_masked_acc) / 2}"
                 )
+            print("Saving intermediate checkpoint...")
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "best_accuracy": best_accuracy,
+                },
+                save_intermediate_model_path,
+            )
 
 
 def main():
@@ -169,6 +193,7 @@ def main():
         args.mask_probability,
         args.checkpoint_path,
         args.save_model_path,
+        args.save_intermediate_model_path,
         args.learning_rate,
         args.weight_decay,
         args.clip_val,
@@ -218,7 +243,7 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=0.00002, help="The learning rate."
+        "--learning_rate", type=float, default=2e-5, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
@@ -244,8 +269,14 @@ def parse_args():
     parser.add_argument(
         "--checkpoint_path",
         type=str,
-        default="pretrained.pt",
+        default=None,
         help="Path to a pretrained checkpoint.",
+    )
+    parser.add_argument(
+        "--save_intermediate_model_path",
+        type=str,
+        default="models/intermediate_sentence_mapping_regressor.pt",
+        help="Where to save the intermediate checkpoint model.",
     )
 
     return parser.parse_args()
