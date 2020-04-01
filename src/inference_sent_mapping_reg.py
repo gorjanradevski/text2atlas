@@ -157,7 +157,7 @@ def parse_args():
         help="Path to the validation set",
     )
     parser.add_argument(
-        "--batch_size", type=int, default=64, help="The size of the batch."
+        "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
         "--joint_space",

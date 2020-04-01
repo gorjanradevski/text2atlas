@@ -337,7 +337,7 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=2e-5, help="The learning rate."
+        "--learning_rate", type=float, default=5e-5, help="The learning rate."
     )
     parser.add_argument(
         "--weight_decay", type=float, default=0.0, help="The weight decay."
