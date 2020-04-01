@@ -94,7 +94,7 @@ def train(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
         print(f"The previous best accuracy was: {best_avg_acc}!")
-    for epoch in range(cur_epoch, epochs):
+    for epoch in range(cur_epoch, cur_epoch + epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)

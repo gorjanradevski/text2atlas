@@ -135,7 +135,7 @@ def train(
         best_avg_accuracy,
     )
 
-    for epoch in range(cur_epoch, epochs):
+    for epoch in range(cur_epoch, cur_epoch + epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
