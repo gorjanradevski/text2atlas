@@ -89,7 +89,7 @@ class InferenceEvaluator(Evaluator):
         self.distances = np.zeros(self.total_samples)
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
-        self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
+        # self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
         super().update_counters(output_mapping, organ_indices)
 
     def voxels_distance(
