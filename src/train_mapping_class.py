@@ -87,13 +87,13 @@ def train(
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
-        best_accuracy = checkpoint["best_accuracy"]
+        best_avg_acc = checkpoint["best_avg_acc"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         print(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best accuracy was: {best_accuracy}!")
+        print(f"The previous best accuracy was: {best_avg_acc}!")
     for epoch in range(cur_epoch, epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -174,7 +174,7 @@ def train(
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_accuracy": best_accuracy,
+                    "best_avg_acc": best_avg_acc,
                 },
                 save_intermediate_model_path,
             )
