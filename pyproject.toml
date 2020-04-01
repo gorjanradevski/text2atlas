@@ -21,7 +21,7 @@ nltk = "^3.4"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allow-prereleases = true}
-flake8 = {version = "^3.7", allows-prereleases = true}
+flake8 = {version = "^3.7", allow-prereleases = true}
 pytest = "^5.3"
 google_images_download = "^2.8"
 rope = "^0.16.0"

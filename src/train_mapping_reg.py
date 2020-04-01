@@ -8,6 +8,7 @@ import json
 from typing import Dict
 import numpy as np
 import random
+from transformers import BertConfig
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
@@ -43,7 +44,7 @@ def create_ind2anchors(
     return ind2voxels
 
 
-def finetune(
+def train(
     organ2ind_path: str,
     organ2voxels_path: str,
     ind2organ_path: str,
@@ -93,10 +94,10 @@ def finetune(
         num_workers=4,
         collate_fn=collate_pad_sentence_reg_batch,
     )
+    config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, joint_space)
+        SentenceMappingsProducer(bert_path_or_name, joint_space, config)
     ).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     if use_all_voxels:
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = OrganDistanceLoss()
@@ -238,7 +239,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    finetune(
+    train(
         args.organ2ind_path,
         args.organ2voxels_path,
         args.ind2organ_path,
@@ -305,13 +306,13 @@ def parse_args():
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/train_dataset.json",
+        default="data/dataset_text_atlas_mapping_train_new.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/val_dataset.json",
+        default="data/dataset_text_atlas_mapping_val_new.json",
         help="Path to the validation set",
     )
     parser.add_argument(

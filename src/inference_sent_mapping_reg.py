@@ -151,7 +151,7 @@ def parse_args():
     parser.add_argument(
         "--test_json_path",
         type=str,
-        default="data/val_dataset.json",
+        default="data/dataset_text_atlas_mapping_test_new.json",
         help="Path to the validation set",
     )
     parser.add_argument(
@@ -172,7 +172,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint_path",
         type=str,
-        default="pretrained.pt",
+        default=None,
         help="Path to a pretrained checkpoint.",
     )
 

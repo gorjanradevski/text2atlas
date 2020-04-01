@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
+from transformers import BertConfig
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainClassDataset,
@@ -15,7 +16,7 @@ from voxel_mapping.datasets import (
 from voxel_mapping.models import SentenceMappingsProducer
 
 
-def finetune(
+def train(
     ind2organ_path: str,
     train_json_path: str,
     val_json_path: str,
@@ -64,16 +65,16 @@ def finetune(
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
+    config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
         SentenceMappingsProducer(
             bert_path_or_name,
             joint_space,
-            finetune=True,
+            config,
             reg_or_class="class",
             num_classes=num_classes,
         )
     ).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
@@ -183,7 +184,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    finetune(
+    train(
         args.ind2organ_path,
         args.train_json_path,
         args.val_json_path,
@@ -212,25 +213,25 @@ def parse_args():
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs/ind2organ.json",
+        default="data/data_organs_new/ind2organ_new.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/train_dataset.json",
+        default="data/dataset_text_atlas_mapping_train_new.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/val_dataset.json",
+        default="data/dataset_text_atlas_mapping_val_new.json",
         help="Path to the validation set",
     )
     parser.add_argument(
         "--save_model_path",
         type=str,
-        default="models/sentence_pretrained.pt",
+        default="models/sentence_mapping_classifier.pt",
         help="Where to save the model.",
     )
     parser.add_argument(

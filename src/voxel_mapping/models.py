@@ -1,4 +1,4 @@
-from transformers import BertModel
+from transformers import BertModel, BertConfig
 from torch import nn
 import torch
 import torch.nn.functional as F
@@ -13,15 +13,16 @@ class SentenceMappingsProducer(nn.Module):
         self,
         bert_path_or_name: str,
         joint_space: int,
+        config: BertConfig,
         reg_or_class: str = "reg",
         num_classes: int = 46,
     ):
         super(SentenceMappingsProducer, self).__init__()
         self.bert = BertModel.from_pretrained(bert_path_or_name)
         if reg_or_class == "reg":
-            self.projector = RegressionProjector(768, joint_space)
+            self.projector = RegressionProjector(config.hidden_size, joint_space)
         elif reg_or_class == "class":
-            self.projector = ClassificationProjector(768, joint_space, num_classes)
+            self.projector = ClassificationProjector(config.hidden_size, joint_space, num_classes)
         else:
             raise ValueError("The projector can be regression or classification.")
 
