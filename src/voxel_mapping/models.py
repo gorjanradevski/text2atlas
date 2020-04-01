@@ -22,7 +22,9 @@ class SentenceMappingsProducer(nn.Module):
         if reg_or_class == "reg":
             self.projector = RegressionProjector(config.hidden_size, joint_space)
         elif reg_or_class == "class":
-            self.projector = ClassificationProjector(config.hidden_size, joint_space, num_classes)
+            self.projector = ClassificationProjector(
+                config.hidden_size, joint_space, num_classes
+            )
         else:
             raise ValueError("The projector can be regression or classification.")
 

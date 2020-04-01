@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+from transformers import BertConfig
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
@@ -43,8 +44,9 @@ def inference(
         collate_fn=collate_pad_sentence_reg_batch,
     )
     # Create model
+    config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, joint_space, finetune=False)
+        SentenceMappingsProducer(bert_path_or_name, joint_space, config)
     ).to(device)
     # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))

@@ -5,6 +5,7 @@ from tqdm import tqdm
 import json
 import numpy as np
 from torch import nn
+from transformers import BertConfig
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestMaskedClassDataset,
@@ -52,11 +53,12 @@ def inference(
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
+    config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
         SentenceMappingsProducer(
             bert_path_or_name,
             joint_space,
-            finetune=False,
+            config,
             reg_or_class="class",
             num_classes=num_classes,
         )
