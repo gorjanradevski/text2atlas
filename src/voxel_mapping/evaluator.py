@@ -170,7 +170,7 @@ class TrainingRegEvaluator(Evaluator):
         super().__init__(
             ind2organ_path, organ2label_path, voxelman_images_path, total_samples
         )
-        self.best_avg_accuracy = -1 if None else best_avg_accuracy
+        self.best_avg_accuracy = best_avg_accuracy
         self.current_average_accuracy = 0
 
     def reset_current_average_accuracy(self):

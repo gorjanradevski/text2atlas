@@ -112,19 +112,19 @@ def train(
 
     # Load model
     cur_epoch = 0
-    best_accuracy = None
+    best_avg_accuracy = -1
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
-        best_accuracy = checkpoint["best_accuracy"]
+        best_avg_accuracy = checkpoint["best_avg_accuracy"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         print(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best accuracy was: {best_accuracy}!")
+        print(f"The previous best accuracy was: {best_avg_accuracy}!")
 
     # Create evaluator
     evaluator = TrainingRegEvaluator(
@@ -132,7 +132,7 @@ def train(
         organ2label_path,
         voxelman_images_path,
         len(val_dataset),
-        best_accuracy,
+        best_avg_accuracy,
     )
 
     for epoch in range(cur_epoch, epochs):
