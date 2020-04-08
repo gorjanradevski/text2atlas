@@ -214,14 +214,16 @@ def train(
                 evaluator.update_best_avg_accuracy()
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy {evaluator.best_avg_accuracy} on epoch "
+                    f"Found new best with avg accuracy"
+                    f"{round(evaluator.best_avg_accuracy, 2)} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 print("======================")
                 torch.save(model.state_dict(), save_model_path)
             else:
                 print(
-                    f"Avg accuracy on epoch {epoch+1} is: {evaluator.current_average_accuracy}"
+                    f"Avg accuracy on epoch {epoch+1} is :"
+                    f"{round(evaluator.current_average_accuracy, 2)}"
                 )
             print("Saving intermediate checkpoint...")
             torch.save(

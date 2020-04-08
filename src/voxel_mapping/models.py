@@ -17,6 +17,10 @@ class SentenceMappingsProducer(nn.Module):
         reg_or_class: str = "reg",
         num_classes: int = 46,
     ):
+        # emilyalsentzer/Bio_ClinicalBERT (https://huggingface.co/emilyalsentzer/Bio_ClinicalBERT)
+        # SciBERT
+        # BioBERT
+        # google/bert_uncased_L-2_H-128_A-2 (https://huggingface.co/google)
         super(SentenceMappingsProducer, self).__init__()
         self.bert = BertModel.from_pretrained(bert_path_or_name)
         if reg_or_class == "reg":
