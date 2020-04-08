@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 import json
@@ -66,12 +66,19 @@ def train(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, bert_path_or_name, mask_probability
+    train_dataset = Subset(
+        VoxelSentenceMappingTrainRegDataset(
+            train_json_path, bert_path_or_name, mask_probability
+        ),
+        [0, 1, 2, 3, 4, 5, 6, 7],
     )
-    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
-        val_json_path, bert_path_or_name
+    val_dataset = Subset(
+        VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name),
+        [0, 1, 2, 3],
+    )
+    val_masked_dataset = Subset(
+        VoxelSentenceMappingTestMaskedRegDataset(val_json_path, bert_path_or_name),
+        [0, 1, 2, 3],
     )
 
     train_loader = DataLoader(
@@ -94,9 +101,9 @@ def train(
         collate_fn=collate_pad_sentence_reg_batch,
     )
     config = BertConfig.from_pretrained(bert_path_or_name)
-    model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, joint_space, config)
-    ).to(device)
+    model = nn.DataParallel(SentenceMappingsProducer(bert_path_or_name, config)).to(
+        device
+    )
     ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
     criterion = OrganDistanceLoss()
     # noinspection PyUnresolvedReferences
@@ -204,8 +211,8 @@ def train(
                 evaluator.update_best_avg_accuracy()
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy"
-                    f"{round(evaluator.best_avg_accuracy, 2)} on epoch "
+                    f"Found new best with avg accuracy: "
+                    f"{evaluator.best_avg_accuracy} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 print("======================")
@@ -213,7 +220,7 @@ def train(
             else:
                 print(
                     f"Avg accuracy on epoch {epoch+1} is :"
-                    f"{round(evaluator.current_average_accuracy, 2)}"
+                    f"{evaluator.current_average_accuracy}"
                 )
             print("Saving intermediate checkpoint...")
             torch.save(

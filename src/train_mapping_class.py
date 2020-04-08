@@ -67,13 +67,7 @@ def train(
     )
     config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(
-            bert_path_or_name,
-            joint_space,
-            config,
-            reg_or_class="class",
-            num_classes=num_classes,
-        )
+        SentenceMappingsProducer(bert_path_or_name, config, reg_or_class="class")
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences

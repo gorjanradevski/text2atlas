@@ -173,6 +173,9 @@ class TrainingRegEvaluator(Evaluator):
 
     def finalize_current_average_accuracy(self):
         self.current_average_accuracy /= 2
+        self.current_average_accuracy = np.round(
+            self.current_average_accuracy * 100, decimals=2
+        )
 
     def is_best_avg_accuracy(self):
         return self.current_average_accuracy > self.best_avg_accuracy
