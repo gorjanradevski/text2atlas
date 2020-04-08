@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
@@ -66,19 +66,12 @@ def train(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = Subset(
-        VoxelSentenceMappingTrainRegDataset(
-            train_json_path, bert_path_or_name, mask_probability
-        ),
-        [0, 1, 2, 3, 4, 5, 6, 7],
+    train_dataset = VoxelSentenceMappingTrainRegDataset(
+        train_json_path, bert_path_or_name, mask_probability
     )
-    val_dataset = Subset(
-        VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name),
-        [0, 1, 2, 3],
-    )
-    val_masked_dataset = Subset(
-        VoxelSentenceMappingTestMaskedRegDataset(val_json_path, bert_path_or_name),
-        [0, 1, 2, 3],
+    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name)
+    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
+        val_json_path, bert_path_or_name
     )
 
     train_loader = DataLoader(
