@@ -189,7 +189,7 @@ def train(
             evaluator.update_current_average_accuracy()
             # Restart counters
             evaluator.reset_counters()
-            for sentences, _, _, organs_indices in tqdm(val_masked_loader):
+            for sentences, organs_indices in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
                 for output_mapping, organ_indices in zip(
