@@ -62,9 +62,7 @@ def train(
     save_model_path: str,
     save_intermediate_model_path: str,
     learning_rate: float,
-    weight_decay: float,
     clip_val: float,
-    joint_space: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,9 +111,7 @@ def train(
         device
     )
     # noinspection PyUnresolvedReferences
-    optimizer = optim.Adam(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    )
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Load model
     cur_epoch = 0
@@ -251,9 +247,7 @@ def main():
         args.save_model_path,
         args.save_intermediate_model_path,
         args.learning_rate,
-        args.weight_decay,
         args.clip_val,
-        args.joint_space,
     )
 
 
@@ -333,15 +327,6 @@ def parse_args():
     )
     parser.add_argument(
         "--learning_rate", type=float, default=5e-5, help="The learning rate."
-    )
-    parser.add_argument(
-        "--weight_decay", type=float, default=0.0, help="The weight decay."
-    )
-    parser.add_argument(
-        "--joint_space",
-        type=int,
-        default=512,
-        help="The joint space where the encodings will be projected.",
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
