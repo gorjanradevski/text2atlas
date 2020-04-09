@@ -37,11 +37,11 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
     def __init__(
         self,
         json_path: str,
-        bert_tokenizer_path_or_name: str,
+        tokenizer: BertTokenizer,
         mask_probability: float,
         ind2anchors: Dict = None,
     ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
+        super().__init__(json_path, tokenizer, ind2anchors)
         self.mask_probability = mask_probability
 
     def __len__(self):
@@ -72,9 +72,9 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
 
 class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset):
     def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, ind2anchors: Dict = None
+        self, json_path: str, tokenizer: BertTokenizer, ind2anchors: Dict = None
     ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
+        super().__init__(json_path, tokenizer, ind2anchors)
 
     def __len__(self):
         return len(self.sentences)
@@ -90,9 +90,9 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
 
 class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, Dataset):
     def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, ind2anchors: Dict = None
+        self, json_path: str, tokenizer: BertTokenizer, ind2anchors: Dict = None
     ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
+        super().__init__(json_path, tokenizer, ind2anchors)
 
     def __len__(self):
         return len(self.sentences)
@@ -138,13 +138,11 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
 
 
 class VoxelSentenceMappingClassDataset:
-    def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, num_classes: int
-    ):
+    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
         self.json_data = json.load(open(json_path))
         self.sentences, self.organs_indices, self.keywords = [], [], []
         self.num_classes = num_classes
-        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
+        self.tokenizer = tokenizer
         for element in self.json_data:
             if len(self.tokenizer.encode(len(element["text"]))) > 512:
                 continue
@@ -157,11 +155,11 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
     def __init__(
         self,
         json_path: str,
-        bert_tokenizer_path_or_name: str,
+        tokenizer: BertTokenizer,
         mask_probability: float,
         num_classes: int,
     ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, num_classes)
+        super().__init__(json_path, tokenizer, num_classes)
         self.mask_probability = mask_probability
 
     def __len__(self):
@@ -191,10 +189,8 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
 
 
 class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dataset):
-    def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, num_classes: int
-    ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, num_classes)
+    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
+        super().__init__(json_path, tokenizer, num_classes)
 
     def __len__(self):
         return len(self.sentences)
@@ -213,10 +209,8 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
 class VoxelSentenceMappingTestMaskedClassDataset(
     VoxelSentenceMappingClassDataset, Dataset
 ):
-    def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, num_classes: int
-    ):
-        super().__init__(json_path, bert_tokenizer_path_or_name, num_classes)
+    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
+        super().__init__(json_path, tokenizer, num_classes)
 
     def __len__(self):
         return len(self.sentences)
