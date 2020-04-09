@@ -268,7 +268,7 @@ def parse_args():
     parser.add_argument(
         "--organ2voxels_path",
         type=str,
-        default="data/data_organs/organ2voxels.json",
+        default="data/data_organs/organ2voxels_eroded.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
