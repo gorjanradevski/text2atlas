@@ -60,9 +60,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(masked_sentence, add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         mapping = torch.tensor(self.mappings[idx])
         organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
@@ -80,9 +78,7 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(self.sentences[idx], add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         organ_indices = torch.tensor(self.organs_indices[idx])
 
         return tokenized_sentence, organ_indices
@@ -105,9 +101,7 @@ class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, D
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(masked_sentence, add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         organ_indices = torch.tensor(self.organs_indices[idx])
 
         return tokenized_sentence, organ_indices
@@ -143,8 +137,8 @@ class VoxelSentenceMappingClassDataset:
         self.sentences, self.organs_indices, self.keywords = [], [], []
         self.num_classes = num_classes
         self.tokenizer = tokenizer
-        for element in self.json_data:
-            if len(self.tokenizer.encode(len(element["text"]))) > 512:
+        for element in tqdm(self.json_data):
+            if len(self.tokenizer.encode(element["text"])) > 512:
                 continue
             self.sentences.append(element["text"])
             self.organs_indices.append(element["organ_indices"])
@@ -178,9 +172,7 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(masked_sentence, add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         organ_indices = torch.tensor(self.organs_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
@@ -196,9 +188,7 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(self.sentences[idx], add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         organ_indices = torch.tensor(self.organs_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
@@ -223,9 +213,7 @@ class VoxelSentenceMappingTestMaskedClassDataset(
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
-        tokenized_sentence = torch.tensor(
-            self.tokenizer.encode(masked_sentence, add_special_tokens=True)
-        )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         organ_indices = torch.tensor(self.organs_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
