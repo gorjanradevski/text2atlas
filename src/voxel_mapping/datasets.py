@@ -5,32 +5,43 @@ import torch
 from typing import Tuple
 import numpy as np
 import nltk
+from tqdm import tqdm
+from typing import Dict
 
 
 class VoxelSentenceMappingRegDataset:
-    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
+    def __init__(self, json_path: str, tokenizer: str, ind2anchors: Dict):
         self.json_data = json.load(open(json_path))
+        self.tokenizer = tokenizer
         self.sentences, self.mappings, self.keywords, self.organs_indices = (
             [],
             [],
             [],
             [],
         )
-        for element in self.json_data:
-            if len(element["text"]) > 200:
+        for element in tqdm(self.json_data):
+            if len(self.tokenizer.encode(element["text"])) > 512:
                 continue
             self.sentences.append(element["text"])
-            self.mappings.append(element["centers"])
+            if ind2anchors:
+                self.mappings.append(
+                    [ind2anchors[ind] for ind in element["organ_indices"]]
+                )
+            else:
+                self.mappings.append(element["centers"])
             self.keywords.append(element["keywords"])
             self.organs_indices.append(element["organ_indices"])
-        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
 
 
 class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Dataset):
     def __init__(
-        self, json_path: str, bert_tokenizer_path_or_name: str, mask_probability: float
+        self,
+        json_path: str,
+        bert_tokenizer_path_or_name: str,
+        mask_probability: float,
+        ind2anchors: Dict = None,
     ):
-        super().__init__(json_path, bert_tokenizer_path_or_name)
+        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
         self.mask_probability = mask_probability
 
     def __len__(self):
@@ -56,12 +67,14 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, organ_indices)
+        return tokenized_sentence, mapping, num_organs, organ_indices
 
 
 class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset):
-    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
-        super().__init__(json_path, bert_tokenizer_path_or_name)
+    def __init__(
+        self, json_path: str, bert_tokenizer_path_or_name: str, ind2anchors: Dict = None
+    ):
+        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
 
     def __len__(self):
         return len(self.sentences)
@@ -70,16 +83,16 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
         tokenized_sentence = torch.tensor(
             self.tokenizer.encode(self.sentences[idx], add_special_tokens=True)
         )
-        mapping = torch.tensor(self.mappings[idx])
         organ_indices = torch.tensor(self.organs_indices[idx])
-        num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, organ_indices)
+        return tokenized_sentence, organ_indices
 
 
 class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, Dataset):
-    def __init__(self, json_path: str, bert_tokenizer_path_or_name: str):
-        super().__init__(json_path, bert_tokenizer_path_or_name)
+    def __init__(
+        self, json_path: str, bert_tokenizer_path_or_name: str, ind2anchors: Dict = None
+    ):
+        super().__init__(json_path, bert_tokenizer_path_or_name, ind2anchors)
 
     def __len__(self):
         return len(self.sentences)
@@ -95,14 +108,12 @@ class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, D
         tokenized_sentence = torch.tensor(
             self.tokenizer.encode(masked_sentence, add_special_tokens=True)
         )
-        mapping = torch.tensor(self.mappings[idx])
         organ_indices = torch.tensor(self.organs_indices[idx])
-        num_organs = len(mapping)
 
-        return (tokenized_sentence, mapping, num_organs, organ_indices)
+        return tokenized_sentence, organ_indices
 
 
-def collate_pad_sentence_reg_batch(
+def collate_pad_sentence_reg_train_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 ):
     sentences, mappings, num_organs, organ_indices = zip(*batch)
@@ -116,6 +127,16 @@ def collate_pad_sentence_reg_batch(
     return padded_sentences, padded_mappings, num_organs, padded_organ_indices
 
 
+def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
+    sentences, organ_indices = zip(*batch)
+    padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
+    padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
+        organ_indices, batch_first=True, padding_value=-1
+    )
+
+    return padded_sentences, padded_organ_indices
+
+
 class VoxelSentenceMappingClassDataset:
     def __init__(
         self, json_path: str, bert_tokenizer_path_or_name: str, num_classes: int
@@ -123,13 +144,13 @@ class VoxelSentenceMappingClassDataset:
         self.json_data = json.load(open(json_path))
         self.sentences, self.organs_indices, self.keywords = [], [], []
         self.num_classes = num_classes
+        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
         for element in self.json_data:
-            if len(element["text"]) > 200:
+            if len(self.tokenizer.encode(len(element["text"]))) > 512:
                 continue
             self.sentences.append(element["text"])
             self.organs_indices.append(element["organ_indices"])
             self.keywords.append(element["keywords"])
-        self.tokenizer = BertTokenizer.from_pretrained(bert_tokenizer_path_or_name)
 
 
 class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Dataset):

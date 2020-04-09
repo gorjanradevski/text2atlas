@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
-from transformers import BertConfig
+from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainClassDataset,
@@ -36,14 +36,15 @@ def train(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load organ to indices to obtain the number of classes
     num_classes = len([index for index in json.load(open(ind2organ_path)).keys()])
+    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, bert_path_or_name, mask_probability, num_classes
+        train_json_path, tokenizer, mask_probability, num_classes
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
-        val_json_path, bert_path_or_name, num_classes
+        val_json_path, tokenizer, num_classes
     )
     val_masked_dataset = VoxelSentenceMappingTestMaskedClassDataset(
-        val_json_path, bert_path_or_name, num_classes
+        val_json_path, tokenizer, num_classes
     )
 
     train_loader = DataLoader(
@@ -207,19 +208,19 @@ def parse_args():
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs_new/ind2organ_new.json",
+        default="data/data_organs/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_train_new.json",
+        default="data/dataset_text_atlas_mapping_train_fixd.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_val_new.json",
+        default="data/dataset_text_atlas_mapping_val_fixd.json",
         help="Path to the validation set",
     )
     parser.add_argument(

@@ -8,13 +8,14 @@ import json
 from typing import Dict
 import numpy as np
 import random
-from transformers import BertConfig
+from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
     VoxelSentenceMappingTestRegDataset,
     VoxelSentenceMappingTestMaskedRegDataset,
-    collate_pad_sentence_reg_batch,
+    collate_pad_sentence_reg_train_batch,
+    collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
@@ -67,37 +68,8 @@ def train(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, bert_path_or_name, mask_probability
-    )
-    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, bert_path_or_name)
-    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
-        val_json_path, bert_path_or_name
-    )
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
-        collate_fn=collate_pad_sentence_reg_batch,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        num_workers=4,
-        collate_fn=collate_pad_sentence_reg_batch,
-    )
-    val_masked_loader = DataLoader(
-        val_masked_dataset,
-        batch_size=batch_size,
-        num_workers=4,
-        collate_fn=collate_pad_sentence_reg_batch,
-    )
-    config = BertConfig.from_pretrained(bert_path_or_name)
-    model = nn.DataParallel(SentenceMappingsProducer(bert_path_or_name, config)).to(
-        device
-    )
+    # Check for the type of loss
+    ind2anchors = None
     if use_all_voxels:
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = OrganDistanceLoss()
@@ -105,6 +77,41 @@ def train(
     else:
         print("Using only one organ center!")
         criterion = MinDistanceLoss()
+
+    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    train_dataset = VoxelSentenceMappingTrainRegDataset(
+        train_json_path, tokenizer, mask_probability, ind2anchors
+    )
+    val_dataset = VoxelSentenceMappingTestRegDataset(
+        val_json_path, tokenizer, ind2anchors
+    )
+    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
+        val_json_path, tokenizer, ind2anchors
+    )
+
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
+        collate_fn=collate_pad_sentence_reg_train_batch,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=batch_size,
+        num_workers=4,
+        collate_fn=collate_pad_sentence_reg_test_batch,
+    )
+    val_masked_loader = DataLoader(
+        val_masked_dataset,
+        batch_size=batch_size,
+        num_workers=4,
+        collate_fn=collate_pad_sentence_reg_test_batch,
+    )
+    config = BertConfig.from_pretrained(bert_path_or_name)
+    model = nn.DataParallel(SentenceMappingsProducer(bert_path_or_name, config)).to(
+        device
+    )
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
@@ -141,17 +148,6 @@ def train(
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
             for sentences, true_mappings, num_organs, true_labels in train_loader:
-                if use_all_voxels:
-                    anchors_list = [
-                        ind2anchors[item.item()]
-                        for true_label in true_labels
-                        for item in true_label
-                    ]
-                    anchors = (
-                        torch.tensor(anchors_list)
-                        .view(true_labels.shape[0], true_labels.shape[1], 1000, 3)
-                        .to(device)
-                    )
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
@@ -161,10 +157,7 @@ def train(
                     num_organs.to(device),
                 )
                 output_mappings = model(sentences)
-                if use_all_voxels:
-                    loss = criterion(output_mappings, anchors, num_organs, device)
-                else:
-                    loss = criterion(output_mappings, true_mappings, num_organs, device)
+                loss = criterion(output_mappings, true_mappings, num_organs, device)
                 # backward
                 loss.backward()
                 # clip the gradients
@@ -182,7 +175,7 @@ def train(
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
-            for sentences, _, _, organs_indices in tqdm(val_loader):
+            for sentences, organs_indices in tqdm(val_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences).cpu().numpy()
                 for output_mapping, organ_indices in zip(
@@ -275,43 +268,43 @@ def parse_args():
     parser.add_argument(
         "--organ2voxels_path",
         type=str,
-        default="data/data_organs_new/organ2voxels_new.json",
+        default="data/data_organs/organ2voxels.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2ind_path",
         type=str,
-        default="data/data_organs_new/organ2ind_new.json",
+        default="data/data_organs/organ2ind.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs_new/ind2organ_new.json",
+        default="data/data_organs/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs_new/organ2label_new.json",
+        default="data/data_organs/organ2label.json",
         help="Path to the organ2label path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/data_organs_new/voxelman_images",
+        default="data/data_organs/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_train_new.json",
+        default="data/dataset_text_atlas_mapping_train_fixd.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_val_new.json",
+        default="data/dataset_text_atlas_mapping_val_fixd.json",
         help="Path to the validation set",
     )
     parser.add_argument(

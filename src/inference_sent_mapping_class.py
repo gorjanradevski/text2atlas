@@ -5,7 +5,7 @@ from tqdm import tqdm
 import json
 import numpy as np
 from torch import nn
-from transformers import BertConfig
+from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestMaskedClassDataset,
@@ -34,8 +34,9 @@ def inference(
     ind2organ = json.load(open(ind2organ_path))
     organ2center = json.load(open(organ2mass_path))
     num_classes = len([index for index in ind2organ.keys()])
+    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
-        test_json_path, bert_path_or_name, num_classes
+        test_json_path, tokenizer, num_classes
     )
     test_loader = DataLoader(
         test_dataset,
@@ -44,7 +45,7 @@ def inference(
         collate_fn=collate_pad_sentence_class_batch,
     )
     test_dataset_masked = VoxelSentenceMappingTestMaskedClassDataset(
-        test_json_path, bert_path_or_name, num_classes
+        test_json_path, tokenizer, num_classes
     )
 
     test_masked_loader = DataLoader(
