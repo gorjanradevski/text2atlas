@@ -255,37 +255,35 @@ def parse_args():
     Returns:
         Arguments
     """
-    parser = argparse.ArgumentParser(
-        description="Finetunes a sentence voxel mapping model."
-    )
+    parser = argparse.ArgumentParser(description="Trains atlas reg mapping model.")
     parser.add_argument(
         "--organ2voxels_path",
         type=str,
-        default="data/data_organs/organ2voxels_eroded.json",
+        default="data/data_organs_sages/organ2voxels_eroded.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2ind_path",
         type=str,
-        default="data/data_organs/organ2ind.json",
+        default="data/data_organs_sages/organ2ind.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs/ind2organ.json",
+        default="data/data_organs_sages/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs/organ2label.json",
+        default="data/data_organs_sages/organ2label.json",
         help="Path to the organ2label path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/data_organs/voxelman_images",
+        default="data/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
