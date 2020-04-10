@@ -23,7 +23,6 @@ def inference(
     batch_size: int,
     bert_path_or_name: str,
     checkpoint_path: str,
-    joint_space: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,45 +125,39 @@ def parse_args():
     Returns:
         Arguments
     """
-    parser = argparse.ArgumentParser(description="Performs mapping inference.")
+    parser = argparse.ArgumentParser(description="Performs class mapping inference.")
     parser.add_argument(
         "--organ2summary_path",
         type=str,
-        default="data/data_organs_new/organ2voxels_new.json",
+        default="data/data_organs/organ2voxels.json",
         help="Path to the organ2voxels path.",
     )
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs_new/ind2organ_new.json",
+        default="data/data_organs/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs_new/organ2label_new.json",
+        default="data/data_organs/organ2label.json",
         help="Path to the organ2label path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/data_organs_new/voxelman_images",
+        default="data/data_organs/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
         "--test_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_test_new.json",
-        help="Path to the validation set",
+        default="data/dataset_text_atlas_mapping_test_fixd.json",
+        help="Path to the test set",
     )
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
-    )
-    parser.add_argument(
-        "--joint_space",
-        type=int,
-        default=512,
-        help="The joint space where the encodings will be projected.",
     )
     parser.add_argument(
         "--bert_path_or_name",

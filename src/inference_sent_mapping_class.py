@@ -26,7 +26,6 @@ def inference(
     batch_size: int,
     bert_path_or_name: str,
     checkpoint_path: str,
-    joint_space: int,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -56,13 +55,7 @@ def inference(
     )
     config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(
-            bert_path_or_name,
-            joint_space,
-            config,
-            reg_or_class="class",
-            num_classes=num_classes,
-        )
+        SentenceMappingsProducer(bert_path_or_name, config, reg_or_class="class")
     ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode
@@ -143,7 +136,6 @@ def main():
         args.batch_size,
         args.bert_path_or_name,
         args.checkpoint_path,
-        args.joint_space,
     )
 
 
@@ -158,31 +150,31 @@ def parse_args():
     parser.add_argument(
         "--organ2summary_path",
         type=str,
-        default="data/data_organs_new/organ2voxels_new.json",
+        default="data/data_organs/organ2voxels.json",
         help="Path to the organ2label file.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/data_organs_new/voxelman_images",
+        default="data/data_organs/voxelman_images",
         help="Path to the voxelman images.",
     )
     parser.add_argument(
         "--organ2label_path",
         type=str,
-        default="data/data_organs_new/organ2label_new.json",
+        default="data/data_organs/organ2label.json",
         help="Path to the organ2label file.",
     )
     parser.add_argument(
         "--organ2mass_path",
         type=str,
-        default="data/data_organs_new/organ2mass_new.json",
+        default="data/data_organs/organ2mass.json",
         help="Path to the organ2center path.",
     )
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs_new/ind2organ_new.json",
+        default="data/data_organs/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(
@@ -193,12 +185,6 @@ def parse_args():
     )
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
-    )
-    parser.add_argument(
-        "--joint_space",
-        type=int,
-        default=512,
-        help="The joint space where the encodings will be projected.",
     )
     parser.add_argument(
         "--bert_path_or_name",
