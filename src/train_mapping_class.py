@@ -35,15 +35,16 @@ def train(
     organ_names = [
         organ_name for organ_name in json.load(open(ind2organ_path)).values()
     ]
+    num_classes = len(organ_names)
     tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, len(organ_names), organ_names
+        train_json_path, tokenizer, num_classes, organ_names
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
-        val_json_path, tokenizer, len(organ_names)
+        val_json_path, tokenizer, num_classes
     )
     val_masked_dataset = VoxelSentenceMappingTestMaskedClassDataset(
-        val_json_path, tokenizer, len(organ_names)
+        val_json_path, tokenizer, num_classes
     )
 
     train_loader = DataLoader(
