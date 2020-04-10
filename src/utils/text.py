@@ -150,8 +150,8 @@ def detect_occurrences(
     hit_list = []
     for word in word_list:
         if word.startswith(" ") or word.endswith(" "):
-            matches.extend(
-                re.findall(pattern=re.compile("\s*({})\s*".format(word)), string=text)
+            matches = re.findall(
+                pattern=re.compile("\s*({})\s*".format(word)), string=text
             )
             matches = [match.strip() for match in matches]
         else:
@@ -161,6 +161,7 @@ def detect_occurrences(
             matches = [match.strip() for match in matches]
         hit_list.extend(matches)
     hit_list = flatten_list([word.split() for word in hit_list])
+    hit_list = [word.replace(",", "").replace(".", "") for word in hit_list]
     hit_list = list(set(hit_list))
     return hit_list
 
