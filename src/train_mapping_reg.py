@@ -57,7 +57,6 @@ def train(
     epochs: int,
     batch_size: int,
     bert_path_or_name: str,
-    mask_probability: float,
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
@@ -77,8 +76,9 @@ def train(
         criterion = MinDistanceLoss()
 
     tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, mask_probability, ind2anchors
+        train_json_path, tokenizer, organ_names, ind2anchors
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(
         val_json_path, tokenizer, ind2anchors
@@ -242,7 +242,6 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_path_or_name,
-        args.mask_probability,
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
@@ -342,9 +341,6 @@ def parse_args():
         type=str,
         default=None,
         help="If resuming training, start from here.",
-    )
-    parser.add_argument(
-        "--mask_probability", type=float, default=0.5, help="The mask probability."
     )
 
     return parser.parse_args()

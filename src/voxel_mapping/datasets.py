@@ -2,7 +2,7 @@ from transformers import BertTokenizer
 from torch.utils.data import Dataset
 import json
 import torch
-from typing import Tuple
+from typing import Tuple, List
 import numpy as np
 import nltk
 from tqdm import tqdm
@@ -38,25 +38,28 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        mask_probability: float,
+        organs_list: List[str],
         ind2anchors: Dict = None,
     ):
         super().__init__(json_path, tokenizer, ind2anchors)
-        self.mask_probability = mask_probability
+        self.organs_list = organs_list
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
+        # 0 - [MASK], 1 - keep word, 2 - random word from list
         mask = {
-            word: np.random.choice(
-                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
-            )
+            word: np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
             for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
-                "[MASK]" if word in mask and mask[word] == 1 else word
+                "[MASK]"
+                if word in mask and mask[word] == 0
+                else np.random.choice(self.organs_list)
+                if word in mask and mask[word] == 2
+                else word
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
@@ -150,25 +153,28 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        mask_probability: float,
         num_classes: int,
+        organs_list: List[str],
     ):
         super().__init__(json_path, tokenizer, num_classes)
-        self.mask_probability = mask_probability
+        self.organs_list = organs_list
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
+        # 0 - [MASK], 1 - keep word, 2 - random word from list
         mask = {
-            word: np.random.choice(
-                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
-            )
+            word: np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
             for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
-                "[MASK]" if word in mask and mask[word] == 1 else word
+                "[MASK]"
+                if word in mask and mask[word] == 0
+                else np.random.choice(self.organs_list)
+                if word in mask and mask[word] == 2
+                else word
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
