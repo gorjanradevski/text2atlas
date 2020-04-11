@@ -56,10 +56,7 @@ def inference(
     config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
         SentenceMappingsProducer(
-            bert_path_or_name,
-            config,
-            reg_or_class="class",
-            final_project_size=num_classes,
+            bert_path_or_name, config, final_project_size=num_classes
         )
     ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
