@@ -111,9 +111,7 @@ class InferenceEvaluator(Evaluator):
                 summary_points = np.array(
                     self.organ2summary[self.ind2organ[str_organ_index]]
                 )
-                distances[i] = np.sqrt(
-                    np.square(pred - summary_points).sum(axis=1)
-                ).min()
+                distances[i] = np.linalg.norm(pred - summary_points, axis=-1).min()
 
         return distances.min()
 
