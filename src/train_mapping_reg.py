@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
@@ -79,19 +79,14 @@ def train(
 
     tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
-    train_dataset = Subset(
-        VoxelSentenceMappingTrainRegDataset(
-            train_json_path, tokenizer, organ_names, ind2anchors
-        ),
-        list(range(20)),
+    train_dataset = VoxelSentenceMappingTrainRegDataset(
+        train_json_path, tokenizer, organ_names, ind2anchors
     )
-    val_dataset = Subset(
-        VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer, ind2anchors),
-        list(range(20)),
+    val_dataset = VoxelSentenceMappingTestRegDataset(
+        val_json_path, tokenizer, ind2anchors
     )
-    val_masked_dataset = Subset(
-        VoxelSentenceMappingTestMaskedRegDataset(val_json_path, tokenizer, ind2anchors),
-        list(range(20)),
+    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
+        val_json_path, tokenizer, ind2anchors
     )
 
     train_loader = DataLoader(
@@ -221,14 +216,13 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 print("======================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 print(
                     f"Avg distance on epoch {epoch+1} is: "
                     f"{evaluator.current_average_distance}"
                 )
             print("Saving intermediate checkpoint...")
-            """
             torch.save(
                 {
                     "epoch": epoch + 1,
@@ -238,7 +232,6 @@ def train(
                 },
                 save_intermediate_model_path,
             )
-            """
 
 
 def main():
