@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+import os
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -15,10 +16,8 @@ from voxel_mapping.evaluator import InferenceEvaluator
 
 
 def inference(
-    ind2organ_path: str,
-    organ2label_path: str,
+    organs_dir_path: str,
     voxelman_images_path: str,
-    organ2summary_path: str,
     test_json_path: str,
     batch_size: int,
     bert_path_or_name: str,
@@ -52,6 +51,10 @@ def inference(
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode
     model.train(False)
+    # Prepare paths
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Create evaluator
     evaluator = InferenceEvaluator(
         ind2organ_path,
@@ -104,10 +107,8 @@ def main():
     # imported as a module.
     args = parse_args()
     inference(
-        args.ind2organ_path,
-        args.organ2label_path,
+        args.organs_dir_path,
         args.voxelman_images_path,
-        args.organ2summary_path,
         args.test_json_path,
         args.batch_size,
         args.bert_path_or_name,
@@ -122,22 +123,10 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Performs class mapping inference.")
     parser.add_argument(
-        "--organ2summary_path",
+        "--organs_dir_path",
         type=str,
-        default="data/data_organs_sages/organ2summary.json",
-        help="Path to the organ2voxels path.",
-    )
-    parser.add_argument(
-        "--ind2organ_path",
-        type=str,
-        default="data/data_organs_sages/ind2organ.json",
-        help="Path to the ind2organ path.",
-    )
-    parser.add_argument(
-        "--organ2label_path",
-        type=str,
-        default="data/data_organs_sages/organ2label.json",
-        help="Path to the organ2label path.",
+        default="data/data_organs_sages",
+        help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--voxelman_images_path",

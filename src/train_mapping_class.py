@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
+import os
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -17,7 +18,7 @@ from voxel_mapping.models import SentenceMappingsProducer
 
 
 def train(
-    ind2organ_path: str,
+    organs_dir_path: str,
     train_json_path: str,
     val_json_path: str,
     epochs: int,
@@ -33,7 +34,10 @@ def train(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load organ to indices to obtain the number of classes and organ names
     organ_names = [
-        organ_name for organ_name in json.load(open(ind2organ_path)).values()
+        organ_name
+        for organ_name in json.load(
+            open(os.path.join(organs_dir_path, "ind2organ.json"))
+        ).values()
     ]
     num_classes = len(organ_names)
     tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
@@ -178,7 +182,7 @@ def main():
     # imported as a module.
     args = parse_args()
     train(
-        args.ind2organ_path,
+        args.organs_dir_path,
         args.train_json_path,
         args.val_json_path,
         args.epochs,
@@ -199,10 +203,10 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Trains atlas class mapping model.")
     parser.add_argument(
-        "--ind2organ_path",
+        "--organs_dir_path",
         type=str,
-        default="data/data_organs/ind2organ.json",
-        help="Path to the ind2organ path.",
+        default="data/data_organs_sages",
+        help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--train_json_path",

@@ -8,6 +8,7 @@ import json
 from typing import Dict
 import numpy as np
 import random
+import os
 import sys
 from transformers import BertConfig, BertTokenizer
 
@@ -47,11 +48,7 @@ def create_ind2anchors(
 
 
 def train(
-    organ2ind_path: str,
-    organ2voxels_path: str,
-    ind2organ_path: str,
-    organ2label_path: str,
-    organ2summary_path: str,
+    organs_dir_path: str,
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
@@ -67,6 +64,12 @@ def train(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Prepare paths
+    organ2voxels_path = os.path.join(organs_dir_path, "organ2voxels_eroded.json")
+    organ2ind_path = os.path.join(organs_dir_path, "organ2ind.json")
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Check for the type of loss
     ind2anchors = None
     if use_all_voxels:
@@ -241,11 +244,7 @@ def main():
     # imported as a module.
     args = parse_args()
     train(
-        args.organ2ind_path,
-        args.organ2voxels_path,
-        args.ind2organ_path,
-        args.organ2label_path,
-        args.organ2summary_path,
+        args.organs_dir_path,
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
@@ -268,34 +267,10 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Trains atlas reg mapping model.")
     parser.add_argument(
-        "--organ2voxels_path",
+        "--organs_dir_path",
         type=str,
-        default="data/data_organs_sages/organ2voxels_eroded.json",
-        help="Path to the ind2organ path.",
-    )
-    parser.add_argument(
-        "--organ2summary_path",
-        type=str,
-        default="data/data_organs_sages/organ2summary.json",
-        help="Path to the organ2label file.",
-    )
-    parser.add_argument(
-        "--organ2ind_path",
-        type=str,
-        default="data/data_organs_sages/organ2ind.json",
-        help="Path to the ind2organ path.",
-    )
-    parser.add_argument(
-        "--ind2organ_path",
-        type=str,
-        default="data/data_organs_sages/ind2organ.json",
-        help="Path to the ind2organ path.",
-    )
-    parser.add_argument(
-        "--organ2label_path",
-        type=str,
-        default="data/data_organs_sages/organ2label.json",
-        help="Path to the organ2label path.",
+        default="data/data_organs_sages",
+        help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--voxelman_images_path",

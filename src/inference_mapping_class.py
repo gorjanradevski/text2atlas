@@ -5,6 +5,7 @@ from tqdm import tqdm
 import json
 import numpy as np
 from torch import nn
+import os
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -18,9 +19,7 @@ from voxel_mapping.evaluator import InferenceEvaluator
 
 def inference(
     test_json_path: str,
-    organ2mass_path: str,
-    ind2organ_path: str,
-    organ2label_path: str,
+    organs_dir_path: str,
     voxelman_images_path: str,
     organ2summary_path: str,
     batch_size: int,
@@ -29,6 +28,10 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Prepare paths
+    organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
     # Load organ to indices to obtain the number of classes
     ind2organ = json.load(open(ind2organ_path))
     organ2center = json.load(open(organ2mass_path))
@@ -126,11 +129,8 @@ def main():
     args = parse_args()
     inference(
         args.test_json_path,
-        args.organ2mass_path,
-        args.ind2organ_path,
-        args.organ2label_path,
+        args.organs_dir_path,
         args.voxelman_images_path,
-        args.organ2summary_path,
         args.batch_size,
         args.bert_path_or_name,
         args.checkpoint_path,
@@ -146,34 +146,16 @@ def parse_args():
         description="Inference with a sentence voxel mapping model."
     )
     parser.add_argument(
-        "--organ2summary_path",
+        "--organs_dir_path",
         type=str,
-        default="data/data_organs_sages/organ2summary.json",
-        help="Path to the organ2summary file.",
+        default="data/data_organs_sages",
+        help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
         default="data/voxelman_images",
         help="Path to the voxelman images.",
-    )
-    parser.add_argument(
-        "--organ2label_path",
-        type=str,
-        default="data/data_organs_sages/organ2label.json",
-        help="Path to the organ2label file.",
-    )
-    parser.add_argument(
-        "--organ2mass_path",
-        type=str,
-        default="data/data_organs_sages/organ2mass.json",
-        help="Path to the organ2center path.",
-    )
-    parser.add_argument(
-        "--ind2organ_path",
-        type=str,
-        default="data/data_organs_sages/ind2organ.json",
-        help="Path to the ind2organ path.",
     )
     parser.add_argument(
         "--test_json_path",
