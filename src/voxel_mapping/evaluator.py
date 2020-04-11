@@ -56,14 +56,12 @@ class Evaluator:
         organ_indices = np.array(organ_indices)
         corrects = np.zeros(organ_indices.size)
         pred = np.round(pred + VOXELMAN_CENTER)
-        pred = np.clip(
-            pred, a_min=np.array([0, 0, 0]), a_max=(np.array(VOXELMAN_CENTER) * 2 - 1)
-        )
+        pred = np.clip(pred, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
+        x, y, z = pred.astype(int)
         for i, organ_index in enumerate(organ_indices):
             if organ_index < 0:
                 continue
             labels = self.organ2label[self.ind2organ[str(organ_index)]]
-            x, y, z = pred.astype(int)
             corrects[i] = int(self.voxelman[x, y, z] in labels)
 
         return 1 if np.count_nonzero(corrects) > 0 else 0
@@ -95,32 +93,23 @@ class InferenceEvaluator(Evaluator):
     def voxels_distance(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
-        """
-        :param pred: prediction for one sample, numpy array or shape (3,)
-        :param organ_indices: set of true organ indices for the sample, list or numpy array
-        :return: Array with k entries
-         x at i-th entry - pred is x away from nearset voxel of the i-th organ,
-         0.0 at i-th entry - pred is inside of the voxels of the i-th organ
-        """
-        organ_indices = np.array(organ_indices)
-        distances = np.zeros(organ_indices.size).astype(float)
+        distances = np.zeros(organ_indices.size, dtype=np.float)
         pred_ind = np.round(pred + VOXELMAN_CENTER)
-        pred_ind = np.clip(
-            pred_ind,
-            a_min=np.array([0, 0, 0]),
-            a_max=(np.array(VOXELMAN_CENTER) * 2 - 1),
-        )
+        pred_ind = np.clip(pred_ind, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
+        x, y, z = pred_ind.astype(int)
         for i, organ_index in enumerate(organ_indices):
             if organ_index < 0:
                 continue
-            labels = self.organ2label[self.ind2organ[str(organ_index)]]
-            x, y, z = pred_ind.astype(int)
-            inside = int(self.voxelman[x, y, z] in labels)
-            if inside:
-                distances[i] = 0.0
+            str_organ_index = str(organ_index)
+            if (
+                self.voxelman[x, y, z]
+                in self.organ2label[self.ind2organ[str_organ_index]]
+            ):
+                # If it is inside, the minimum will always be 0
+                return 0.0
             else:
                 summary_points = np.array(
-                    self.organ2summary[self.ind2organ[str(organ_index)]]
+                    self.organ2summary[self.ind2organ[str_organ_index]]
                 )
                 distances[i] = np.sqrt(
                     np.square(pred - summary_points).sum(axis=1)

@@ -34,11 +34,11 @@ def bbox_intersection_volume(bboxes: List[np.ndarray]):
 
 def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str):
     # Prepare paths
-    organ2mass_path = os.path.join(organs_dir_path, "organ2mass_new.json")
-    organ2ind_path = os.path.join(organs_dir_path, "organ2ind_new.json")
-    ind2organ_path = os.path.join(organs_dir_path, "ind2organ_new.json")
-    organ2label_path = os.path.join(organs_dir_path, "organ2label_new.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2voxels_new.json")
+    organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
+    organ2ind_path = os.path.join(organs_dir_path, "organ2ind.json")
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2voxels.json")
     voxelman_images_path = os.path.join(organs_dir_path, "voxelman_images")
     # Load necessary jsons
     organ2mass = json.load(open(organ2mass_path))
@@ -83,14 +83,10 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
 
 def random_naive(organs_dir_path: str, samples, mode):
     organ2voxels = json.load(
-        open(os.path.join(organs_dir_path, "organ2voxels_new.json"))
+        open(os.path.join(organs_dir_path, "organ2voxels.json"))
     )
-    ind2organ = json.load(
-        open(os.path.join(organs_dir_path, "ind2organ_new.json"))
-    )
-    body_hull = json.load(
-        open(os.path.join(organs_dir_path, "body_hull.json"))
-    )
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    body_hull = json.load(open(os.path.join(organs_dir_path, "body_hull.json")))
     body_hull = np.array(body_hull["body_hull"])
     volume_box = np.concatenate(
         (body_hull.min(axis=0)[..., None], body_hull.max(axis=0)[..., None]), axis=1
@@ -110,9 +106,7 @@ def random_naive(organs_dir_path: str, samples, mode):
     print(
         f"At blind guessing in {mode} mode, the average probability of hitting is: {100 * sum(hit_probs) / len(hit_probs)}%"
     )
-    print(
-        f"Error bound: {np.std(np.array(hit_probs), ddof=1)/np.sqrt(len(hit_probs))}"
-    )
+    print(f"Error bound: {np.std(np.array(hit_probs), ddof=1)/np.sqrt(len(hit_probs))}")
 
 
 def main():
@@ -140,7 +134,7 @@ def parse_args():
     parser.add_argument(
         "--organs-dir-path",
         type=str,
-        default="data/data_organs_new",
+        default="data/data_organs_sages",
         help="Path to the data organs directory.",
     )
     parser.add_argument(

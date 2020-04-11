@@ -201,7 +201,7 @@ def parse_args():
     parser.add_argument(
         "--ind2organ_path",
         type=str,
-        default="data/data_organs_new/ind2organ.json",
+        default="data/data_organs/ind2organ.json",
         help="Path to the ind2organ path.",
     )
     parser.add_argument(

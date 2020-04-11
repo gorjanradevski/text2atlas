@@ -8,7 +8,7 @@ from transformers import BertConfig, BertTokenizer
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
     VoxelSentenceMappingTestMaskedRegDataset,
-    collate_pad_sentence_reg_batch,
+    collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.evaluator import InferenceEvaluator
@@ -35,13 +35,13 @@ def inference(
         test_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_reg_batch,
+        collate_fn=collate_pad_sentence_reg_test_batch,
     )
     test_masked_loader = DataLoader(
         test_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
-        collate_fn=collate_pad_sentence_reg_batch,
+        collate_fn=collate_pad_sentence_reg_test_batch,
     )
     # Create model
     config = BertConfig.from_pretrained(bert_path_or_name)

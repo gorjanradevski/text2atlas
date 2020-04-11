@@ -1,6 +1,7 @@
 import re
+import numpy as np
 
-VOXELMAN_CENTER = [165.0, 286.5, 387.0]
+VOXELMAN_CENTER = np.array([165.0, 286.5, 387.0])
 
 pdf_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_PDF"
 image_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_IMG"
