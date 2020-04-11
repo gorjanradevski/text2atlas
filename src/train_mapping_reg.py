@@ -135,8 +135,8 @@ def train(
     evaluator = TrainingRegEvaluator(
         ind2organ_path,
         organ2label_path,
-        voxelman_images_path,
         organ2summary_path,
+        voxelman_images_path,
         len(val_dataset),
         best_avg_distance,
     )
@@ -205,7 +205,9 @@ def train(
             print(
                 f"The distance on the masked validation set is {evaluator.get_current_distance()}"
             )
+
             evaluator.update_current_average_distance()
+            evaluator.finalize_current_average_distance()
 
             if evaluator.is_best_avg_distance():
                 evaluator.update_best_avg_distance()
@@ -224,7 +226,7 @@ def train(
                 )
             print("Saving intermediate checkpoint...")
             torch.save(
-                {
+                { 
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),

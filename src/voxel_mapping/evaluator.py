@@ -14,13 +14,14 @@ class Evaluator:
         self,
         ind2organ_path: str,
         organ2label_path: str,
-        voxelman_images_path: str,
         organ2summary_path: str,
+        voxelman_images_path: str,
         total_samples: int,
     ):
         self.total_samples = total_samples
         self.organ2label = json.load(open(organ2label_path))
         self.ind2organ = json.load(open(ind2organ_path))
+        self.organ2summary = json.load(open(organ2summary_path))
         image_files = natsort.natsorted(
             [
                 os.path.join(voxelman_images_path, f)
@@ -31,7 +32,6 @@ class Evaluator:
         )[::-1]
         self.voxelman = tifffile.imread(image_files).transpose(1, 2, 0)
         self.corrects = np.zeros(self.total_samples)
-        self.organ2summary = json.load(open(organ2summary_path))
         self.distances = np.zeros(total_samples)
         self.index = 0
 
@@ -105,15 +105,15 @@ class InferenceEvaluator(Evaluator):
         self,
         ind2organ_path: str,
         organ2label_path: str,
-        voxelman_images_path: str,
         organ2summary_path: str,
+        voxelman_images_path: str,
         total_samples: int,
     ):
         super().__init__(
             ind2organ_path,
             organ2label_path,
-            voxelman_images_path,
             organ2summary_path,
+            voxelman_images_path,
             total_samples,
         )
 
@@ -135,16 +135,16 @@ class TrainingRegEvaluator(Evaluator):
         self,
         ind2organ_path: str,
         organ2label_path: str,
-        voxelman_images_path: str,
         organ2summary_path: str,
+        voxelman_images_path: str,
         total_samples: int,
         best_avg_distance: float,
     ):
         super().__init__(
             ind2organ_path,
             organ2label_path,
-            voxelman_images_path,
             organ2summary_path,
+            voxelman_images_path,
             total_samples,
         )
         self.best_avg_distance = best_avg_distance

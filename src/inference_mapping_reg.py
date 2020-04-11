@@ -56,8 +56,8 @@ def inference(
     evaluator = InferenceEvaluator(
         ind2organ_path,
         organ2label_path,
-        voxelman_images_path,
         organ2summary_path,
+        voxelman_images_path,
         len(test_dataset),
     )
     with torch.no_grad():
