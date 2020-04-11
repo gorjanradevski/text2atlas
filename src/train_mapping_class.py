@@ -68,7 +68,12 @@ def train(
     )
     config = BertConfig.from_pretrained(bert_path_or_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, config, reg_or_class="class")
+        SentenceMappingsProducer(
+            bert_path_or_name,
+            config,
+            reg_or_class="class",
+            final_project_size=num_classes,
+        )
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
@@ -157,7 +162,7 @@ def train(
                 print("======================")
             else:
                 print(
-                    f"Avg IOR on epoch {epoch+1} is: {(cur_unmasked_ior + cur_masked_ir) / 2}"
+                    f"Avg IOR on epoch {epoch+1} is: {(cur_unmasked_ior + cur_masked_ior) / 2}"
                 )
             print("Saving intermediate checkpoint...")
             torch.save(

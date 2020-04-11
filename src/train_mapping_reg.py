@@ -109,9 +109,11 @@ def train(
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     config = BertConfig.from_pretrained(bert_path_or_name)
-    model = nn.DataParallel(SentenceMappingsProducer(bert_path_or_name, config)).to(
-        device
-    )
+    model = nn.DataParallel(
+        SentenceMappingsProducer(
+            bert_path_or_name, config, reg_or_class="reg", final_project_size=3
+        )
+    ).to(device)
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -226,7 +228,7 @@ def train(
                 )
             print("Saving intermediate checkpoint...")
             torch.save(
-                { 
+                {
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
