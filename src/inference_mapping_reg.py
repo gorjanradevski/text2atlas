@@ -69,14 +69,12 @@ def inference(
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(
-            f"The accuracy on the non-masked test set is {evaluator.get_current_accuracy()}"
-        )
+        print(f"The IOR on the non-masked test set is {evaluator.get_current_ior()}")
         print(
             f"The avg distance on the non-masked test set is {evaluator.get_current_distance()}"
         )
         print(
-            f"The error bar of the accuracy on the non-masked test set is {evaluator.get_accuracy_error_bar()}"
+            f"The error bar of the IOR on the non-masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the non-masked test set is {evaluator.get_distance_error_bar()}"
@@ -89,14 +87,12 @@ def inference(
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(
-            f"The accuracy on the masked test set is {evaluator.get_current_accuracy()}"
-        )
+        print(f"The IOR on the masked test set is {evaluator.get_current_ior()}")
         print(
             f"The avg distance on the masked test set is {evaluator.get_current_distance()}"
         )
         print(
-            f"The error bar of the accuracy on the masked test set is {evaluator.get_accuracy_error_bar()}"
+            f"The error bar of the IOR on the masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the masked test set is {evaluator.get_distance_error_bar()}"

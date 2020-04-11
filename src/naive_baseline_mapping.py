@@ -67,14 +67,14 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
         )
 
     print(
-        f"At {mode} mode the average probability of hitting: {100 * evaluator.get_current_accuracy()}%"
+        f"At {mode} mode the average probability of hitting: {100 * evaluator.get_current_ior()}%"
     )
     print(
         f"At {mode} mode the average distance to hit: {evaluator.get_current_distance()}"
     )
 
     print(
-        f"At {mode} mode the accuracy error-bar of hitting: {evaluator.get_accuracy_error_bar()}"
+        f"At {mode} mode the IOR error-bar of hitting: {evaluator.get_ior_error_bar()}"
     )
     print(
         f"At {mode} mode the distance error-bar to hit: {evaluator.get_distance_error_bar()}"
@@ -82,9 +82,7 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
 
 
 def random_naive(organs_dir_path: str, samples, mode):
-    organ2voxels = json.load(
-        open(os.path.join(organs_dir_path, "organ2voxels.json"))
-    )
+    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     body_hull = json.load(open(os.path.join(organs_dir_path, "body_hull.json")))
     body_hull = np.array(body_hull["body_hull"])

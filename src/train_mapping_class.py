@@ -73,20 +73,20 @@ def train(
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    best_avg_acc = -1
+    best_avg_ior = -1
     cur_epoch = 0
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
-        best_avg_acc = checkpoint["best_avg_acc"]
+        best_avg_ior = checkpoint["best_avg_ior"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         print(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best accuracy was: {best_avg_acc}!")
+        print(f"The previous best IOR was: {best_avg_ior}!")
     for epoch in range(cur_epoch, cur_epoch + epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -117,7 +117,7 @@ def train(
         with torch.no_grad():
             corrects = 0
             totals = 0
-            cur_unmasked_acc = 0
+            cur_unmasked_ior = 0
             for sentences, organ_indices in tqdm(val_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
@@ -128,13 +128,11 @@ def train(
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
                 totals += organ_indices.size()[0]
 
-            cur_unmasked_acc = corrects * 100 / totals
-            print(
-                f"The accuracy on the non masked validation set is {cur_unmasked_acc}"
-            )
+            cur_unmasked_ior = corrects * 100 / totals
+            print(f"The IOR on the non masked validation set is {cur_unmasked_ior}")
             corrects = 0
             totals = 0
-            cur_masked_acc = 0
+            cur_masked_ior = 0
             for sentences, organ_indices in tqdm(val_masked_loader):
                 sentences = sentences.to(device)
                 output_mappings = model(sentences)
@@ -145,21 +143,21 @@ def train(
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
                 totals += organ_indices.size()[0]
 
-            cur_masked_acc = corrects * 100 / totals
+            cur_masked_ior = corrects * 100 / totals
 
-            print(f"The accuracy on the masked validation set is {cur_masked_acc}")
-            if (cur_unmasked_acc + cur_masked_acc) / 2 > best_avg_acc:
-                best_avg_acc = (cur_unmasked_acc + cur_masked_acc) / 2
+            print(f"The IOR on the masked validation set is {cur_masked_ior}")
+            if (cur_unmasked_ior + cur_masked_ior) / 2 > best_avg_ior:
+                best_avg_ior = (cur_unmasked_ior + cur_masked_ior) / 2
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy {best_avg_acc} on epoch "
+                    f"Found new best with avg IOR {best_avg_ior} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
                 print("======================")
             else:
                 print(
-                    f"Avg accuracy on epoch {epoch+1} is: {(cur_unmasked_acc + cur_masked_acc) / 2}"
+                    f"Avg IOR on epoch {epoch+1} is: {(cur_unmasked_ior + cur_masked_ir) / 2}"
                 )
             print("Saving intermediate checkpoint...")
             torch.save(
@@ -167,7 +165,7 @@ def train(
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_avg_acc": best_avg_acc,
+                    "best_avg_ior": best_avg_ior,
                 },
                 save_intermediate_model_path,
             )

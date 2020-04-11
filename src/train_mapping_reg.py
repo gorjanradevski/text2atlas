@@ -1,13 +1,14 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 import json
 from typing import Dict
 import numpy as np
 import random
+import sys
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -50,6 +51,7 @@ def train(
     organ2voxels_path: str,
     ind2organ_path: str,
     organ2label_path: str,
+    organ2summary_path: str,
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
@@ -77,14 +79,19 @@ def train(
 
     tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
-    train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, organ_names, ind2anchors
+    train_dataset = Subset(
+        VoxelSentenceMappingTrainRegDataset(
+            train_json_path, tokenizer, organ_names, ind2anchors
+        ),
+        list(range(20)),
     )
-    val_dataset = VoxelSentenceMappingTestRegDataset(
-        val_json_path, tokenizer, ind2anchors
+    val_dataset = Subset(
+        VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer, ind2anchors),
+        list(range(20)),
     )
-    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
-        val_json_path, tokenizer, ind2anchors
+    val_masked_dataset = Subset(
+        VoxelSentenceMappingTestMaskedRegDataset(val_json_path, tokenizer, ind2anchors),
+        list(range(20)),
     )
 
     train_loader = DataLoader(
@@ -115,27 +122,28 @@ def train(
 
     # Load model
     cur_epoch = 0
-    best_avg_accuracy = -1
+    best_avg_distance = sys.maxsize
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
-        best_avg_accuracy = checkpoint["best_accuracy"]
+        best_avg_distance = checkpoint["best_distance"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         print(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best accuracy was: {best_avg_accuracy}!")
+        print(f"The previous best distance was: {best_avg_distance}!")
 
     # Create evaluator
     evaluator = TrainingRegEvaluator(
         ind2organ_path,
         organ2label_path,
         voxelman_images_path,
+        organ2summary_path,
         len(val_dataset),
-        best_avg_accuracy,
+        best_avg_distance,
     )
 
     for epoch in range(cur_epoch, cur_epoch + epochs):
@@ -166,8 +174,8 @@ def train(
 
         # Set model in evaluation mode
         model.train(False)
-        # Reset current average accuracy
-        evaluator.reset_current_average_accuracy()
+        # Reset current average distance
+        evaluator.reset_current_average_distance()
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
@@ -180,9 +188,12 @@ def train(
                     evaluator.update_counters(output_mapping, organ_indices.numpy())
 
             print(
-                f"The accuracy on the non masked validation set is {evaluator.get_current_accuracy()}"
+                f"The IOR on the non-masked validation set is {evaluator.get_current_ior()}"
             )
-            evaluator.update_current_average_accuracy()
+            print(
+                f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
+            )
+            evaluator.update_current_average_distance()
             # Restart counters
             evaluator.reset_counters()
             for sentences, organs_indices in tqdm(val_masked_loader):
@@ -194,36 +205,40 @@ def train(
                     evaluator.update_counters(output_mapping, organ_indices.numpy())
 
             print(
-                f"The accuracy on the masked validation set is {evaluator.get_current_accuracy()}"
+                f"The IOR on the masked validation set is {evaluator.get_current_ior()}"
             )
-            evaluator.update_current_average_accuracy()
-            evaluator.finalize_current_average_accuracy()
+            print(
+                f"The distance on the masked validation set is {evaluator.get_current_distance()}"
+            )
+            evaluator.update_current_average_distance()
 
-            if evaluator.is_best_avg_accuracy():
-                evaluator.update_best_avg_accuracy()
+            if evaluator.is_best_avg_distance():
+                evaluator.update_best_avg_distance()
                 print("======================")
                 print(
-                    f"Found new best with avg accuracy: "
-                    f"{evaluator.best_avg_accuracy} on epoch "
+                    f"Found new best with avg distance: "
+                    f"{evaluator.best_avg_distance} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 print("======================")
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
             else:
                 print(
-                    f"Avg accuracy on epoch {epoch+1} is: "
-                    f"{evaluator.current_average_accuracy}"
+                    f"Avg distance on epoch {epoch+1} is: "
+                    f"{evaluator.current_average_distance}"
                 )
             print("Saving intermediate checkpoint...")
+            """
             torch.save(
                 {
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_accuracy": evaluator.best_avg_accuracy,
+                    "best_distance": evaluator.best_avg_distance,
                 },
                 save_intermediate_model_path,
             )
+            """
 
 
 def main():
@@ -235,6 +250,7 @@ def main():
         args.organ2voxels_path,
         args.ind2organ_path,
         args.organ2label_path,
+        args.organ2summary_path,
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
@@ -261,6 +277,12 @@ def parse_args():
         type=str,
         default="data/data_organs_sages/organ2voxels_eroded.json",
         help="Path to the ind2organ path.",
+    )
+    parser.add_argument(
+        "--organ2summary_path",
+        type=str,
+        default="data/data_organs_sages/organ2summary.json",
+        help="Path to the organ2label file.",
     )
     parser.add_argument(
         "--organ2ind_path",

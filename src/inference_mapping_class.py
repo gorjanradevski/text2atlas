@@ -82,14 +82,12 @@ def inference(
                     np.array(pred_center), np.where(organ_indices == 1)[0]
                 )
 
-        print(
-            f"The accuracy on the non-masked test set is {evaluator.get_current_accuracy()}"
-        )
+        print(f"The IOR on the non-masked test set is {evaluator.get_current_ior()}")
         print(
             f"The avg distance on the non-masked test set is {evaluator.get_current_distance()}"
         )
         print(
-            f"The error bar of the accuracy on the non-masked test set is {evaluator.get_accuracy_error_bar()}"
+            f"The error bar of the IOR on the non-masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the non-masked test set is {evaluator.get_distance_error_bar()}"
@@ -108,14 +106,12 @@ def inference(
                     np.array(pred_center), np.where(organ_indices == 1)[0]
                 )
 
-        print(
-            f"The accuracy on the masked test set is {evaluator.get_current_accuracy()}"
-        )
+        print(f"The IOR on the masked test set is {evaluator.get_current_ior()}")
         print(
             f"The avg distance on the masked test set is {evaluator.get_current_distance()}"
         )
         print(
-            f"The error bar of the accuracy on the masked test set is {evaluator.get_accuracy_error_bar()}"
+            f"The error bar of the IOR on the masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the masked test set is {evaluator.get_distance_error_bar()}"
@@ -151,7 +147,7 @@ def parse_args():
         "--organ2summary_path",
         type=str,
         default="data/data_organs_sages/organ2summary.json",
-        help="Path to the organ2label file.",
+        help="Path to the organ2summary file.",
     )
     parser.add_argument(
         "--voxelman_images_path",

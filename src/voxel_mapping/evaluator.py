@@ -15,6 +15,7 @@ class Evaluator:
         ind2organ_path: str,
         organ2label_path: str,
         voxelman_images_path: str,
+        organ2summary_path: str,
         total_samples: int,
     ):
         self.total_samples = total_samples
@@ -30,18 +31,25 @@ class Evaluator:
         )[::-1]
         self.voxelman = tifffile.imread(image_files).transpose(1, 2, 0)
         self.corrects = np.zeros(self.total_samples)
+        self.organ2summary = json.load(open(organ2summary_path))
+        self.distances = np.zeros(total_samples)
         self.index = 0
 
     def reset_counters(self):
         self.index = 0
         self.corrects = np.zeros(self.total_samples)
+        self.distances = np.zeros(self.total_samples)
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
         self.corrects[self.index] = self.voxels_inside(output_mapping, organ_indices)
+        self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
         self.index += 1
 
-    def get_current_accuracy(self):
+    def get_current_ior(self):
         return np.round((np.sum(self.corrects) / self.total_samples) * 100, decimals=2)
+
+    def get_current_distance(self):
+        return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=2)
 
     def voxels_inside(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
@@ -65,30 +73,6 @@ class Evaluator:
             corrects[i] = int(self.voxelman[x, y, z] in labels)
 
         return 1 if np.count_nonzero(corrects) > 0 else 0
-
-
-class InferenceEvaluator(Evaluator):
-    def __init__(
-        self,
-        ind2organ_path: str,
-        organ2label_path: str,
-        voxelman_images_path: str,
-        organ2summary_path: str,
-        total_samples: int,
-    ):
-        super().__init__(
-            ind2organ_path, organ2label_path, voxelman_images_path, total_samples
-        )
-        self.organ2summary = json.load(open(organ2summary_path))
-        self.distances = np.zeros(total_samples)
-
-    def reset_counters(self):
-        super().reset_counters()
-        self.distances = np.zeros(self.total_samples)
-
-    def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
-        self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
-        super().update_counters(output_mapping, organ_indices)
 
     def voxels_distance(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
@@ -115,10 +99,25 @@ class InferenceEvaluator(Evaluator):
 
         return distances.min()
 
-    def get_current_distance(self):
-        return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=2)
 
-    def get_accuracy_error_bar(self):
+class InferenceEvaluator(Evaluator):
+    def __init__(
+        self,
+        ind2organ_path: str,
+        organ2label_path: str,
+        voxelman_images_path: str,
+        organ2summary_path: str,
+        total_samples: int,
+    ):
+        super().__init__(
+            ind2organ_path,
+            organ2label_path,
+            voxelman_images_path,
+            organ2summary_path,
+            total_samples,
+        )
+
+    def get_ior_error_bar(self):
         return np.round(
             np.std(self.corrects, ddof=1) / np.sqrt(self.total_samples) * 100,
             decimals=2,
@@ -137,35 +136,31 @@ class TrainingRegEvaluator(Evaluator):
         ind2organ_path: str,
         organ2label_path: str,
         voxelman_images_path: str,
+        organ2summary_path: str,
         total_samples: int,
-        best_avg_accuracy: float,
+        best_avg_distance: float,
     ):
         super().__init__(
-            ind2organ_path, organ2label_path, voxelman_images_path, total_samples
+            ind2organ_path,
+            organ2label_path,
+            voxelman_images_path,
+            organ2summary_path,
+            total_samples,
         )
-        self.best_avg_accuracy = best_avg_accuracy
-        self.current_average_accuracy = 0
+        self.best_avg_distance = best_avg_distance
+        self.current_average_distance = 0
 
-    def reset_current_average_accuracy(self):
-        self.current_average_accuracy = 0
+    def reset_current_average_distance(self):
+        self.current_average_distance = 0
 
-    def reset_counters(self):
-        super().reset_counters()
+    def update_current_average_distance(self):
+        self.current_average_distance += self.get_current_distance()
 
-    def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
-        super().update_counters(output_mapping, organ_indices)
+    def finalize_current_average_distance(self):
+        self.current_average_distance /= 2
 
-    def update_current_average_accuracy(self):
-        self.current_average_accuracy += np.sum(self.corrects) / self.total_samples
+    def is_best_avg_distance(self):
+        return self.current_average_distance < self.best_avg_distance
 
-    def finalize_current_average_accuracy(self):
-        self.current_average_accuracy /= 2
-        self.current_average_accuracy = np.round(
-            self.current_average_accuracy * 100, decimals=2
-        )
-
-    def is_best_avg_accuracy(self):
-        return self.current_average_accuracy > self.best_avg_accuracy
-
-    def update_best_avg_accuracy(self):
-        self.best_avg_accuracy = self.current_average_accuracy
+    def update_best_avg_distance(self):
+        self.best_avg_distance = self.current_average_distance
