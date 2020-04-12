@@ -77,8 +77,8 @@ class Evaluator:
     def voxels_distance(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
-
-        distances = np.zeros(organ_indices.size, dtype=np.float)
+        # Setting distances to large number so that we can take minimum
+        distances = np.ones(organ_indices.size, dtype=np.float) * 10000000
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(pred_ind, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
         x, y, z = pred_ind.astype(int)
