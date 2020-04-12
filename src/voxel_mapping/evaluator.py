@@ -28,7 +28,7 @@ class Evaluator:
                 for f in os.listdir(voxelman_images_path)
                 if os.path.isfile(os.path.join(voxelman_images_path, f))
                 and f.endswith(".tif")
-            ]
+            ] 
         )[::-1]
         self.voxelman = tifffile.imread(image_files).transpose(1, 2, 0)
         self.corrects = np.zeros(self.total_samples)
