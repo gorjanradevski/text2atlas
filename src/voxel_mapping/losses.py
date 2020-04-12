@@ -36,7 +36,7 @@ class OrganDistanceLoss(nn.Module):
         distances_weights = F.softmin(distances_masked, dim=2)
         organ_distances_masked = (distances_masked * distances_weights).sum(dim=2)
         organ_distances_weights = F.softmin(organ_distances_masked, dim=1)
-        loss = organ_distances_masked * organ_distances_weights.sum(dim=1).mean(dim=0)
+        loss = (organ_distances_masked * organ_distances_weights).sum(dim=1).mean(dim=0)
         return loss
 
 
