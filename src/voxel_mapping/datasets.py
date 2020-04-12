@@ -156,10 +156,7 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
     def __getitem__(self, idx: int):
         # 1 - [MASK], 0 - keep word
         mask = {
-            word: np.random.choice(
-                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
-            )
-            for word in self.keywords[idx]
+            word: np.random.choice([0, 1], p=[0.5, 0.5]) for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
