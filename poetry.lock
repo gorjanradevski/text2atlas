@@ -232,6 +232,20 @@ version = "2.9"
 
 [[package]]
 category = "main"
+description = "Image transformation, compression, and decompression codecs"
+name = "imagecodecs"
+optional = false
+python-versions = ">=3.6"
+version = "2020.2.18"
+
+[package.dependencies]
+numpy = ">=1.15"
+
+[package.extras]
+all = ["matplotlib (>=3.1)", "tifffile (>=2019.7.2)"]
+
+[[package]]
+category = "main"
 description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\""
 name = "importlib-metadata"
@@ -1034,6 +1048,21 @@ test = ["pathlib2"]
 
 [[package]]
 category = "main"
+description = "Read and write TIFF(r) files"
+name = "tifffile"
+optional = false
+python-versions = ">=3.6"
+version = "2020.2.16"
+
+[package.dependencies]
+imagecodecs = ">=2020.1.31"
+numpy = ">=1.15.1"
+
+[package.extras]
+all = ["matplotlib (>=3.1)"]
+
+[[package]]
+category = "main"
 description = "Fast and Customizable Tokenizers"
 name = "tokenizers"
 optional = false
@@ -1148,6 +1177,7 @@ torch = ["torch"]
 reference = "2631261abc2e3a03e9085bc48f03aff3d6611847"
 type = "git"
 url = "https://github.com/gorjanradevski/transformers.git"
+
 [[package]]
 category = "main"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -1205,7 +1235,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "8f0b7cf90a1a9999fc94f8024e0281bdc21eb98b29b13750184df8ca504187bb"
+content-hash = "d94f56386e9c81270526eeca501b545bc5f883a8f1f545e142401ac23b7917bb"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1300,6 +1330,30 @@ google-images-download = [
 idna = [
     {file = "idna-2.9-py2.py3-none-any.whl", hash = "sha256:a068a21ceac8a4d63dbfd964670474107f541babbd2250d61922f029858365fa"},
     {file = "idna-2.9.tar.gz", hash = "sha256:7588d1c14ae4c77d74036e8c22ff447b26d0fde8f007354fd48a7814db15b7cb"},
+]
+imagecodecs = [
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-macosx_10_13_intel.whl", hash = "sha256:286b87ee09506c35f099585e6b5ce245fb62c2a826aac4e0497cdfdfba631cc7"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-macosx_10_9_intel.whl", hash = "sha256:f6ac9dd40e1cdb72842fb72f147e8a51a1874c8f375629524566b388e841be20"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:c7367e01a199228b6526f05dc7fe7a85adac19f1b19e08a99edbdd2523cfcdc4"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:f6722cd6a73501c508b361f485259f172898d3cf2530e6de71f3e89394a0a713"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:eedf5be2c9c65a0d92970bda98dfd7e9525c137e631e1956753bb6ce369b08f9"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-win32.whl", hash = "sha256:d1b0b2de7be918a8eada62c8d2339931381c86dbd43216a064e35ace5957e350"},
+    {file = "imagecodecs-2020.2.18-cp36-cp36m-win_amd64.whl", hash = "sha256:22f3c39755752fe3a91a92fcf24002ca57a51efca1ab99e9919cf783f90b4026"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-macosx_10_13_intel.whl", hash = "sha256:2bda6c7b13be73dfd202b3c23dc4b3003fdc02209835e348e4bd31ddca124d76"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-macosx_10_9_intel.whl", hash = "sha256:cf855a00bf5cb5a7cf1d608e7588ddc535d714e5422c3095dd811829b559f237"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:c5667d4b8e97cf10b3754f5e8159d60620cdd35052ffc298346273d42284430f"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:9742b392640c1b2d05c6aaad956bd7e3bf461c7e0f403f7b25ee464a5c949c8c"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:2c130b89fcb70bab3aa57ee0671423ab0e053c6ff7ed26646bf425592fa3116d"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-win32.whl", hash = "sha256:adc09e5f9af6927eccc35d60ae1ec422cd9791cee4d5456d39af6903dff19477"},
+    {file = "imagecodecs-2020.2.18-cp37-cp37m-win_amd64.whl", hash = "sha256:fbdd0d42aa3c984377421767a892e77c40249870425aca0ba5629bdcd57d3ae4"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:6275213bd611156fa2fd73ce81b29ca708c4344d36fe3686f567cd104ccf4d18"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6f63ae2592086b1abbd40b699816c054dc7aad616df2b14c2e15cd2372b77653"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-manylinux2010_i686.whl", hash = "sha256:9a9abc5498121f0005fb00dfbed57a062337445d32a39569e4378286b503125b"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-manylinux2010_x86_64.whl", hash = "sha256:91eb82b0167ff022a6a8dcf86e5871b635bfbe96801557e00d6b1e2a10ac25dd"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:e0f3cfc2fc77c19118e173dca6af0dbed4a3cef75d3296762db687fd00fb7921"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-win32.whl", hash = "sha256:e8f460145258a28544d4119f58cab2daf87ac6653429ab9df7dff7d2cc30714f"},
+    {file = "imagecodecs-2020.2.18-cp38-cp38-win_amd64.whl", hash = "sha256:0538f7a4def1f6745b2d83d21883dcd61e82bc8faaca810e3a35e6b551b455d1"},
+    {file = "imagecodecs-2020.2.18.tar.gz", hash = "sha256:c019b19438dff31365fee3002b438992c16bc9955a036f466c600d80699cb5a2"},
 ]
 importlib-metadata = [
     {file = "importlib_metadata-0.23-py2.py3-none-any.whl", hash = "sha256:d5f18a79777f3aa179c145737780282e27b508fc8fd688cb17c7a813e8bd39af"},
@@ -1818,6 +1872,10 @@ terminado = [
 testpath = [
     {file = "testpath-0.4.4-py2.py3-none-any.whl", hash = "sha256:bfcf9411ef4bf3db7579063e0546938b1edda3d69f4e1fb8756991f5951f85d4"},
     {file = "testpath-0.4.4.tar.gz", hash = "sha256:60e0a3261c149755f4399a1fff7d37523179a70fdc3abdf78de9fc2604aeec7e"},
+]
+tifffile = [
+    {file = "tifffile-2020.2.16-py3-none-any.whl", hash = "sha256:0439b63efcda551dc1bfd126fcd6cd2b3f60e98d7d165e3aedc5df637b71382f"},
+    {file = "tifffile-2020.2.16.tar.gz", hash = "sha256:f03b03c4863d232e746859ebdf36e3dfd974364d9944d884bc82b430b0d7290d"},
 ]
 tokenizers = [
     {file = "tokenizers-0.5.2-cp35-cp35m-macosx_10_15_x86_64.whl", hash = "sha256:986d3502c794ffdee17acd18e6b002c9d8c7636a00c81277309202a3ad3fd778"},
