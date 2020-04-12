@@ -28,7 +28,7 @@ class Evaluator:
                 for f in os.listdir(voxelman_images_path)
                 if os.path.isfile(os.path.join(voxelman_images_path, f))
                 and f.endswith(".tif")
-            ] 
+            ]
         )[::-1]
         self.voxelman = tifffile.imread(image_files).transpose(1, 2, 0)
         self.corrects = np.zeros(self.total_samples)
@@ -74,9 +74,10 @@ class Evaluator:
 
         return 1 if np.count_nonzero(corrects) > 0 else 0
 
-    def voxels_distance(
+    def voxels_distance_old(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
+        """STAYING HERE JUST FOR TESTING PURPOSES"""
         distances = np.zeros(organ_indices.size, dtype=np.float)
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(pred_ind, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
@@ -96,6 +97,40 @@ class Evaluator:
                     self.organ2summary[self.ind2organ[str_organ_index]]
                 )
                 distances[i] = np.linalg.norm(pred - summary_points, axis=-1).min()
+
+        return distances.min()
+
+    def voxels_distance(
+        self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
+    ) -> np.ndarray:
+        """
+        :param pred: prediction for one sample, numpy array or shape (3,)
+        :param organ_indices: set of true organ indices for the sample, list or numpy array
+        :return: Array with k entries
+         x at i-th entry - pred is x away from nearset voxel of the i-th organ,
+         0.0 at i-th entry - pred is inside of the voxels of the i-th organ
+        """
+        organ_indices = np.array(organ_indices)
+        distances = np.zeros(organ_indices.size).astype(float)
+        pred_ind = np.round(pred + VOXELMAN_CENTER)
+        pred_ind = np.clip(
+            pred_ind,
+            a_min=np.array([0, 0, 0]),
+            a_max=(np.array(VOXELMAN_CENTER) * 2 - 1),
+        )
+        for i, organ_index in enumerate(organ_indices):
+            labels = self.organ2label[self.ind2organ[str(organ_index)]]
+            x, y, z = pred_ind.astype(int)
+            inside = int(self.voxelman[x, y, z] in labels)
+            if inside:
+                distances[i] = 0.0
+            else:
+                summary_points = np.array(
+                    self.organ2summary[self.ind2organ[str(organ_index)]]
+                )
+                distances[i] = np.sqrt(
+                    np.square(pred - summary_points).sum(axis=1)
+                ).min()
 
         return distances.min()
 

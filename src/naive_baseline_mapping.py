@@ -32,14 +32,19 @@ def bbox_intersection_volume(bboxes: List[np.ndarray]):
     return max((float(bbox_volume(intersection))), 0.0)
 
 
-def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str):
+def frequency_naive(
+    organs_dir_path: str,
+    voxelman_images_path: str,
+    train_samples,
+    test_samples,
+    mode: str,
+):
     # Prepare paths
     organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
     organ2ind_path = os.path.join(organs_dir_path, "organ2ind.json")
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2voxels.json")
-    voxelman_images_path = os.path.join(organs_dir_path, "voxelman_images")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Load necessary jsons
     organ2mass = json.load(open(organ2mass_path))
     organ2ind = json.load(open(organ2ind_path))
@@ -48,8 +53,8 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
     evaluator = InferenceEvaluator(
         ind2organ_path,
         organ2label_path,
-        voxelman_images_path,
         organ2summary_path,
+        voxelman_images_path,
         len(test_samples),
     )
     # Compute frequences
@@ -67,7 +72,7 @@ def frequency_naive(organs_dir_path: str, train_samples, test_samples, mode: str
         )
 
     print(
-        f"At {mode} mode the average probability of hitting: {100 * evaluator.get_current_ior()}%"
+        f"At {mode} mode the average probability of hitting: {evaluator.get_current_ior()}%"
     )
     print(
         f"At {mode} mode the average distance to hit: {evaluator.get_current_distance()}"
@@ -120,7 +125,13 @@ def main():
     else:
         train_samples = json.load(open(args.train_samples_path))
         test_samples = json.load(open(args.test_samples_path))
-        frequency_naive(args.organs_dir_path, train_samples, test_samples, args.mode)
+        frequency_naive(
+            args.organs_dir_path,
+            args.voxelman_images_path,
+            train_samples,
+            test_samples,
+            args.mode,
+        )
 
 
 def parse_args():
@@ -134,6 +145,12 @@ def parse_args():
         type=str,
         default="data/data_organs_sages",
         help="Path to the data organs directory.",
+    )
+    parser.add_argument(
+        "--voxelman-images-path",
+        type=str,
+        default="data/voxelman_images",
+        help="Path to the voxel-man images",
     )
     parser.add_argument(
         "--train-samples-path",
