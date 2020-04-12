@@ -21,7 +21,6 @@ def inference(
     test_json_path: str,
     organs_dir_path: str,
     voxelman_images_path: str,
-    organ2summary_path: str,
     batch_size: int,
     bert_path_or_name: str,
     checkpoint_path: str,
@@ -32,6 +31,7 @@ def inference(
     organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Load organ to indices to obtain the number of classes
     ind2organ = json.load(open(ind2organ_path))
     organ2center = json.load(open(organ2mass_path))
