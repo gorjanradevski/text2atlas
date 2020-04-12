@@ -72,10 +72,51 @@ def frequency_naive(
         )
 
     print(
-        f"At {mode} mode the average probability of hitting: {evaluator.get_current_ior()}%"
+        f"At {mode} mode the average probability of hitting: {evaluator.get_current_ior():.3f}%"
     )
     print(
-        f"At {mode} mode the average distance to hit: {evaluator.get_current_distance()}"
+        f"At {mode} mode the average distance to hit: {evaluator.get_current_distance():.3f}"
+    )
+
+    print(
+        f"At {mode} mode the IOR error-bar of hitting: {evaluator.get_ior_error_bar()}"
+    )
+    print(
+        f"At {mode} mode the distance error-bar to hit: {evaluator.get_distance_error_bar()}"
+    )
+
+
+def center_naive(
+        organs_dir_path: str,
+        voxelman_images_path: str,
+        test_samples,
+        mode: str
+):
+    # Prepare paths
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2voxels.json")
+    # Create evaluator
+    evaluator = InferenceEvaluator(
+        ind2organ_path,
+        organ2label_path,
+        organ2summary_path,
+        voxelman_images_path,
+        len(test_samples),
+    )
+
+    prediction = [0.0, 0.0, 0.0]
+
+    for sample in tqdm(test_samples):
+        evaluator.update_counters(
+            np.array(prediction), np.array(sample["organ_indices"])
+        )
+
+    print(
+        f"At {mode} mode the average probability of hitting: {100 * evaluator.get_current_ior():.3f}%"
+    )
+    print(
+        f"At {mode} mode the average distance to hit: {evaluator.get_current_distance():.3f}"
     )
 
     print(
@@ -107,7 +148,7 @@ def random_naive(organs_dir_path: str, samples, mode):
         hit_probs.append(union_volume / volume)
 
     print(
-        f"At blind guessing in {mode} mode, the average probability of hitting is: {100 * sum(hit_probs) / len(hit_probs)}%"
+        f"At blind guessing in {mode} mode, the average probability of hitting is: {100 * sum(hit_probs) / len(hit_probs):.3f}%"
     )
     print(f"Error bound: {np.std(np.array(hit_probs), ddof=1)/np.sqrt(len(hit_probs))}")
 
@@ -116,12 +157,20 @@ def main():
     args = parse_args()
     assert args.mode in [
         "frequency",
+        "center",
         "random",
-    ], 'Parameter "difficulty" needs to be one of {"frequency", "random"}'
+    ], 'Parameter "difficulty" needs to be one of {"frequency", "center", "random"}'
 
     if args.mode == "random":
         test_samples = json.load(open(args.test_samples_path))
         random_naive(args.organs_dir_path, test_samples, args.mode)
+    elif args.mode == "center":
+        test_samples = json.load(open(args.test_samples_path))
+        center_naive(
+            args.organs_dir_path,
+            args.voxelman_images_path,
+            test_samples,
+            args.mode)
     else:
         train_samples = json.load(open(args.train_samples_path))
         test_samples = json.load(open(args.test_samples_path))
@@ -169,7 +218,7 @@ def parse_args():
         "--mode",
         "-m",
         type=str,
-        help='Mode - one of {"frequency", "random"}, setting for naive evaluation',
+        help='Mode - one of {"frequency", "center", "random"}, setting for naive evaluation',
     )
     parser.add_argument(
         "--bbox-shrink",
