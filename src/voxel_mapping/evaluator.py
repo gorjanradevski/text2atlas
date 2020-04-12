@@ -32,7 +32,7 @@ class Evaluator:
         )[::-1]
         self.voxelman = tifffile.imread(image_files).transpose(1, 2, 0)
         self.corrects = np.zeros(self.total_samples)
-        self.distances = np.zeros(total_samples)
+        self.distances = np.zeros(self.total_samples)
         self.index = 0
 
     def reset_counters(self):
@@ -78,7 +78,7 @@ class Evaluator:
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
         # Setting distances to large number so that we can take minimum
-        distances = np.ones(organ_indices.size, dtype=np.float) * 10000000
+        distances = np.ones(organ_indices.size, dtype=np.float) * 1e15
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(pred_ind, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
         x, y, z = pred_ind.astype(int)
@@ -105,7 +105,7 @@ class Evaluator:
     ) -> np.ndarray:
         """STAYING HERE JUST FOR TESTING"""
         organ_indices = np.array(organ_indices)
-        distances = np.zeros(organ_indices.size).astype(float)
+        distances = np.ones(organ_indices.size, dtype=np.float) * 1e15
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(
             pred_ind,
