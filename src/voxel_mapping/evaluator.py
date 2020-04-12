@@ -74,10 +74,10 @@ class Evaluator:
 
         return 1 if np.count_nonzero(corrects) > 0 else 0
 
-    def voxels_distance_old(
+    def voxels_distance(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
-        """STAYING HERE JUST FOR TESTING PURPOSES"""
+
         distances = np.zeros(organ_indices.size, dtype=np.float)
         pred_ind = np.round(pred + VOXELMAN_CENTER)
         pred_ind = np.clip(pred_ind, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
@@ -100,16 +100,10 @@ class Evaluator:
 
         return distances.min()
 
-    def voxels_distance(
+    def voxels_distance_old(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> np.ndarray:
-        """
-        :param pred: prediction for one sample, numpy array or shape (3,)
-        :param organ_indices: set of true organ indices for the sample, list or numpy array
-        :return: Array with k entries
-         x at i-th entry - pred is x away from nearset voxel of the i-th organ,
-         0.0 at i-th entry - pred is inside of the voxels of the i-th organ
-        """
+        """STAYING HERE JUST FOR TESTING"""
         organ_indices = np.array(organ_indices)
         distances = np.zeros(organ_indices.size).astype(float)
         pred_ind = np.round(pred + VOXELMAN_CENTER)
@@ -119,6 +113,8 @@ class Evaluator:
             a_max=(np.array(VOXELMAN_CENTER) * 2 - 1),
         )
         for i, organ_index in enumerate(organ_indices):
+            if organ_index < 0:
+                continue
             labels = self.organ2label[self.ind2organ[str(organ_index)]]
             x, y, z = pred_ind.astype(int)
             inside = int(self.voxelman[x, y, z] in labels)
