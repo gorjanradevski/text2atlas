@@ -95,7 +95,7 @@ def center_naive(
     # Prepare paths
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2voxels.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Create evaluator
     evaluator = InferenceEvaluator(
         ind2organ_path,
