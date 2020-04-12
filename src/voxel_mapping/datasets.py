@@ -48,27 +48,21 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        # 0 - [MASK], 1 - keep word, 2 - random word from list
+        # 1 - [MASK], 0 - keep word
         mask = {
-            word: np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
-            for word in self.keywords[idx]
+            word: np.random.choice([0, 1], p=[0.5, 0.5]) for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
-                "[MASK]"
-                if word in mask and mask[word] == 0
-                else np.random.choice(self.organs_list)
-                if word in mask and mask[word] == 2
-                else word
+                "[MASK]" if word in mask and mask[word] == 1 else word
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )
         tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         mapping = torch.tensor(self.mappings[idx])
-        organ_indices = torch.tensor(self.organs_indices[idx])
         num_organs = len(mapping)
 
-        return tokenized_sentence, mapping, num_organs, organ_indices
+        return tokenized_sentence, mapping, num_organs
 
 
 class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset):
@@ -113,15 +107,12 @@ class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, D
 def collate_pad_sentence_reg_train_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 ):
-    sentences, mappings, num_organs, organ_indices = zip(*batch)
+    sentences, mappings, num_organs = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
     num_organs = torch.tensor([*num_organs])
-    padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
-        organ_indices, batch_first=True, padding_value=-1
-    )
 
-    return padded_sentences, padded_mappings, num_organs, padded_organ_indices
+    return padded_sentences, padded_mappings, num_organs
 
 
 def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
@@ -163,18 +154,16 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        # 0 - [MASK], 1 - keep word, 2 - random word from list
+        # 1 - [MASK], 0 - keep word
         mask = {
-            word: np.random.choice([0, 1, 2], p=[0.4, 0.4, 0.2])
+            word: np.random.choice(
+                [0, 1], p=[1 - self.mask_probability, self.mask_probability]
+            )
             for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
-                "[MASK]"
-                if word in mask and mask[word] == 0
-                else np.random.choice(self.organs_list)
-                if word in mask and mask[word] == 2
-                else word
+                "[MASK]" if word in mask and mask[word] == 1 else word
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )

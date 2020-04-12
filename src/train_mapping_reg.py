@@ -149,7 +149,7 @@ def train(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, true_mappings, num_organs, true_labels in train_loader:
+            for sentences, true_mappings, num_organs in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
