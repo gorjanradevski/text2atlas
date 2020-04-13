@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
@@ -11,7 +11,6 @@ import random
 import os
 import sys
 from transformers import BertConfig, BertTokenizer
-from torch.utils.tensorboard import SummaryWriter
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
@@ -62,7 +61,6 @@ def train(
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
-    logs_path: str,
     learning_rate: float,
     clip_val: float,
 ):
@@ -153,9 +151,6 @@ def train(
         best_avg_distance,
     )
 
-    # Prepare summary writer
-    writer = SummaryWriter(logs_path)
-
     for epoch in range(cur_epoch, cur_epoch + epochs):
         running_loss = 0
         print(f"Starting epoch {epoch + 1}...")
@@ -239,12 +234,6 @@ def train(
                 f"The distance on the masked validation set is {evaluator.get_current_distance()}"
             )
 
-            # Include validation metrics
-            writer.add_scalar("IQR-masked", evaluator.get_current_ior(), epoch)
-            writer.add_scalar(
-                "Distance-masked", evaluator.get_current_distance(), epoch
-            )
-
             evaluator.update_current_average_distance()
             evaluator.finalize_current_average_distance()
 
@@ -292,7 +281,6 @@ def main():
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
-        args.logs_path,
         args.learning_rate,
         args.clip_val,
     )
@@ -335,9 +323,6 @@ def parse_args():
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--logs_path", type=str, default="logs/test", help="Where to save the logs."
-    )
-    parser.add_argument(
         "--use_all_voxels", action="store_true", help="Whether to use the all voxels."
     )
     parser.add_argument(
@@ -349,7 +334,7 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=30,
+        default=20,
         help="The number of epochs to train the model.",
     )
     parser.add_argument(
