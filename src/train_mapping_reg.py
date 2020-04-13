@@ -152,7 +152,6 @@ def train(
     )
 
     for epoch in range(cur_epoch, cur_epoch + epochs):
-        running_loss = 0
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -178,11 +177,6 @@ def train(
                 # Update progress bar
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
-                # Update loss
-                running_loss += loss
-
-        # Include training loss to logs
-        writer.add_scalar("Training-loss", running_loss / len(train_loader), epoch)
 
         # Set model in evaluation mode
         model.train(False)
@@ -206,12 +200,6 @@ def train(
             )
             print(
                 f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
-            )
-
-            # Include validation metrics
-            writer.add_scalar("IQR-non-masked", evaluator.get_current_ior(), epoch)
-            writer.add_scalar(
-                "Distance-non-masked", evaluator.get_current_distance(), epoch
             )
 
             evaluator.update_current_average_distance()
