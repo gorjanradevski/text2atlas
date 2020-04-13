@@ -89,7 +89,7 @@ def inference(
         )
         # Restart counters
         evaluator.reset_counters()
-        for sentences, organs_indices in tqdm(test_masked_loader):
+        for sentences, attn_mask, organs_indices in tqdm(test_masked_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = (
                 model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
