@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 import json
@@ -11,6 +11,7 @@ import random
 import os
 import sys
 from transformers import BertConfig, BertTokenizer
+from torch.utils.tensorboard import SummaryWriter
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
@@ -61,6 +62,7 @@ def train(
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
+    logs_path: str,
     learning_rate: float,
     clip_val: float,
 ):
@@ -92,6 +94,7 @@ def train(
     val_dataset = VoxelSentenceMappingTestRegDataset(
         val_json_path, tokenizer, ind2anchors
     )
+
     val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
         val_json_path, tokenizer, ind2anchors
     )
@@ -150,7 +153,11 @@ def train(
         best_avg_distance,
     )
 
+    # Prepare summary writer
+    writer = SummaryWriter(logs_path)
+
     for epoch in range(cur_epoch, cur_epoch + epochs):
+        running_loss = 0
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
@@ -176,6 +183,11 @@ def train(
                 # Update progress bar
                 pbar.update(1)
                 pbar.set_postfix({"Batch loss": loss.item()})
+                # Update loss
+                running_loss += loss
+
+        # Include training loss to logs
+        writer.add_scalar("Training-loss", running_loss / len(train_loader), epoch)
 
         # Set model in evaluation mode
         model.train(False)
@@ -200,6 +212,13 @@ def train(
             print(
                 f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
             )
+
+            # Include validation metrics
+            writer.add_scalar("IQR-non-masked", evaluator.get_current_ior(), epoch)
+            writer.add_scalar(
+                "Distance-non-masked", evaluator.get_current_distance(), epoch
+            )
+
             evaluator.update_current_average_distance()
             # Restart counters
             evaluator.reset_counters()
@@ -218,6 +237,12 @@ def train(
             )
             print(
                 f"The distance on the masked validation set is {evaluator.get_current_distance()}"
+            )
+
+            # Include validation metrics
+            writer.add_scalar("IQR-masked", evaluator.get_current_ior(), epoch)
+            writer.add_scalar(
+                "Distance-masked", evaluator.get_current_distance(), epoch
             )
 
             evaluator.update_current_average_distance()
@@ -267,6 +292,7 @@ def main():
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
+        args.logs_path,
         args.learning_rate,
         args.clip_val,
     )
@@ -307,6 +333,9 @@ def parse_args():
         type=str,
         default="models/sentence_mapping_regressor.pt",
         help="Where to save the model.",
+    )
+    parser.add_argument(
+        "--logs_path", type=str, default="logs/test", help="Where to save the logs."
     )
     parser.add_argument(
         "--use_all_voxels", action="store_true", help="Whether to use the all voxels."

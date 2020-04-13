@@ -7,3 +7,4 @@ __pycache__/
 condor/
 src/PdfToTree/
 !src/PdfToTree/.gitkeep
+logs/
