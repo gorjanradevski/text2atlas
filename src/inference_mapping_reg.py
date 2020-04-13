@@ -13,6 +13,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.evaluator import InferenceEvaluator
+from utils.constants import bert_variants
 
 
 def inference(
@@ -20,12 +21,14 @@ def inference(
     voxelman_images_path: str,
     test_json_path: str,
     batch_size: int,
-    bert_path_or_name: str,
+    bert_name: str,
     checkpoint_path: str,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    # Check for valid bert
+    assert bert_name in bert_variants
+    tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
     test_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
         test_json_path, tokenizer
@@ -43,9 +46,9 @@ def inference(
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     # Create model
-    config = BertConfig.from_pretrained(bert_path_or_name)
+    config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, config, final_project_size=3)
+        SentenceMappingsProducer(bert_name, config, final_project_size=3)
     ).to(device)
     # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
@@ -111,7 +114,7 @@ def main():
         args.voxelman_images_path,
         args.test_json_path,
         args.batch_size,
-        args.bert_path_or_name,
+        args.bert_name,
         args.checkpoint_path,
     )
 
@@ -144,10 +147,12 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--bert_path_or_name",
+        "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="The name or path to a pretrained bert model.",
+        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
+        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
+        "google/bert_uncased_L-2_H-128_A-2]",
     )
     parser.add_argument(
         "--checkpoint_path",

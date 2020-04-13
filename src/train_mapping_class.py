@@ -15,6 +15,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_class_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
+from utils.constants import bert_variants
 
 
 def train(
@@ -23,7 +24,7 @@ def train(
     val_json_path: str,
     epochs: int,
     batch_size: int,
-    bert_path_or_name: str,
+    bert_name: str,
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
@@ -32,6 +33,8 @@ def train(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Check for valid bert
+    assert bert_name in bert_variants
     # Load organ to indices to obtain the number of classes and organ names
     organ_names = [
         organ_name
@@ -40,7 +43,7 @@ def train(
         ).values()
     ]
     num_classes = len(organ_names)
-    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    tokenizer = BertTokenizer.from_pretrained(bert_name)
     train_dataset = VoxelSentenceMappingTrainClassDataset(
         train_json_path, tokenizer, num_classes, organ_names
     )
@@ -70,11 +73,9 @@ def train(
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
-    config = BertConfig.from_pretrained(bert_path_or_name)
+    config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(
-            bert_path_or_name, config, final_project_size=num_classes
-        )
+        SentenceMappingsProducer(bert_name, config, final_project_size=num_classes)
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
@@ -187,7 +188,7 @@ def main():
         args.val_json_path,
         args.epochs,
         args.batch_size,
-        args.bert_path_or_name,
+        args.bert_name,
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
@@ -242,10 +243,12 @@ def parse_args():
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
     )
     parser.add_argument(
-        "--bert_path_or_name",
+        "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="The name or path to a pretrained bert model.",
+        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
+        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
+        "google/bert_uncased_L-2_H-128_A-2]",
     )
     parser.add_argument(
         "--checkpoint_path",

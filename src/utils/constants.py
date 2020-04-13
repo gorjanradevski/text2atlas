@@ -1,6 +1,14 @@
 import re
 import numpy as np
 
+bert_variants = [
+    "bert-base-uncased",
+    "allenai/scibert_scivocab_uncased",
+    "monologg/biobert_v1.1_pubmed",
+    "emilyalsentzer/Bio_ClinicalBERT",
+    "google/bert_uncased_L-4_H-256_A-4",
+]
+
 VOXELMAN_CENTER = np.array([165.0, 286.5, 387.0])
 
 pdf_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_PDF"

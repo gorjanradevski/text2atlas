@@ -22,6 +22,7 @@ from voxel_mapping.datasets import (
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
+from utils.constants import bert_variants
 
 
 def create_ind2anchors(
@@ -55,13 +56,15 @@ def train(
     use_all_voxels: bool,
     epochs: int,
     batch_size: int,
-    bert_path_or_name: str,
+    bert_name: str,
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
     learning_rate: float,
     clip_val: float,
 ):
+    # Check whether bert_name is valid
+    assert bert_name in bert_variants
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare paths
@@ -80,7 +83,7 @@ def train(
         print("Using only one organ center!")
         criterion = MinDistanceLoss()
 
-    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    tokenizer = BertTokenizer.from_pretrained(bert_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
     train_dataset = VoxelSentenceMappingTrainRegDataset(
         train_json_path, tokenizer, organ_names, ind2anchors
@@ -111,9 +114,9 @@ def train(
         num_workers=4,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
-    config = BertConfig.from_pretrained(bert_path_or_name)
+    config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_path_or_name, config, final_project_size=3)
+        SentenceMappingsProducer(bert_name, config, final_project_size=3)
     ).to(device)
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -251,7 +254,7 @@ def main():
         args.use_all_voxels,
         args.epochs,
         args.batch_size,
-        args.bert_path_or_name,
+        args.bert_name,
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
@@ -321,10 +324,12 @@ def parse_args():
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
     )
     parser.add_argument(
-        "--bert_path_or_name",
+        "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="The name or path to a pretrained bert model.",
+        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
+        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
+        "google/bert_uncased_L-2_H-128_A-2]",
     )
     parser.add_argument(
         "--checkpoint_path",

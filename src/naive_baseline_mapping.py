@@ -87,10 +87,7 @@ def frequency_naive(
 
 
 def center_naive(
-        organs_dir_path: str,
-        voxelman_images_path: str,
-        test_samples,
-        mode: str
+    organs_dir_path: str, voxelman_images_path: str, test_samples, mode: str
 ):
     # Prepare paths
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
@@ -167,10 +164,8 @@ def main():
     elif args.mode == "center":
         test_samples = json.load(open(args.test_samples_path))
         center_naive(
-            args.organs_dir_path,
-            args.voxelman_images_path,
-            test_samples,
-            args.mode)
+            args.organs_dir_path, args.voxelman_images_path, test_samples, args.mode
+        )
     else:
         train_samples = json.load(open(args.train_samples_path))
         test_samples = json.load(open(args.test_samples_path))

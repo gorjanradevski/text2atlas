@@ -15,6 +15,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.evaluator import InferenceEvaluator
+from utils.constants import bert_variants
 
 
 def inference(
@@ -22,11 +23,13 @@ def inference(
     organs_dir_path: str,
     voxelman_images_path: str,
     batch_size: int,
-    bert_path_or_name: str,
+    bert_name: str,
     checkpoint_path: str,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Check for valid bert
+    assert bert_name in bert_variants
     # Prepare paths
     organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
@@ -36,7 +39,7 @@ def inference(
     ind2organ = json.load(open(ind2organ_path))
     organ2center = json.load(open(organ2mass_path))
     num_classes = len([index for index in ind2organ.keys()])
-    tokenizer = BertTokenizer.from_pretrained(bert_path_or_name)
+    tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
         test_json_path, tokenizer, num_classes
     )
@@ -56,11 +59,9 @@ def inference(
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
-    config = BertConfig.from_pretrained(bert_path_or_name)
+    config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(
-            bert_path_or_name, config, final_project_size=num_classes
-        )
+        SentenceMappingsProducer(bert_name, config, final_project_size=num_classes)
     ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode
@@ -132,7 +133,7 @@ def main():
         args.organs_dir_path,
         args.voxelman_images_path,
         args.batch_size,
-        args.bert_path_or_name,
+        args.bert_name,
         args.checkpoint_path,
     )
 
@@ -167,10 +168,12 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--bert_path_or_name",
+        "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="The name or path to a pretrained bert model.",
+        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
+        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
+        "google/bert_uncased_L-2_H-128_A-2]",
     )
     parser.add_argument(
         "--checkpoint_path",
