@@ -108,11 +108,17 @@ def collate_pad_sentence_reg_train_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 ):
     sentences, mappings, num_organs = zip(*batch)
-    padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
-    padded_mappings = torch.nn.utils.rnn.pad_sequence(mappings, batch_first=True)
+    padded_sentences = torch.nn.utils.rnn.pad_sequence(
+        sentences, batch_first=True, padding_value=0
+    )
+    padded_mappings = torch.nn.utils.rnn.pad_sequence(
+        mappings, batch_first=True, padding_value=0
+    )
     num_organs = torch.tensor([*num_organs])
+    attn_mask = padded_sentences.clone()
+    attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, padded_mappings, num_organs
+    return padded_sentences, attn_mask, padded_mappings, num_organs
 
 
 def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
@@ -121,8 +127,10 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
     padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
         organ_indices, batch_first=True, padding_value=-1
     )
+    attn_mask = padded_sentences.clone()
+    attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, padded_organ_indices
+    return padded_sentences, attn_mask, padded_organ_indices
 
 
 class VoxelSentenceMappingClassDataset:
@@ -219,5 +227,7 @@ class VoxelSentenceMappingTestMaskedClassDataset(
 def collate_pad_sentence_class_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
     sentences, organ_indices = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
+    attn_mask = padded_sentences.clone()
+    attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, torch.stack([*organ_indices], dim=0)
+    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0)

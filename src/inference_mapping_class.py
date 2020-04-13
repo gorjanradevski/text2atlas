@@ -77,9 +77,9 @@ def inference(
     with torch.no_grad():
         # UNMASKED SETTING
         evaluator.reset_counters()
-        for sentences, organs_indices in tqdm(test_loader):
-            sentences = sentences.to(device)
-            output_mappings = model(sentences)
+        for sentences, attn_mask, organs_indices in tqdm(test_loader):
+            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+            output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=-1)
             pred_organ_names = [ind2organ[str(ind.item())] for ind in y_pred]
             pred_centers = [organ2center[organ_name] for organ_name in pred_organ_names]
@@ -100,9 +100,9 @@ def inference(
         )
         # MASKED SETTING
         evaluator.reset_counters()
-        for sentences, organs_indices in tqdm(test_masked_loader):
-            sentences = sentences.to(device)
-            output_mappings = model(sentences)
+        for sentences, attn_mask, organs_indices in tqdm(test_masked_loader):
+            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+            output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=1)
             # Measure distance
             pred_organ_names = [ind2organ[str(ind.item())] for ind in y_pred]

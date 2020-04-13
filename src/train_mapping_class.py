@@ -25,6 +25,7 @@ def train(
     epochs: int,
     batch_size: int,
     bert_name: str,
+    weight_decay: float,
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
@@ -79,7 +80,9 @@ def train(
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    )
     best_avg_ior = -1
     cur_epoch = 0
     if checkpoint_path is not None:
@@ -99,15 +102,16 @@ def train(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, organ_indices in train_loader:
+            for sentences, attn_mask, organ_indices in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                sentences, organ_indices = (
+                sentences, attn_mask, organ_indices = (
                     sentences.to(device),
+                    attn_mask.to(device),
                     organ_indices.to(device),
                 )
-                output_mappings = model(sentences)
+                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 loss = criterion(output_mappings, organ_indices)
                 # backward
                 loss.backward()
@@ -125,9 +129,9 @@ def train(
             corrects = 0
             totals = 0
             cur_unmasked_ior = 0
-            for sentences, organ_indices in tqdm(val_loader):
-                sentences = sentences.to(device)
-                output_mappings = model(sentences)
+            for sentences, attn_mask, organ_indices in tqdm(val_loader):
+                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 y_pred = torch.argmax(output_mappings, dim=1)
                 y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
@@ -140,9 +144,9 @@ def train(
             corrects = 0
             totals = 0
             cur_masked_ior = 0
-            for sentences, organ_indices in tqdm(val_masked_loader):
-                sentences = sentences.to(device)
-                output_mappings = model(sentences)
+            for sentences, attn_mask, organ_indices in tqdm(val_masked_loader):
+                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 y_pred = torch.argmax(output_mappings, dim=1)
                 y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
                 y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
@@ -189,6 +193,7 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_name,
+        args.weight_decay,
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
@@ -234,10 +239,16 @@ def parse_args():
         help="The number of epochs to train the model.",
     )
     parser.add_argument(
+        "--weight_decay",
+        type=float,
+        default=0.0,
+        help="The weight decay - default as per BERT.",
+    )
+    parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=5e-5, help="The learning rate."
+        "--learning_rate", type=float, default=2e-5, help="The learning rate."
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."

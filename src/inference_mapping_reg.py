@@ -69,9 +69,11 @@ def inference(
     with torch.no_grad():
         # Restart counters
         evaluator.reset_counters()
-        for sentences, organs_indices in tqdm(test_loader):
-            sentences = sentences.to(device)
-            output_mappings = model(sentences).cpu().numpy()
+        for sentences, attn_mask, organs_indices in tqdm(test_loader):
+            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+            output_mappings = (
+                model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+            )
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
@@ -88,8 +90,10 @@ def inference(
         # Restart counters
         evaluator.reset_counters()
         for sentences, organs_indices in tqdm(test_masked_loader):
-            sentences = sentences.to(device)
-            output_mappings = model(sentences).cpu().numpy()
+            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+            output_mappings = (
+                model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+            )
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
