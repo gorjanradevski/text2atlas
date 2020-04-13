@@ -206,7 +206,7 @@ def train(
             for sentences, attn_mask, organs_indices in tqdm(val_masked_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
                 output_mappings = (
-                    model(input_ids=sentences, attn_mask=attn_mask).cpu().numpy()
+                    model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
                 )
                 for output_mapping, organ_indices in zip(
                     output_mappings, organs_indices
