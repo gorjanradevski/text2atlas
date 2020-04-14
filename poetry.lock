@@ -215,6 +215,23 @@ pycodestyle = ">=2.5.0,<2.6.0"
 pyflakes = ">=2.1.0,<2.2.0"
 
 [[package]]
+category = "main"
+description = "Google Drive direct download of big files."
+name = "gdown"
+optional = false
+python-versions = "*"
+version = "3.10.2"
+
+[package.dependencies]
+filelock = "*"
+six = "*"
+tqdm = "*"
+
+[package.dependencies.requests]
+extras = ["socks"]
+version = "*"
+
+[[package]]
 category = "dev"
 description = "Python Script to download hundreds of images from 'Google Images'. It is a ready-to-run code! "
 name = "google-images-download"
@@ -845,6 +862,14 @@ version = "0.15.6"
 six = "*"
 
 [[package]]
+category = "main"
+description = "A Python SOCKS client module. See https://github.com/Anorov/PySocks for more information."
+name = "pysocks"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "1.7.1"
+
+[[package]]
 category = "dev"
 description = "pytest: simple powerful testing with Python"
 name = "pytest"
@@ -947,6 +972,10 @@ certifi = ">=2017.4.17"
 chardet = ">=3.0.2,<4"
 idna = ">=2.5,<3"
 urllib3 = ">=1.21.1,<1.25.0 || >1.25.0,<1.25.1 || >1.25.1,<1.26"
+
+[package.dependencies.PySocks]
+optional = true
+version = ">=1.5.6,<1.5.7 || >1.5.7"
 
 [package.extras]
 security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)"]
@@ -1289,7 +1318,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "d782a0f5ecb4d672bb7bbe6a6ceca4e3c9a545d110aa297263132d7e4bf22dff"
+content-hash = "49213fec9803ef18b72375fbd408345c02116c4339ac29d08cb162c7e5cad2d3"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -1377,6 +1406,9 @@ filelock = [
 flake8 = [
     {file = "flake8-3.7.9-py2.py3-none-any.whl", hash = "sha256:49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca"},
     {file = "flake8-3.7.9.tar.gz", hash = "sha256:45681a117ecc81e870cbf1262835ae4af5e7a8b08e40b944a8a6e6b895914cfb"},
+]
+gdown = [
+    {file = "gdown-3.10.2.tar.gz", hash = "sha256:2773fbcf724c3f247a0d14487eae6a55eb91aa867ed1be575151036344614a67"},
 ]
 google-images-download = [
     {file = "google_images_download-2.8.0.tar.gz", hash = "sha256:a4090564a58904ceeaa60cc31ba6bf7e7bb321b65e2bbafc4b5e1e894810bcc1"},
@@ -1761,6 +1793,11 @@ pyparsing = [
 ]
 pyrsistent = [
     {file = "pyrsistent-0.15.6.tar.gz", hash = "sha256:f3b280d030afb652f79d67c5586157c5c1355c9a58dfc7940566e28d28f3df1b"},
+]
+pysocks = [
+    {file = "PySocks-1.7.1-py27-none-any.whl", hash = "sha256:08e69f092cc6dbe92a0fdd16eeb9b9ffbc13cadfe5ca4c7bd92ffb078b293299"},
+    {file = "PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5"},
+    {file = "PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0"},
 ]
 pytest = [
     {file = "pytest-5.3.1-py3-none-any.whl", hash = "sha256:63344a2e3bce2e4d522fd62b4fdebb647c019f1f9e4ca075debbd13219db4418"},

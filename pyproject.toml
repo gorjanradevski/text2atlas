@@ -18,6 +18,7 @@ nltk = "^3.4"
 transformers = {git = "https://github.com/gorjanradevski/transformers.git"}
 tifffile = "^2020.2.16"
 tensorboard = "1.14.0"
+gdown = "^3.10.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allow-prereleases = true}
