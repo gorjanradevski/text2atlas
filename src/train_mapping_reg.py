@@ -206,6 +206,9 @@ def train(
             print(
                 f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
             )
+            print(
+                f"The miss distance on the non-masked validation set is {evaluator.get_current_miss_distance()}"
+            )
 
             evaluator.update_current_average_distance()
             # Restart counters
@@ -225,6 +228,9 @@ def train(
             )
             print(
                 f"The distance on the masked validation set is {evaluator.get_current_distance()}"
+            )
+            print(
+                f"The miss distance on the masked validation set is {evaluator.get_current_miss_distance()}"
             )
 
             evaluator.update_current_average_distance()

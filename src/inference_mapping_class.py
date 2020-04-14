@@ -93,10 +93,16 @@ def inference(
             f"The avg distance on the non-masked test set is {evaluator.get_current_distance()}"
         )
         print(
+            f"The avg miss distance on the non-masked test set is {evaluator.get_current_miss_distance()}"
+        )
+        print(
             f"The error bar of the IOR on the non-masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the non-masked test set is {evaluator.get_distance_error_bar()}"
+        )
+        print(
+            f"The error bar of the miss distance on the non-masked test set is {evaluator.get_miss_distance_error_bar()}"
         )
         # MASKED SETTING
         evaluator.reset_counters()
@@ -117,10 +123,16 @@ def inference(
             f"The avg distance on the masked test set is {evaluator.get_current_distance()}"
         )
         print(
+            f"The avg miss distance on the masked test set is {evaluator.get_current_miss_distance()}"
+        )
+        print(
             f"The error bar of the IOR on the masked test set is {evaluator.get_ior_error_bar()}"
         )
         print(
             f"The error bar of the distance on the masked test set is {evaluator.get_distance_error_bar()}"
+        )
+        print(
+            f"The error bar of the miss distance on the masked test set is {evaluator.get_miss_distance_error_bar()}"
         )
 
 
