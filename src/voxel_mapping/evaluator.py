@@ -51,6 +51,11 @@ class Evaluator:
     def get_current_distance(self):
         return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=2)
 
+    def get_current_miss_distance(self):
+        return np.round(
+            (np.sum(self.distances) / np.count_nonzero(self.distances)) / 10, decimals=2
+        )
+
     def voxels_inside(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
     ) -> int:
@@ -100,36 +105,6 @@ class Evaluator:
 
         return distances.min()
 
-    def voxels_distance_old(
-        self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
-    ) -> np.ndarray:
-        """STAYING HERE JUST FOR TESTING"""
-        organ_indices = np.array(organ_indices)
-        distances = np.ones(organ_indices.size, dtype=np.float) * 1e15
-        pred_ind = np.round(pred + VOXELMAN_CENTER)
-        pred_ind = np.clip(
-            pred_ind,
-            a_min=np.array([0, 0, 0]),
-            a_max=(np.array(VOXELMAN_CENTER) * 2 - 1),
-        )
-        for i, organ_index in enumerate(organ_indices):
-            if organ_index < 0:
-                continue
-            labels = self.organ2label[self.ind2organ[str(organ_index)]]
-            x, y, z = pred_ind.astype(int)
-            inside = int(self.voxelman[x, y, z] in labels)
-            if inside:
-                distances[i] = 0.0
-            else:
-                summary_points = np.array(
-                    self.organ2summary[self.ind2organ[str(organ_index)]]
-                )
-                distances[i] = np.sqrt(
-                    np.square(pred - summary_points).sum(axis=1)
-                ).min()
-
-        return distances.min()
-
 
 class InferenceEvaluator(Evaluator):
     def __init__(
@@ -157,6 +132,14 @@ class InferenceEvaluator(Evaluator):
     def get_distance_error_bar(self):
         return np.round(
             np.std(self.distances, ddof=1) / np.sqrt(self.total_samples) / 10,
+            decimals=2,
+        )
+
+    def get_miss_distance_error_bar(self):
+        return np.round(
+            np.std(self.distances[np.nonzero(self.distances)], ddof=1)
+            / np.sqrt(np.count_nonzero(self.distances))
+            / 10,
             decimals=2,
         )
 
