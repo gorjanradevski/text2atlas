@@ -185,26 +185,26 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description="Performs naive baseline evaluation.")
     parser.add_argument(
-        "--organs-dir-path",
+        "--organs_dir_path",
         type=str,
         default="data/data_organs_covid",
         help="Path to the data organs directory.",
     )
     parser.add_argument(
-        "--voxelman-images-path",
+        "--voxelman_images_path",
         type=str,
         default="data/voxelman_images",
         help="Path to the voxel-man images",
     )
     parser.add_argument(
-        "--train-samples-path",
+        "--train_samples_path",
         "-trp",
         type=str,
         default="",
         help="Path to the json with data samples",
     )
     parser.add_argument(
-        "--test-samples-path",
+        "--test_samples_path",
         "-tsp",
         type=str,
         help="Path to the json with data samples",
@@ -214,13 +214,6 @@ def parse_args():
         "-m",
         type=str,
         help='Mode - one of {"frequency", "center", "random"}, setting for naive evaluation',
-    )
-    parser.add_argument(
-        "--bbox-shrink",
-        "-bs",
-        type=float,
-        default=0.0,
-        help="Fraction (from 0.0 to 1.0) by which we decrease each dimension of the bounding boxes",
     )
     return parser.parse_args()
 
