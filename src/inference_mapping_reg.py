@@ -77,21 +77,17 @@ def inference(
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(f"The IOR on the non-masked test set is {evaluator.get_current_ior()}")
         print(
-            f"The avg distance on the non-masked test set is {evaluator.get_current_distance()}"
+            "The IOR on the masked test set is: "
+            f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
         )
         print(
-            f"The avg miss distance on the non-masked validation set is {evaluator.get_current_miss_distance()}"
+            "The avg distance on the masked test set is: "
+            f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
         )
         print(
-            f"The error bar of the IOR on the non-masked test set is {evaluator.get_ior_error_bar()}"
-        )
-        print(
-            f"The error bar of the distance on the non-masked test set is {evaluator.get_distance_error_bar()}"
-        )
-        print(
-            f"The error bar of the miss distance on the non-masked test set is {evaluator.get_miss_distance_error_bar()}"
+            "The avg miss distance on the masked test set is: "
+            f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
         # Restart counters
         evaluator.reset_counters()
@@ -103,21 +99,17 @@ def inference(
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
                 evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-        print(f"The IOR on the masked test set is {evaluator.get_current_ior()}")
         print(
-            f"The avg distance on the masked test set is {evaluator.get_current_distance()}"
+            "The IOR on the masked test set is: "
+            f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
         )
         print(
-            f"The avg miss distance on the masked validation set is {evaluator.get_current_miss_distance()}"
+            "The avg distance on the masked test set is: "
+            f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
         )
         print(
-            f"The error bar of the IOR on the masked test set is {evaluator.get_ior_error_bar()}"
-        )
-        print(
-            f"The error bar of the distance on the masked test set is {evaluator.get_distance_error_bar()}"
-        )
-        print(
-            f"The error bar of the miss distance on the masked test set is {evaluator.get_miss_distance_error_bar()}"
+            "The avg miss distance on the masked test set is: "
+            f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
 
 
