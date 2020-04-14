@@ -120,6 +120,7 @@ def inference(
             f"The error bar of the miss distance on the masked test set is {evaluator.get_miss_distance_error_bar()}"
         )
 
+
 def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
