@@ -140,7 +140,9 @@ def train(
                 totals += organ_indices.size()[0]
 
             cur_unmasked_ior = corrects * 100 / totals
-            print(f"The IOR on the non masked validation set is {cur_unmasked_ior}")
+            print(
+                f"The IOR on the non masked validation set is {round(cur_unmasked_ior, 2)}"
+            )
             corrects = 0
             totals = 0
             cur_masked_ior = 0
@@ -156,19 +158,19 @@ def train(
 
             cur_masked_ior = corrects * 100 / totals
 
-            print(f"The IOR on the masked validation set is {cur_masked_ior}")
+            print(f"The IOR on the masked validation set is {round(cur_masked_ior, 2)}")
             if (cur_unmasked_ior + cur_masked_ior) / 2 > best_avg_ior:
                 best_avg_ior = (cur_unmasked_ior + cur_masked_ior) / 2
                 print("======================")
                 print(
-                    f"Found new best with avg IOR {best_avg_ior} on epoch "
+                    f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
                 print("======================")
             else:
                 print(
-                    f"Avg IOR on epoch {epoch+1} is: {(cur_unmasked_ior + cur_masked_ior) / 2}"
+                    f"Avg IOR on epoch {epoch+1} is: {round((cur_unmasked_ior + cur_masked_ior) / 2, 2)}"
                 )
             print("Saving intermediate checkpoint...")
             torch.save(
@@ -259,7 +261,7 @@ def parse_args():
         default="bert-base-uncased",
         help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
         "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
-        "google/bert_uncased_L-2_H-128_A-2]",
+        "google/bert_uncased_L-4_H-512_A-8]",
     )
     parser.add_argument(
         "--checkpoint_path",

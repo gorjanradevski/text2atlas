@@ -173,7 +173,7 @@ def parse_args():
         default="bert-base-uncased",
         help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
         "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
-        "google/bert_uncased_L-2_H-128_A-2]",
+        "google/bert_uncased_L-8_H-512_A-8]",
     )
     parser.add_argument(
         "--checkpoint_path",

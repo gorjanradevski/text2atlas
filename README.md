@@ -4,17 +4,25 @@ This repository is the official implementation of [Self-supervised context-aware
 
 ## Requirements
 
-If you are using [Poetry](https://python-poetry.org/), navigating in the project root directory and running `poetry install` will suffice. Otherwise, a `requirements.txt` file is present at the project root directory so you can install all dependencies by running `pip install -r requirements.txt`.
+If you are using [Poetry](https://python-poetry.org/), navigating in the project root directory and running `poetry install` will suffice. Otherwise, a `requirements.txt` file is present at the project root directory so you can install all dependencies by running `pip install -r requirements.txt`. However, if you just want to download the trained models or dataset splits, make sure to have [gdown](https://github.com/wkentaro/gdown) installed `pip install gdown` (Already installed if the project dependencies are installed).
 
-## Fetching the data-splits
+## Fetching the data
 
-The training, validation and test splits obtained from the [original dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) can be downloaded by executing the code snippet below (Assuming that all project dependencies are installed).
+The data we use to perform the research consist of the splits used for training, validation and testing the model, together with the...
+
+### Downloading the dataset splits
+
+The training, validation and test splits obtained from the [original dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) can be downloaded with `gdown` using the code snippet bellow.
 
 ```shell
 gdown link_goes_here -O data/dataset_covid_train.json
 gdown link_goes_here -O data/dataset_covid_val.json
 gdown link_goes_here -O data/dataset_covid_test.json
 ```
+
+### Downloading the human-atlas
+
+The last thing we need from the data...
 
 ## Training
 
@@ -52,7 +60,7 @@ The script will perfrom inference with the trained model saved at `models/covid_
 
 ## Pre-trained models
 
-All models used to report the results in the paper can be downloaded by running the below code snippet (Assuming that all project dependencies are installed).
+All models used to report the results in the paper can be downloaded with `gdown` using the code snippet bellow.
 
 ```shell
 gdown link_goes_here -O models/covid_basebert.pt
