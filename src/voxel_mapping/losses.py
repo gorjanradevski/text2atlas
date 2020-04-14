@@ -3,6 +3,32 @@ from torch import nn
 import torch.nn.functional as F
 
 
+class BaselineRegLoss(nn.Module):
+    def __init__(self):
+        super(BaselineRegLoss, self).__init__()
+
+    def forward(
+        self,
+        predictions: torch.Tensor,
+        anchors: torch.Tensor,
+        lengths: torch.Tensor,
+        device: torch.device,
+    ):
+        mask = (
+            torch.arange(torch.max(lengths))
+            .expand(lengths.size()[0], torch.max(lengths))
+            .to(device)
+            < lengths.unsqueeze(1)
+        ).float()
+        mask[torch.where(mask == 0)] = 1e15
+        mask = mask.unsqueeze(2)
+        predictions = predictions.unsqueeze(1).unsqueeze(2)
+        distances = (predictions - anchors).norm(p=2, dim=3)
+        distances_masked = distances * mask
+
+        return distances_masked.mean()
+
+
 class OrganDistanceLoss(nn.Module):
     def __init__(self):
         super(OrganDistanceLoss, self).__init__()

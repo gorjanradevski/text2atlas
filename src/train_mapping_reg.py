@@ -20,7 +20,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
+from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss, BaselineRegLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 from utils.constants import bert_variants
 
@@ -53,7 +53,7 @@ def train(
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
-    use_all_voxels: bool,
+    loss_type: str,
     epochs: int,
     batch_size: int,
     bert_name: str,
@@ -76,13 +76,18 @@ def train(
     organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Check for the type of loss
     ind2anchors = None
-    if use_all_voxels:
+    assert loss_type in ["one_voxel", "all_voxels", "baseline"]
+    if loss_type == "all_voxels":
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = OrganDistanceLoss()
         print("Using all organ points!")
-    else:
+    elif loss_type == "one_voxel":
         print("Using only one organ center!")
         criterion = MinDistanceLoss()
+    else:
+        ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
+        criterion = BaselineRegLoss()
+        print("Training using the baseline regression loss!")
 
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
@@ -261,7 +266,7 @@ def main():
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
-        args.use_all_voxels,
+        args.loss_type,
         args.epochs,
         args.batch_size,
         args.bert_name,
@@ -311,7 +316,10 @@ def parse_args():
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--use_all_voxels", action="store_true", help="Whether to use the all voxels."
+        "--loss_type",
+        type=str,
+        default="all_voxels",
+        help="The type of loss to use to train the model",
     )
     parser.add_argument(
         "--save_intermediate_model_path",
