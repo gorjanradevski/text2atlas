@@ -6,7 +6,8 @@ bert_variants = [
     "allenai/scibert_scivocab_uncased",
     "monologg/biobert_v1.1_pubmed",
     "emilyalsentzer/Bio_ClinicalBERT",
-    "google/bert_uncased_L-4_H-256_A-4",
+    "google/bert_uncased_L-4_H-256_A-4", # Mini
+    "google/bert_uncased_L-4_H-512_A-8", # Small
 ]
 
 VOXELMAN_CENTER = np.array([165.0, 286.5, 387.0])
