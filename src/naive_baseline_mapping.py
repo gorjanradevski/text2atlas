@@ -77,12 +77,17 @@ def frequency_naive(
     print(
         f"At {mode} mode the average distance to hit: {evaluator.get_current_distance():.3f}"
     )
-
+    print(
+        f"At {mode} mode the average distance to hit when missing: {evaluator.get_current_miss_distance():.3f}"
+    )
     print(
         f"At {mode} mode the IOR error-bar of hitting: {evaluator.get_ior_error_bar()}"
     )
     print(
         f"At {mode} mode the distance error-bar to hit: {evaluator.get_distance_error_bar()}"
+    )
+    print(
+        f"At {mode} mode the distance error-bar to hit when missing: {evaluator.get_miss_distance_error_bar()}"
     )
 
 
@@ -110,17 +115,22 @@ def center_naive(
         )
 
     print(
-        f"At {mode} mode the average probability of hitting: {100 * evaluator.get_current_ior():.3f}%"
+        f"At {mode} mode the average probability of hitting: {evaluator.get_current_ior():.3f}%"
     )
     print(
         f"At {mode} mode the average distance to hit: {evaluator.get_current_distance():.3f}"
     )
-
+    print(
+        f"At {mode} mode the average distance to hit when missing: {evaluator.get_current_miss_distance():.3f}"
+    )
     print(
         f"At {mode} mode the IOR error-bar of hitting: {evaluator.get_ior_error_bar()}"
     )
     print(
         f"At {mode} mode the distance error-bar to hit: {evaluator.get_distance_error_bar()}"
+    )
+    print(
+        f"At {mode} mode the distance error-bar to hit when missing: {evaluator.get_miss_distance_error_bar()}"
     )
 
 
