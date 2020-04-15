@@ -197,14 +197,14 @@ def parse_args():
     parser.add_argument(
         "--organs_dir_path",
         type=str,
-        default="data/data_organs_covid",
+        default="data/data_organs",
         help="Path to the data organs directory.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
         default="data/voxelman_images",
-        help="Path to the voxel-man images",
+        help="Path to the voxelman images",
     )
     parser.add_argument(
         "--train_samples_path",

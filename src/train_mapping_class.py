@@ -213,7 +213,7 @@ def parse_args():
     parser.add_argument(
         "--organs_dir_path",
         type=str,
-        default="data/data_organs_covid",
+        default="data/data_organs",
         help="Path to the data organs directory path.",
     )
     parser.add_argument(
