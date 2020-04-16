@@ -26,7 +26,11 @@ gdown "https://drive.google.com/uc?id=18VSbspzB2VjxDdLaVSNyFB-GZAvEopGE" -O data
 
 ### Downloading the human atlas
 
-Instructions for obtaining the voxelman here...
+Instructions for obtaining the human atlas can be found on the [Voxel-Man website] (https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/)
+
+The downloaded file contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the list of objects (organs), and three directories, CT/, labels/, rgb/.
+
+The innerorgans/labels/ directory is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
 
 ### Downloading the dictionaries
 
