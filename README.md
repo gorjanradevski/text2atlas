@@ -28,7 +28,7 @@ gdown "https://drive.google.com/uc?id=18VSbspzB2VjxDdLaVSNyFB-GZAvEopGE" -O data
 
 Instructions for obtaining the human atlas can be found on the [Voxel-Man website] (https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/)
 
-The provided file contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the a text file with a of objects and their segmentation labels, and three directories, CT/, labels/, rgb/.
+The obtained model contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the a text file with a of objects and their segmentation labels, and three directories, CT/, labels/, rgb/.
 
 The innerorgans/labels/ directory constains slices of the human atlas in the form of .tif images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
 
@@ -38,7 +38,8 @@ The data/data_organs_cord/ directory already contains four json files with dicti
   - organ2ind.json
   - ind2organ.json
   - organ2label.json
-  - organ2alias.json\
+  - organ2alias.json
+  
 Details of the steps (removals, mergers of organ segmentation labels and renamings) that resulted in such json files can be found [here](data/README.md).
   
 An additional three json files need to be generated after obtaining the human atlas and moving the labels/ directory with images to the data/ directory of the project.
