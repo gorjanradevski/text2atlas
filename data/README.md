@@ -48,4 +48,4 @@ left ventricle &rarr; ventricle
 ### Renaming of organs for better alias term extraction
 
 arch of aorta &rarr; aortic arch\
-duodenum (retroperitoneal part) &rarr; duodenum\
+duodenum (retroperitoneal part) &rarr; duodenum
