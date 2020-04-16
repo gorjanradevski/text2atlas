@@ -8,15 +8,15 @@ See our [Cord-19 Explorer](https://cord19-explorer.herokuapp.com/) and our [Cord
 
 ## Requirements
 
-If you are using [Poetry](https://python-poetry.org/), navigating to the project root directory and running `poetry install` will suffice. Otherwise, a `requirements.txt` file is present at the project root directory so you can install all dependencies by running `pip install -r requirements.txt`. However, if you just want to download the trained models or dataset splits, make sure to have [gdown](https://github.com/wkentaro/gdown) installed. If the project dependencies are installed then `gdown` is already present, otherwise, run `pip install gdown` to install it.
+If you are using [Poetry](https://python-poetry.org/), navigating to the project root directory and running `poetry install` will suffice. Otherwise, a `requirements.txt` file is present so you can install all dependencies by running `pip install -r requirements.txt`. However, if you just want to download the trained models or dataset splits, make sure to have [gdown](https://github.com/wkentaro/gdown) installed. If the project dependencies are installed then `gdown` is already present. Otherwise, run `pip install gdown` to install it.
 
 ## Fetching the data
 
-The data we use to perform the research consist of the splits used for training, validation and testing the model, together with a [3D human model](https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/). 
+The data we use to perform the research consist of the splits used for training, validation and testing the model, together with a [3D human model](https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/).
 
 ### Downloading the dataset splits
 
-The training, validation and test splits obtained from the [original dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge), plus the corresponding mappings to the human body atlas can be downloaded with `gdown` using the code snippet bellow.
+The training, validation and test splits obtained from the [original dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) can be downloaded with `gdown` using the code snippet bellow.
 
 ```shell
 gdown "https://drive.google.com/uc?id=1kLvbRVzyR-66lrfzLfeFd3k9-l_S_Cl4" -O data/cord_dataset_train.json
@@ -26,35 +26,28 @@ gdown "https://drive.google.com/uc?id=18VSbspzB2VjxDdLaVSNyFB-GZAvEopGE" -O data
 
 ### Downloading the 3D human model
 
-Instructions for obtaining the human atlas can be found on the [Voxel-Man website] (https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/)
+Instructions for obtaining the human atlas can be found on the [Voxel-Man website](https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/). The obtained model contains images of the male head `head.zip` and torso `innerorgans.zip`. The unzipped directory `innerograns/`, contains a text file with organs and their segmentation labels, and three directories, `CT/`, `labels/`, `rgb/`.
 
-The obtained model contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the a text file with a of objects and their segmentation labels, and three directories, CT/, labels/, rgb/.
-
-The innerorgans/labels/ directory constains slices of the human atlas in the form of .tif images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
+The `innerorgans/labels/` directory constains slices of the human atlas in the form of `.tiff` images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
 
 ### Generating required json files
+  
+The required four json files `organ2ind.json`, `ind2organ.json`, `organ2label.json` and `organ2alias.json` that contain the the dictionaries related to the organs in the human atlas can be downloaded and extracted by running:
 
-The data/data_organs_cord/ directory already contains four json files with dictionaries related to the organs in the human atlas:
-  - organ2ind.json
-  - ind2organ.json
-  - organ2label.json
-  - organ2alias.json
-  
-Details of the steps (removals, mergers of organ segmentation labels and renamings) that resulted in such json files can be found [here](data/README.md).
-  
-An additional three json files need to be generated after obtaining the human atlas and moving the labels/ directory with images to the data/ directory of the project.
-This can be done by running the following script:
+```shell
+gdown "https://drive.google.com/uc?id=18qxmrOovy1_Cd4ceUNLPKTQUHf3RRs1r" -O data/data_organs_cord.zip
+unzip -qq data/data_organs_cord.zip
+```
+
+Details of the steps (removals, mergers of organ segmentation labels and renamings) that resulted in such json files can be found [here](data/README.md). An additional three json files need to be generated after obtaining the human atlas and moving the `labels/` directory with images to the `data/` directory of the project. This can be done by running the following script:
+
 ```shell
 python src/generate_voxel_dict.py --organs_dir_path "data/data_organs_cord"\
                                   --voxelman_images_path "data/labels"
 ```
-This script should generate three additional json files:
-  - organ2voxels.json
-  - organ2voxels_eroded.json
-  - organ2summary.json
-And place them in the data/data_organs_cord/ directory.
-  
 
+This script should generate three additional json files `organ2voxels.json`, `organ2voxels_eroded.json`, `organ2summary.json`, and place them in the `data/data_organs_cord/` directory.
+  
 ## Training
 
 To train a new model on the training data split, from the root project directory run:
@@ -95,7 +88,7 @@ All models used to report the results in the paper can be downloaded with `gdown
 ```shell
 gdown "https://drive.google.com/uc?id=17_2g3kWndZI64WpGSR4EZEIK2qBzLrtI" -O models/cord_basebert_grounding.pt
 gdown "https://drive.google.com/uc?id=17nUZ0Iym6q7U83kO9QowdmCzvQlp7Cce" -O models/cord_biobert_grounding.pt
-gdown link_goes_here -O models/cord_scibert_grounding.pt
+gdown "https://drive.google.com/uc?id=1_WxTKu7qJ0sF5oLqniYnTMUVIFcJ1pPJ" -O models/cord_scibert_grounding.pt
 gdown "https://drive.google.com/uc?id=144TyLhPmPnZNH88hP4WHLzAC4So7OvFU" -O models/cord_clinicalbert_grounding.pt
 gdown "https://drive.google.com/uc?id=11OHi9wETRPAHUTIH4p6BqZY3gH6NJtve" -O models/cord_smallbert_grounding.pt
 ```
