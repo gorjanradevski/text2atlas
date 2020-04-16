@@ -50,4 +50,4 @@ left ventricle &rarr; ventricle
 arch of aorta &rarr; aortic arch\
 duodenum (retroperitoneal part) &rarr; duodenum
 
-### Removal of all organ with fewer than 100 occurrences in the text corpus
+### Removal of organs with fewer than 100 occurrences in the text corpus
