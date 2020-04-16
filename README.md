@@ -38,7 +38,7 @@ The data/data_organs_cord/ directory already contains four json files with dicti
   - organ2ind.json
   - ind2organ.json
   - organ2label.json
-  - organ2alias.json
+  - organ2alias.json\
 Details of the steps (removals, mergers of organ segmentation labels and renamings) that resulted in such json files can be found [here](data/README.md).
   
 An additional three json files need to be generated after obtaining the human atlas and moving the labels/ directory with images to the data/ directory of the project.
