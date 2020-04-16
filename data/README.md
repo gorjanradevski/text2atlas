@@ -12,15 +12,15 @@ right atrium, right clavicular cartilage, right colic flexure, right costal cart
 
 ### Merger of left costal cartilage segments into "left costal cartilage"
 
-left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9
+left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9 &rarr; left costal cartilage
 
 ### Mergers of stomach segments into "stomach"
 
-stomach fundus, greater curvature, lesser curvature, body of stomach, cardia, stomach
+stomach fundus, greater curvature, lesser curvature, body of stomach, cardia, stomach &rarr; stomach
 
 ### Merger of colon segments into "colon"
 
-ascending colon, descending colon, transverse colon merged
+ascending colon, descending colon, transverse colon &rarr; colon 
 
 ## Renaming
 
