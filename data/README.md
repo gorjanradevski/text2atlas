@@ -50,4 +50,6 @@ left ventricle &rarr; ventricle
 arch of aorta &rarr; aortic arch\
 duodenum (retroperitoneal part) &rarr; duodenum
 
-### Removal of organs with fewer than 100 occurrences in the text corpus
+## Removal of organs with fewer than 100 occurrences in the text corpus
+
+abdominal aorta, ampulla, aortic arch, ascending aorta, azygos vein, brachiocephalic vein, corpus cavernosum penis, corpus spongiosum penis, penis, cystic duct, descending aorta, hepatic veins, inferior vena cava, superior vena cava, ischiocavernosus, clavicular cartilage, colic flexure, external oblique, inernal oblique, iliacus, obturator internus, renal medulla, subclavian vein, transversus abdominis, pelvic diaphragm, psoas, pulmonary trunk, pulmonary veins, rectus abdominis, rectus sheath, renal vein, scrotum, seminal gland, splenic vein, superior mesenteric vein, inferior mesenteric vein, trachea lumen, visceral fat
