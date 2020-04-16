@@ -28,7 +28,7 @@ gdown "https://drive.google.com/uc?id=18VSbspzB2VjxDdLaVSNyFB-GZAvEopGE" -O data
 
 Instructions for obtaining the human atlas can be found on the [Voxel-Man website](https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/). The obtained model contains images of the male head `head.zip` and torso `innerorgans.zip`. The unzipped directory `innerograns/`, contains a text file with organs and their segmentation labels, and three directories, `CT/`, `labels/`, `rgb/`.
 
-The `innerorgans/labels/` directory constains slices of the human atlas in the form of `.tiff` images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
+The `innerorgans/labels/` directory constains slices of the human atlas in the form of `.tiff` images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the `data/` directory in the project prior to running the scripts.
 
 ### Generating required json files
   
@@ -37,6 +37,7 @@ The required four json files `organ2ind.json`, `ind2organ.json`, `organ2label.js
 ```shell
 gdown "https://drive.google.com/uc?id=18qxmrOovy1_Cd4ceUNLPKTQUHf3RRs1r" -O data/data_organs_cord.zip
 unzip -qq data/data_organs_cord.zip
+rm data/data_organs_cord.zip
 ```
 
 Details of the steps (removals, mergers of organ segmentation labels and renamings) that resulted in such json files can be found [here](data/README.md). An additional three json files need to be generated after obtaining the human atlas and moving the `labels/` directory with images to the `data/` directory of the project. This can be done by running the following script:
@@ -79,7 +80,13 @@ python src/inference_mapping_reg.py --batch_size 128\
                                     --organs_dir_path "data/data_organs_cord"
 ```
 
-The script will perfrom inference with the trained model saved at `models/cord_basebert_grounding.pt`, and report the Inside Organ Ratio (IOR) and Distance to the nearst Voxel metrics on the test set.
+The script will perfrom inference with the trained model saved at `models/cord_basebert_grounding.pt`, and report:
+
+- Distance to the nearest voxel of the nearest correct organ (NVD).
+- Distance to the nearest correct organ voxel calculated only on the samples for which the projection is outside the organ volume (NVD-O).
+- Rate at which the sentences are grounded within the volume of the correct organ, which we denote as Inside Organ Ratio (IOR).
+
+both NVD and NVD-O are calculated in centimeters.
 
 ## Pre-trained models
 
