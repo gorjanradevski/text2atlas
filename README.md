@@ -28,13 +28,28 @@ gdown "https://drive.google.com/uc?id=18VSbspzB2VjxDdLaVSNyFB-GZAvEopGE" -O data
 
 Instructions for obtaining the human atlas can be found on the [Voxel-Man website] (https://www.voxel-man.com/segmented-inner-organs-of-the-visible-human/)
 
-The downloaded file contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the list of objects (organs), and three directories, CT/, labels/, rgb/.
+The downloaded file contains images of the male head (head.zip) and torso (innerorgans.zip). The unzipped directory innerograns/, contains the a text file with a of objects (organs), and three directories, CT/, labels/, rgb/.
 
-The innerorgans/labels/ directory is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
+The innerorgans/labels/ directory constains slices of the human atlas in the form of .tif images, where the grayscale level represents the segmentation label for each organ. It is used for training and evaluating the model, and should be moved to the data/ directory in the project prior to running the scripts.
 
-### Downloading the dictionaries
+### Generating required json files
 
-Instructions related to the voxelman related dictionaries here...
+The data/data_organs_cord/ directory already contains three json files with dictionaries related to the organs in the human atlas:
+  - organ2ind.json
+  - ind2organ.json
+  - organ2label.json
+An additional three json files need to be generated after obtaining the human atlas and moving the labels/ directory with images to the data/ directory of the project.
+This can be done by running the following script:
+```shell
+python src/generate_voxel_dict.py --organs_dir_path "data/data_organs_cord"\
+                                  --voxelman_images_path "data/labels"
+```
+This script should generate three additional json files:
+  - organ2voxels.json
+  - organ2voxels_eroded.json
+  - organ2summary.json
+And place them in the data/data_organs_cord/ directory.
+  
 
 ## Training
 
