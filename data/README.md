@@ -12,15 +12,15 @@ right atrium, right clavicular cartilage, right colic flexure, right costal cart
 
 ### Merger of left costal cartilage segments into "left costal cartilage"
 
-left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9
+left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9 &rarr; left costal cartilage
 
 ### Mergers of stomach segments into "stomach"
 
-stomach fundus, greater curvature, lesser curvature, body of stomach, cardia, stomach
+stomach fundus, greater curvature, lesser curvature, body of stomach, cardia, stomach &rarr; stomach
 
 ### Merger of colon segments into "colon"
 
-ascending colon, descending colon, transverse colon merged
+ascending colon, descending colon, transverse colon &rarr; colon 
 
 ## Renaming
 
@@ -48,4 +48,8 @@ left ventricle &rarr; ventricle
 ### Renaming of organs for better alias term extraction
 
 arch of aorta &rarr; aortic arch\
-duodenum (retroperitoneal part) &rarr; duodenum\
+duodenum (retroperitoneal part) &rarr; duodenum
+
+## Removal of organs with fewer than 100 occurrences in the text corpus
+
+abdominal aorta, ampulla, aortic arch, ascending aorta, azygos vein, brachiocephalic vein, corpus cavernosum penis, corpus spongiosum penis, penis, cystic duct, descending aorta, hepatic veins, inferior vena cava, superior vena cava, ischiocavernosus, clavicular cartilage, colic flexure, external oblique, inernal oblique, iliacus, obturator internus, renal medulla, subclavian vein, transversus abdominis, pelvic diaphragm, psoas, pulmonary trunk, pulmonary veins, rectus abdominis, rectus sheath, renal vein, scrotum, seminal gland, splenic vein, superior mesenteric vein, inferior mesenteric vein, trachea lumen, visceral fat
