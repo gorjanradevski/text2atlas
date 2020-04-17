@@ -29,10 +29,10 @@ def get_images(images_dir, extension=".tif") -> List:
 def read_images(images_dir, extension=".tif") -> np.ndarray:
     """Return a 3D numpy array of stacked images in folder
 
-        Args:
-            folder: str - path to folder
-            extension: str - acceptable extension of files
-        """
+    Args:
+        folder: str - path to folder
+        extension: str - acceptable extension of files
+    """
     image_files = get_images(images_dir, extension)
     images = tifffile.imread(image_files)
     images = images.transpose(1, 2, 0)
@@ -122,13 +122,13 @@ def parse_args():
     parser.add_argument(
         "--organs_dir_path",
         type=str,
-        default="data/data_organs",
+        default="data/data_organs_cord",
         help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--voxelman_images_path",
         type=str,
-        default="data/voxelman_images",
+        default="data/labels",
         help="Path to the voxel-man images",
     )
 
