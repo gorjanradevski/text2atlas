@@ -1,6 +1,6 @@
 # Self-supervised context-aware Covid-19 document exploration through atlas grounding
 
-This repository is the official implementation of [Self-supervised context-aware Covid-19 document exploration through atlas grounding](https://github.com/gorjanradevski/macchina) authored by Dusan Grujicic<sup>*</sup>, [Gorjan Radevski<sup>*</sup>](http://gorjanradevski.github.io/), [Tinne Tuytelaars](https://homes.esat.kuleuven.be/~tuytelaa/), [Matthew Blaschko](https://homes.esat.kuleuven.be/~mblaschk/). The work is currently under review at [NLP COVID-19 Workshop](https://www.nlpcovid19workshop.org/) at ACL 2020.
+This repository is the official implementation of [Self-supervised context-aware Covid-19 document exploration through atlas grounding](https://openreview.net/forum?id=EC1vWkJXpjy) authored by Dusan Grujicic<sup>*</sup>, [Gorjan Radevski<sup>*</sup>](http://gorjanradevski.github.io/), [Tinne Tuytelaars](https://homes.esat.kuleuven.be/~tuytelaa/), [Matthew Blaschko](https://homes.esat.kuleuven.be/~mblaschk/). The work is currently under review at [NLP COVID-19 Workshop](https://www.nlpcovid19workshop.org/) at ACL 2020.
 
 See our [Cord-19 Explorer](https://cord19-explorer.herokuapp.com/) and our [Cord-19 Visualizer](https://github.com/dusangrujicic/cord19-visualizer) tools.
 
