@@ -10,6 +10,7 @@ import numpy as np
 import random
 import os
 import sys
+import logging
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -61,9 +62,11 @@ def train(
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
+    log_filepath: str,
     learning_rate: float,
     clip_val: float,
 ):
+    logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
     # Check whether bert_name is valid
     assert bert_name in bert_variants
     # Check for CUDA
@@ -80,14 +83,14 @@ def train(
     if loss_type == "all_voxels":
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = OrganDistanceLoss()
-        print("Using all organ points!")
+        logging.warning("Using all organ points!")
     elif loss_type == "one_voxel":
-        print("Using only one organ center!")
+        logging.warning("Using only one organ center!")
         criterion = MinDistanceLoss()
     else:
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = BaselineRegLoss()
-        print("Training using the baseline regression loss!")
+        logging.warning("Training using the baseline regression loss!")
 
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
@@ -141,10 +144,10 @@ def train(
         best_avg_distance = checkpoint["best_distance"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
-        print(
+        logging.warning(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best distance was: {best_avg_distance}!")
+        logging.warning(f"The previous best distance was: {best_avg_distance}!")
 
     # Create evaluator
     evaluator = TrainingRegEvaluator(
@@ -157,7 +160,7 @@ def train(
     )
 
     for epoch in range(cur_epoch, cur_epoch + epochs):
-        print(f"Starting epoch {epoch + 1}...")
+        logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
@@ -200,13 +203,13 @@ def train(
                 ):
                     evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-            print(
+            logging.info(
                 f"The IOR on the non-masked validation set is {evaluator.get_current_ior()}"
             )
-            print(
+            logging.info(
                 f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
             )
-            print(
+            logging.info(
                 f"The miss distance on the non-masked validation set is {evaluator.get_current_miss_distance()}"
             )
 
@@ -223,13 +226,13 @@ def train(
                 ):
                     evaluator.update_counters(output_mapping, organ_indices.numpy())
 
-            print(
+            logging.info(
                 f"The IOR on the masked validation set is {evaluator.get_current_ior()}"
             )
-            print(
+            logging.info(
                 f"The distance on the masked validation set is {evaluator.get_current_distance()}"
             )
-            print(
+            logging.info(
                 f"The miss distance on the masked validation set is {evaluator.get_current_miss_distance()}"
             )
 
@@ -238,20 +241,20 @@ def train(
 
             if evaluator.is_best_avg_distance():
                 evaluator.update_best_avg_distance()
-                print("======================")
-                print(
+                logging.info("======================")
+                logging.info(
                     f"Found new best with avg distance: "
                     f"{evaluator.best_avg_distance} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                print("======================")
+                logging.info("======================")
                 torch.save(model.state_dict(), save_model_path)
             else:
-                print(
+                logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
                     f"{evaluator.current_average_distance}"
                 )
-            print("Saving intermediate checkpoint...")
+            logging.info("Saving intermediate checkpoint...")
             torch.save(
                 {
                     "epoch": epoch + 1,
@@ -280,6 +283,7 @@ def main():
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
+        args.log_filepath,
         args.learning_rate,
         args.clip_val,
     )
@@ -306,13 +310,13 @@ def parse_args():
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_train_fixd.json",
+        default="data/cord_dataset_train.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_val_fixd.json",
+        default="data/cord_dataset_val.json",
         help="Path to the validation set",
     )
     parser.add_argument(
@@ -367,6 +371,12 @@ def parse_args():
         type=str,
         default=None,
         help="If resuming training, start from here.",
+    )
+    parser.add_argument(
+        "--log_filepath",
+        type=str,
+        default="logs/regression.log",
+        help="The logging file.",
     )
 
     return parser.parse_args()

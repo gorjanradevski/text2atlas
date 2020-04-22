@@ -1,10 +1,6 @@
 from transformers import BertModel, BertConfig
 from torch import nn
 import torch
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class SentenceMappingsProducer(nn.Module):

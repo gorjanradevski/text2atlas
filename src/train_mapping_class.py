@@ -6,6 +6,7 @@ from torch import nn
 from tqdm import tqdm
 import json
 import os
+import logging
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -29,9 +30,11 @@ def train(
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
+    log_filepath: str,
     learning_rate: float,
     clip_val: float,
 ):
+    logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Check for valid bert
@@ -93,12 +96,12 @@ def train(
         best_avg_ior = checkpoint["best_avg_ior"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
-        print(
+        logging.warning(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        print(f"The previous best IOR was: {best_avg_ior}!")
+        logging.warning(f"The previous best IOR was: {best_avg_ior}!")
     for epoch in range(cur_epoch, cur_epoch + epochs):
-        print(f"Starting epoch {epoch + 1}...")
+        logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
@@ -140,7 +143,7 @@ def train(
                 totals += organ_indices.size()[0]
 
             cur_unmasked_ior = corrects * 100 / totals
-            print(
+            logging.info(
                 f"The IOR on the non masked validation set is {round(cur_unmasked_ior, 2)}"
             )
             corrects = 0
@@ -158,21 +161,23 @@ def train(
 
             cur_masked_ior = corrects * 100 / totals
 
-            print(f"The IOR on the masked validation set is {round(cur_masked_ior, 2)}")
+            logging.info(
+                f"The IOR on the masked validation set is {round(cur_masked_ior, 2)}"
+            )
             if (cur_unmasked_ior + cur_masked_ior) / 2 > best_avg_ior:
                 best_avg_ior = (cur_unmasked_ior + cur_masked_ior) / 2
-                print("======================")
-                print(
+                logging.info("======================")
+                logging.info(
                     f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 torch.save(model.state_dict(), save_model_path)
-                print("======================")
+                logging.info("======================")
             else:
-                print(
+                logging.info(
                     f"Avg IOR on epoch {epoch+1} is: {round((cur_unmasked_ior + cur_masked_ior) / 2, 2)}"
                 )
-            print("Saving intermediate checkpoint...")
+            logging.info("Saving intermediate checkpoint...")
             torch.save(
                 {
                     "epoch": epoch + 1,
@@ -199,6 +204,7 @@ def main():
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
+        args.log_filepath,
         args.learning_rate,
         args.clip_val,
     )
@@ -219,13 +225,13 @@ def parse_args():
     parser.add_argument(
         "--train_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_train_fixd.json",
+        default="data/cord_dataset_train.json",
         help="Path to the training set",
     )
     parser.add_argument(
         "--val_json_path",
         type=str,
-        default="data/dataset_text_atlas_mapping_val_fixd.json",
+        default="data/cord_dataset_val.json",
         help="Path to the validation set",
     )
     parser.add_argument(
@@ -272,8 +278,14 @@ def parse_args():
     parser.add_argument(
         "--save_intermediate_model_path",
         type=str,
-        default="models/intermediate_sentence_mapping_regressor.pt",
+        default="models/intermediate_sentence_mapping_classifier.pt",
         help="Where to save the intermediate checkpoint model.",
+    )
+    parser.add_argument(
+        "--log_filepath",
+        type=str,
+        default="logs/classification.log",
+        help="The logging file.",
     )
 
     return parser.parse_args()
