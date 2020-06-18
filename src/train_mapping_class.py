@@ -34,7 +34,11 @@ def train(
     learning_rate: float,
     clip_val: float,
 ):
-    logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    # Set up logging
+    if log_filepath:
+        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    else:
+        logging.basicConfig(level=logging.INFO)
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Check for valid bert
@@ -171,22 +175,22 @@ def train(
                     f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
                 logging.info("======================")
             else:
                 logging.info(
                     f"Avg IOR on epoch {epoch+1} is: {round((cur_unmasked_ior + cur_masked_ior) / 2, 2)}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "best_avg_ior": best_avg_ior,
-                },
-                save_intermediate_model_path,
-            )
+            # torch.save(
+            #     {
+            #         "epoch": epoch + 1,
+            #         "model_state_dict": model.state_dict(),
+            #         "optimizer_state_dict": optimizer.state_dict(),
+            #         "best_avg_ior": best_avg_ior,
+            #     },
+            #     save_intermediate_model_path,
+            # )
 
 
 def main():
@@ -282,10 +286,7 @@ def parse_args():
         help="Where to save the intermediate checkpoint model.",
     )
     parser.add_argument(
-        "--log_filepath",
-        type=str,
-        default="logs/classification.log",
-        help="The logging file.",
+        "--log_filepath", type=str, default=None, help="The logging file."
     )
 
     return parser.parse_args()

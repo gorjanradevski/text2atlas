@@ -66,7 +66,11 @@ def train(
     learning_rate: float,
     clip_val: float,
 ):
-    logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    # Set up logging
+    if log_filepath:
+        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    else:
+        logging.basicConfig(level=logging.INFO)
     # Check whether bert_name is valid
     assert bert_name in bert_variants
     # Check for CUDA
@@ -248,22 +252,22 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
                     f"{evaluator.current_average_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "best_distance": evaluator.best_avg_distance,
-                },
-                save_intermediate_model_path,
-            )
+            # torch.save(
+            #     {
+            #         "epoch": epoch + 1,
+            #         "model_state_dict": model.state_dict(),
+            #         "optimizer_state_dict": optimizer.state_dict(),
+            #         "best_distance": evaluator.best_avg_distance,
+            #     },
+            #     save_intermediate_model_path,
+            # )
 
 
 def main():
@@ -373,10 +377,7 @@ def parse_args():
         help="If resuming training, start from here.",
     )
     parser.add_argument(
-        "--log_filepath",
-        type=str,
-        default="logs/regression.log",
-        help="The logging file.",
+        "--log_filepath", type=str, default=None, help="The logging file."
     )
 
     return parser.parse_args()
