@@ -8,3 +8,4 @@ condor/
 src/PdfToTree/
 !src/PdfToTree/.gitkeep
 logs/
+.python-version
