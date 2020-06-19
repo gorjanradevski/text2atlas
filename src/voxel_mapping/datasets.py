@@ -3,7 +3,6 @@ from torch.utils.data import Dataset
 import json
 import torch
 from typing import Tuple, List
-import numpy as np
 import nltk
 from tqdm import tqdm
 from typing import Dict
@@ -48,13 +47,13 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        # 1 - [MASK], 0 - keep word
         mask = {
-            word: np.random.choice([0, 1], p=[0.5, 0.5]) for word in self.keywords[idx]
+            word: torch.bernoulli(torch.tensor([0.5])).bool().item()
+            for word in self.keywords[idx]
         }
         masked_sentence = " ".join(
             [
-                "[MASK]" if word in mask and mask[word] == 1 else word
+                "[MASK]" if word in mask and mask[word] else word
                 for word in nltk.word_tokenize(self.sentences[idx])
             ]
         )

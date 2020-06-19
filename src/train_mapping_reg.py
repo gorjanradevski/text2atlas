@@ -112,7 +112,7 @@ def train(
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        shuffle=True,
+        # shuffle=True,
         num_workers=4,
         collate_fn=collate_pad_sentence_reg_train_batch,
     )
@@ -133,7 +133,7 @@ def train(
         SentenceMappingsProducer(bert_name, config, final_project_size=3)
     ).to(device)
     # noinspection PyUnresolvedReferences
-    optimizer = optim.Adam(
+    optimizer = optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
 
@@ -252,7 +252,7 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
@@ -348,10 +348,7 @@ def parse_args():
         help="The number of epochs to train the model.",
     )
     parser.add_argument(
-        "--weight_decay",
-        type=float,
-        default=0.0,
-        help="The weight decay - default as per BERT.",
+        "--weight_decay", type=float, default=0.01, help="AdamW default."
     )
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."

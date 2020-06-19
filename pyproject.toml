@@ -14,11 +14,12 @@ matplotlib = "=3.0.2"
 ndjson = "^0.2.0"
 natsort = "^6.2"
 nltk = "^3.4"
-transformers = {git = "https://github.com/gorjanradevski/transformers.git"}
 tifffile = "^2020.2.16"
 tensorboard = "1.14.0"
 gdown = "^3.10.2"
 bleach = "^3.1.4"
+ipympl = "^0.5.6"
+transformers = {git = "https://github.com/gorjanradevski/transformers.git"}
 
 [tool.poetry.dev-dependencies]
 black = {version = "^18.3-alpha.0", allow-prereleases = true}
