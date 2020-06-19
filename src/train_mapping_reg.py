@@ -21,7 +21,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
-from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss, BaselineRegLoss
+from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 from utils.constants import bert_variants
 
@@ -92,9 +92,7 @@ def train(
         logging.warning("Using only one organ center!")
         criterion = MinDistanceLoss()
     else:
-        ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
-        criterion = BaselineRegLoss()
-        logging.warning("Training using the baseline regression loss!")
+        raise ValueError("Invalid loss method!")
 
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
@@ -112,7 +110,7 @@ def train(
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        # shuffle=True,
+        shuffle=True,
         num_workers=4,
         collate_fn=collate_pad_sentence_reg_train_batch,
     )
