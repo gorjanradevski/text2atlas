@@ -2,30 +2,21 @@
 name = "macchina"
 version = "0.1.0"
 description = ""
-authors = ["gorjanradevski <gorjanradevski@gmail.com>"]
+authors = ["Gorjan Radevski <gorjanradevski@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-torch = "1.4"
-jupyter = "^1.0"
-tqdm = "^4.39"
-scikit-learn = "0.23.1"
-ndjson = "^0.2.0"
-natsort = "^6.2"
-nltk = "^3.4"
-tifffile = "^2020.2.16"
-tensorboard = "1.14.0"
-gdown = "^3.10.2"
-bleach = "^3.1.4"
-ipympl = "^0.5.6"
-transformers = {git = "https://github.com/gorjanradevski/transformers.git"}
-matplotlib = "3.2.1"
+python = "^3.8"
+torch = "^1.5.1"
+transformers = "^2.11.0"
+matplotlib = "^3.2.2"
+scikit-learn = "^0.23.1"
+tqdm = "^4.46.1"
+tifffile = "^2020.6.3"
+natsort = "^7.0.1"
+nltk = "^3.5"
 
 [tool.poetry.dev-dependencies]
-black = {version = "^18.3-alpha.0", allow-prereleases = true}
-flake8 = {version = "^3.7", allow-prereleases = true}
-pytest = "^5.3"
-rope = "^0.16.0"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
