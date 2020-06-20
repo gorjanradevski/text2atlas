@@ -13,7 +13,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import SentenceMappingsProducer
 from voxel_mapping.evaluator import InferenceEvaluator
-from utils.constants import bert_variants
+from utils.constants import bert_variants, VOXELMAN_CENTER
 
 
 def inference(
@@ -36,13 +36,11 @@ def inference(
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
-        num_workers=4,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     test_masked_loader = DataLoader(
         test_masked_dataset,
         batch_size=batch_size,
-        num_workers=4,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     # Create model
@@ -66,16 +64,17 @@ def inference(
         voxelman_images_path,
         len(test_dataset),
     )
+    center = torch.from_numpy(VOXELMAN_CENTER)
     with torch.no_grad():
         # Restart counters
         evaluator.reset_counters()
         for sentences, attn_mask, organs_indices in tqdm(test_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = (
-                model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+                model(input_ids=sentences, attention_mask=attn_mask).cpu() * center
             )
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
-                evaluator.update_counters(output_mapping, organ_indices.numpy())
+                evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
 
         print(
             "The IOR on the non-masked test set is: "
@@ -94,10 +93,10 @@ def inference(
         for sentences, attn_mask, organs_indices in tqdm(test_masked_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = (
-                model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+                model(input_ids=sentences, attention_mask=attn_mask).cpu() * center
             )
             for output_mapping, organ_indices in zip(output_mappings, organs_indices):
-                evaluator.update_counters(output_mapping, organ_indices.numpy())
+                evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
 
         print(
             "The IOR on the masked test set is: "
