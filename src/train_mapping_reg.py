@@ -202,9 +202,10 @@ def train(
                     model(input_ids=sentences_normal, attention_mask=attn_mask_normal)
                     * center
                 )
+                output_mappings_normal = output_mappings_normal.cpu() * center
 
                 for output_mapping_normal, organ_indices_normal in zip(
-                    output_mappings_normal.cpu().numpy(), organs_indices_normal
+                    output_mappings_normal.numpy(), organs_indices_normal
                 ):
                     evaluator.update_counters(
                         output_mapping_normal, organ_indices_normal.numpy()
