@@ -3,42 +3,13 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class BaselineRegLoss(nn.Module):
-    def __init__(self):
-        super(BaselineRegLoss, self).__init__()
-
-    def forward(
-        self,
-        predictions: torch.Tensor,
-        anchors: torch.Tensor,
-        lengths: torch.Tensor,
-        device: torch.device,
-    ):
-        mask = (
-            torch.arange(torch.max(lengths))
-            .expand(lengths.size()[0], torch.max(lengths))
-            .to(device)
-            < lengths.unsqueeze(1)
-        ).float()
-        mask[torch.where(mask == 0)] = 1e15
-        mask = mask.unsqueeze(2)
-        predictions = predictions.unsqueeze(1).unsqueeze(2)
-        distances = (predictions - anchors).norm(p=2, dim=3)
-        distances_masked = distances * mask
-
-        return distances_masked.mean()
-
-
 class OrganDistanceLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
         super(OrganDistanceLoss, self).__init__()
+        self.device = device
 
     def forward(
-        self,
-        predictions: torch.Tensor,
-        anchors: torch.Tensor,
-        lengths: torch.Tensor,
-        device: torch.device,
+        self, predictions: torch.Tensor, anchors: torch.Tensor, lengths: torch.Tensor,
     ) -> torch.Tensor:
         """Computes the minimum distance to organ loss.
 
@@ -51,7 +22,7 @@ class OrganDistanceLoss(nn.Module):
         mask = (
             torch.arange(torch.max(lengths))
             .expand(lengths.size()[0], torch.max(lengths))
-            .to(device)
+            .to(self.device)
             < lengths.unsqueeze(1)
         ).float()
         mask[torch.where(mask == 0)] = 1e15
@@ -67,15 +38,12 @@ class OrganDistanceLoss(nn.Module):
 
 
 class MinDistanceLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, device):
+        self.device = device
         super(MinDistanceLoss, self).__init__()
 
     def forward(
-        self,
-        predictions: torch.Tensor,
-        labels: torch.Tensor,
-        lengths: torch.Tensor,
-        device,
+        self, predictions: torch.Tensor, labels: torch.Tensor, lengths: torch.Tensor,
     ):
         """Computes the minimum distance to organ loss.
 
@@ -88,13 +56,13 @@ class MinDistanceLoss(nn.Module):
         mask = (
             torch.arange(torch.max(lengths))
             .expand(lengths.size()[0], torch.max(lengths))
-            .to(device)
+            .to(self.device)
             < lengths.unsqueeze(1)
         ).float()
         mask[torch.where(mask == 0)] = 1e15
         predictions = predictions.unsqueeze(1)
         loss = (predictions - labels).norm(p=2, dim=2)
         loss_masked = loss * mask
-        loss_softmined = F.softmin(loss_masked, dim=1)
+        softmin_weights = F.softmin(loss_masked, dim=1)
 
-        return (loss_masked * loss_softmined).sum(-1).mean()
+        return (loss_masked * softmin_weights).sum(-1).mean()

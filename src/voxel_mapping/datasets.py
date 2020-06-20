@@ -6,6 +6,7 @@ from typing import Tuple, List
 import nltk
 from tqdm import tqdm
 from typing import Dict
+from utils.constants import VOXELMAN_CENTER
 
 
 class VoxelSentenceMappingRegDataset:
@@ -30,6 +31,7 @@ class VoxelSentenceMappingRegDataset:
                 self.mappings.append(element["centers"])
             self.keywords.append(element["keywords"])
             self.organs_indices.append(element["organ_indices"])
+        self.center = torch.from_numpy(VOXELMAN_CENTER)
 
 
 class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Dataset):
@@ -58,7 +60,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
             ]
         )
         tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
-        mapping = torch.tensor(self.mappings[idx])
+        mapping = torch.tensor(self.mappings[idx]) / self.center
         num_organs = len(mapping)
 
         return tokenized_sentence, mapping, num_organs

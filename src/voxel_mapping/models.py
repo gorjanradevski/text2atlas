@@ -15,6 +15,4 @@ class SentenceMappingsProducer(nn.Module):
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        last_state = hidden_states[0][:, 0, :]
-
-        return self.projector(last_state)
+        return torch.tanh(self.projector(hidden_states[0][:, 0, :]))

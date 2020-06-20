@@ -11,7 +11,7 @@ bert_variants = [
     "google/bert_uncased_L-8_H-512_A-8",  # Medium
 ]
 
-VOXELMAN_CENTER = np.array([165.0, 286.5, 387.0])
+VOXELMAN_CENTER = np.array([165.0, 286.5, 387.0], dtype=np.float32)
 
 pdf_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_PDF"
 image_data_dir = "/esat/izar/dgrujici/IntegrationData/dirs_IMG"

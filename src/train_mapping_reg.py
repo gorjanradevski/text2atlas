@@ -12,6 +12,7 @@ import os
 import sys
 import logging
 from transformers import BertConfig, BertTokenizer
+from utils.constants import VOXELMAN_CENTER
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
@@ -58,7 +59,6 @@ def train(
     epochs: int,
     batch_size: int,
     bert_name: str,
-    weight_decay: float,
     checkpoint_path: str,
     save_model_path: str,
     save_intermediate_model_path: str,
@@ -86,11 +86,12 @@ def train(
     assert loss_type in ["one_voxel", "all_voxels", "baseline"]
     if loss_type == "all_voxels":
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
-        criterion = OrganDistanceLoss()
+        criterion = OrganDistanceLoss(device)
         logging.warning("Using all organ points!")
     elif loss_type == "one_voxel":
         logging.warning("Using only one organ center!")
-        criterion = MinDistanceLoss()
+        criterion = MinDistanceLoss(device)
+        # criterion = nn.MSELoss()
     else:
         raise ValueError("Invalid loss method!")
 
@@ -110,20 +111,17 @@ def train(
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        shuffle=True,
-        num_workers=4,
+        # shuffle=True,
         collate_fn=collate_pad_sentence_reg_train_batch,
     )
     val_loader = DataLoader(
         val_dataset,
         batch_size=batch_size,
-        num_workers=4,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     val_masked_loader = DataLoader(
         val_masked_dataset,
         batch_size=batch_size,
-        num_workers=4,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
@@ -131,9 +129,7 @@ def train(
         SentenceMappingsProducer(bert_name, config, final_project_size=3)
     ).to(device)
     # noinspection PyUnresolvedReferences
-    optimizer = optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
-    )
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Load model
     cur_epoch = 0
@@ -160,7 +156,7 @@ def train(
         len(val_dataset),
         best_avg_distance,
     )
-
+    center = torch.from_numpy(VOXELMAN_CENTER)
     for epoch in range(cur_epoch, cur_epoch + epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -177,7 +173,7 @@ def train(
                     num_organs.to(device),
                 )
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                loss = criterion(output_mappings, true_mappings, num_organs, device)
+                loss = criterion(output_mappings, true_mappings, num_organs)
                 # backward
                 loss.backward()
                 # clip the gradients
@@ -195,15 +191,24 @@ def train(
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
-            for sentences, attn_mask, organs_indices in tqdm(val_loader):
-                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-                output_mappings = (
-                    model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+            for sentences_normal, attn_mask_normal, organs_indices_normal in tqdm(
+                val_loader
+            ):
+                sentences_normal, attn_mask_normal = (
+                    sentences_normal.to(device),
+                    attn_mask_normal.to(device),
                 )
-                for output_mapping, organ_indices in zip(
-                    output_mappings, organs_indices
+                output_mappings_normal = (
+                    model(input_ids=sentences_normal, attention_mask=attn_mask_normal)
+                    * center
+                )
+
+                for output_mapping_normal, organ_indices_normal in zip(
+                    output_mappings_normal.cpu().numpy(), organs_indices_normal
                 ):
-                    evaluator.update_counters(output_mapping, organ_indices.numpy())
+                    evaluator.update_counters(
+                        output_mapping_normal, organ_indices_normal.numpy()
+                    )
 
             logging.info(
                 f"The IOR on the non-masked validation set is {evaluator.get_current_ior()}"
@@ -218,15 +223,24 @@ def train(
             evaluator.update_current_average_distance()
             # Restart counters
             evaluator.reset_counters()
-            for sentences, attn_mask, organs_indices in tqdm(val_masked_loader):
-                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-                output_mappings = (
-                    model(input_ids=sentences, attention_mask=attn_mask).cpu().numpy()
+            for sentences_masked, attn_mask_masked, organs_indices_masked in tqdm(
+                val_masked_loader
+            ):
+                sentences_masked, attn_mask_masked = (
+                    sentences_masked.to(device),
+                    attn_mask_masked.to(device),
                 )
-                for output_mapping, organ_indices in zip(
-                    output_mappings, organs_indices
+                output_mappings_masked = (
+                    model(input_ids=sentences_masked, attention_mask=attn_mask_masked)
+                    * center
+                )
+
+                for output_mapping_masked, organ_indices_masked in zip(
+                    output_mappings_masked.cpu().numpy(), organs_indices_masked
                 ):
-                    evaluator.update_counters(output_mapping, organ_indices.numpy())
+                    evaluator.update_counters(
+                        output_mapping_masked, organ_indices_masked.numpy()
+                    )
 
             logging.info(
                 f"The IOR on the masked validation set is {evaluator.get_current_ior()}"
@@ -281,7 +295,6 @@ def main():
         args.epochs,
         args.batch_size,
         args.bert_name,
-        args.weight_decay,
         args.checkpoint_path,
         args.save_model_path,
         args.save_intermediate_model_path,
@@ -344,9 +357,6 @@ def parse_args():
         type=int,
         default=20,
         help="The number of epochs to train the model.",
-    )
-    parser.add_argument(
-        "--weight_decay", type=float, default=0.01, help="AdamW default."
     )
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
