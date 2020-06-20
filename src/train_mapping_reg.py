@@ -198,9 +198,8 @@ def train(
                     sentences_normal.to(device),
                     attn_mask_normal.to(device),
                 )
-                output_mappings_normal = (
-                    model(input_ids=sentences_normal, attention_mask=attn_mask_normal)
-                    * center
+                output_mappings_normal = model(
+                    input_ids=sentences_normal, attention_mask=attn_mask_normal
                 )
                 output_mappings_normal = output_mappings_normal.cpu() * center
 
@@ -231,13 +230,13 @@ def train(
                     sentences_masked.to(device),
                     attn_mask_masked.to(device),
                 )
-                output_mappings_masked = (
-                    model(input_ids=sentences_masked, attention_mask=attn_mask_masked)
-                    * center
+                output_mappings_masked = model(
+                    input_ids=sentences_masked, attention_mask=attn_mask_masked
                 )
+                output_mappings_masked = output_mappings_masked.cpu() * center
 
                 for output_mapping_masked, organ_indices_masked in zip(
-                    output_mappings_masked.cpu().numpy(), organs_indices_masked
+                    output_mappings_masked.numpy(), organs_indices_masked
                 ):
                     evaluator.update_counters(
                         output_mapping_masked, organ_indices_masked.numpy()
