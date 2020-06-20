@@ -91,7 +91,6 @@ def train(
     elif loss_type == "one_voxel":
         logging.warning("Using only one organ center!")
         criterion = MinDistanceLoss(device)
-        # criterion = nn.MSELoss()
     else:
         raise ValueError("Invalid loss method!")
 
@@ -111,7 +110,7 @@ def train(
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        # shuffle=True,
+        shuffle=True,
         collate_fn=collate_pad_sentence_reg_train_batch,
     )
     val_loader = DataLoader(
