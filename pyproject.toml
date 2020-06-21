@@ -15,6 +15,8 @@ tifffile = "^2020.6.3"
 natsort = "^7.0.1"
 nltk = "^3.5"
 jupyter = "^1.0.0"
+ipympl = "^0.5.6"
+ndjson = "^0.3.1"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}

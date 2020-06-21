@@ -4,9 +4,11 @@ import torch.nn.functional as F
 
 
 class OrganDistanceLoss(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, voxel_temperature, organ_temperature):
         super(OrganDistanceLoss, self).__init__()
         self.device = device
+        self.voxel_temperature = voxel_temperature
+        self.organ_temperature = organ_temperature
 
     def forward(
         self, predictions: torch.Tensor, anchors: torch.Tensor, lengths: torch.Tensor,
@@ -30,17 +32,20 @@ class OrganDistanceLoss(nn.Module):
         predictions = predictions.unsqueeze(1).unsqueeze(2)
         distances = (predictions - anchors).norm(p=2, dim=3)
         distances_masked = distances * mask
-        distances_weights = F.softmin(distances_masked, dim=2)
+        distances_weights = F.softmin(distances_masked / self.voxel_temperature, dim=2)
         organ_distances_masked = (distances_masked * distances_weights).sum(dim=2)
-        organ_distances_weights = F.softmin(organ_distances_masked, dim=1)
+        organ_distances_weights = F.softmin(
+            organ_distances_masked / self.organ_temperature, dim=1
+        )
         loss = (organ_distances_masked * organ_distances_weights).sum(dim=1).mean(dim=0)
         return loss
 
 
 class MinDistanceLoss(nn.Module):
-    def __init__(self, device):
-        self.device = device
+    def __init__(self, device, organ_temperature):
         super(MinDistanceLoss, self).__init__()
+        self.organ_temperature = organ_temperature
+        self.device = device
 
     def forward(
         self, predictions: torch.Tensor, labels: torch.Tensor, lengths: torch.Tensor,
@@ -63,6 +68,6 @@ class MinDistanceLoss(nn.Module):
         predictions = predictions.unsqueeze(1)
         loss = (predictions - labels).norm(p=2, dim=2)
         loss_masked = loss * mask
-        softmin_weights = F.softmin(loss_masked, dim=1)
+        softmin_weights = F.softmin(loss_masked / self.organ_temperature, dim=1)
 
         return (loss_masked * softmin_weights).sum(-1).mean()

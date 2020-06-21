@@ -195,6 +195,19 @@ test = ["pytest (!=5.3.4)", "pytest-cov", "flaky", "nose"]
 
 [[package]]
 category = "main"
+description = "Matplotlib Jupyter Extension"
+name = "ipympl"
+optional = false
+python-versions = "*"
+version = "0.5.6"
+
+[package.dependencies]
+ipykernel = ">=4.7"
+ipywidgets = ">=7.5.0"
+matplotlib = ">=2.0.0"
+
+[[package]]
+category = "main"
 description = "IPython: Productive Interactive Computing"
 name = "ipython"
 optional = false
@@ -476,6 +489,14 @@ traitlets = ">=4.1"
 
 [package.extras]
 test = ["pytest", "pytest-cov", "testpath"]
+
+[[package]]
+category = "main"
+description = "JsonDecoder for ndjson"
+name = "ndjson"
+optional = false
+python-versions = "*"
+version = "0.3.1"
 
 [[package]]
 category = "main"
@@ -1019,7 +1040,7 @@ version = "3.5.1"
 notebook = ">=4.4.1"
 
 [metadata]
-content-hash = "6e2b652d85ce5920ac85e91ac979a108c59f1afd0812ec30ed60330c7d37ed0d"
+content-hash = "6948db4fd3eb57446ab72a4a3527d89b07ff56534e98a441d64cdcce1d5fab28"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1097,6 +1118,10 @@ idna = [
 ipykernel = [
     {file = "ipykernel-5.3.0-py3-none-any.whl", hash = "sha256:a8362e3ae365023ca458effe93b026b8cdadc0b73ff3031472128dd8a2cf0289"},
     {file = "ipykernel-5.3.0.tar.gz", hash = "sha256:731adb3f2c4ebcaff52e10a855ddc87670359a89c9c784d711e62d66fccdafae"},
+]
+ipympl = [
+    {file = "ipympl-0.5.6-py2.py3-none-any.whl", hash = "sha256:ab3da98751c949ec50a67d35a6e55fa0f03029e0dcf9001e252299386d58473f"},
+    {file = "ipympl-0.5.6.tar.gz", hash = "sha256:076240e606f4dc1f23b7ecc3303c759f5718dc16f9a119382776c6cb382a53e9"},
 ]
 ipython = [
     {file = "ipython-7.15.0-py3-none-any.whl", hash = "sha256:1b85d65632211bf5d3e6f1406f3393c8c429a47d7b947b9a87812aa5bce6595c"},
@@ -1233,6 +1258,10 @@ nbconvert = [
 nbformat = [
     {file = "nbformat-5.0.7-py3-none-any.whl", hash = "sha256:ea55c9b817855e2dfcd3f66d74857342612a60b1f09653440f4a5845e6e3523f"},
     {file = "nbformat-5.0.7.tar.gz", hash = "sha256:54d4d6354835a936bad7e8182dcd003ca3dc0cedfee5a306090e04854343b340"},
+]
+ndjson = [
+    {file = "ndjson-0.3.1-py2.py3-none-any.whl", hash = "sha256:839c22275e6baa3040077b83c005ac24199b94973309a8a1809be962c753a410"},
+    {file = "ndjson-0.3.1.tar.gz", hash = "sha256:bf9746cb6bb1cb53d172cda7f154c07c786d665ff28341e4e689b796b229e5d6"},
 ]
 nltk = [
     {file = "nltk-3.5.zip", hash = "sha256:845365449cd8c5f9731f7cb9f8bd6fd0767553b9d53af9eb1b3abf7700936b35"},

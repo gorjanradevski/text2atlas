@@ -64,6 +64,8 @@ def train(
     save_intermediate_model_path: str,
     log_filepath: str,
     learning_rate: float,
+    voxel_temperature: float,
+    organ_temperature: float,
     clip_val: float,
 ):
     # Set up logging
@@ -83,14 +85,18 @@ def train(
     organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Check for the type of loss
     ind2anchors = None
-    assert loss_type in ["one_voxel", "all_voxels", "baseline"]
+    assert loss_type in ["one_voxel", "all_voxels"]
     if loss_type == "all_voxels":
         ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
-        criterion = OrganDistanceLoss(device)
+        criterion = OrganDistanceLoss(
+            device=device,
+            voxel_temperature=voxel_temperature,
+            organ_temperature=organ_temperature,
+        )
         logging.warning("Using all organ points!")
     elif loss_type == "one_voxel":
         logging.warning("Using only one organ center!")
-        criterion = MinDistanceLoss(device)
+        criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
     else:
         raise ValueError("Invalid loss method!")
 
@@ -299,6 +305,8 @@ def main():
         args.save_intermediate_model_path,
         args.log_filepath,
         args.learning_rate,
+        args.voxel_temperature,
+        args.organ_temperature,
         args.clip_val,
     )
 
@@ -362,6 +370,12 @@ def parse_args():
     )
     parser.add_argument(
         "--learning_rate", type=float, default=2e-5, help="The learning rate."
+    )
+    parser.add_argument(
+        "--voxel_temperature", type=float, default=1.0, help="The voxel temperature."
+    )
+    parser.add_argument(
+        "--organ_temperature", type=float, default=1.0, help="The organ temperature."
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
