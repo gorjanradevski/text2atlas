@@ -175,7 +175,7 @@ def train(
                     f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
                 logging.info("======================")
             else:
                 logging.info(
