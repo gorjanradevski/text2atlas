@@ -20,6 +20,8 @@ class VoxelSentenceMappingRegDataset:
             [],
         )
         for element in tqdm(self.json_data):
+            if len(self.tokenizer.encode(element["text"])) > 512:
+                continue
             self.sentences.append(element["text"])
             if ind2anchors:
                 self.mappings.append(
@@ -139,6 +141,8 @@ class VoxelSentenceMappingClassDataset:
         self.num_classes = num_classes
         self.tokenizer = tokenizer
         for element in tqdm(self.json_data):
+            if len(self.tokenizer.encode(element["text"])) > 512:
+                continue
             self.sentences.append(element["text"])
             self.organs_indices.append(element["organ_indices"])
             self.keywords.append(element["keywords"])
