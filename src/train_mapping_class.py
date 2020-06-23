@@ -12,7 +12,6 @@ from transformers import BertConfig, BertTokenizer
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainClassDataset,
     VoxelSentenceMappingTestClassDataset,
-    VoxelSentenceMappingTestMaskedClassDataset,
     collate_pad_sentence_class_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
@@ -58,10 +57,6 @@ def train(
     val_dataset = VoxelSentenceMappingTestClassDataset(
         val_json_path, tokenizer, num_classes
     )
-    val_masked_dataset = VoxelSentenceMappingTestMaskedClassDataset(
-        val_json_path, tokenizer, num_classes
-    )
-
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -71,12 +66,6 @@ def train(
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
-        num_workers=4,
-        collate_fn=collate_pad_sentence_class_batch,
-    )
-    val_masked_loader = DataLoader(
-        val_masked_dataset,
         batch_size=batch_size,
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
@@ -150,26 +139,8 @@ def train(
             logging.info(
                 f"The IOR on the non masked validation set is {round(cur_unmasked_ior, 2)}"
             )
-            corrects = 0
-            totals = 0
-            cur_masked_ior = 0
-            for sentences, attn_mask, organ_indices in tqdm(val_masked_loader):
-                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                y_pred = torch.argmax(output_mappings, dim=1)
-                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
-                y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
-                y_one_hot[torch.where(y_one_hot == 0)] = -100
-                corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
-                totals += organ_indices.size()[0]
-
-            cur_masked_ior = corrects * 100 / totals
-
-            logging.info(
-                f"The IOR on the masked validation set is {round(cur_masked_ior, 2)}"
-            )
-            if (cur_unmasked_ior + cur_masked_ior) / 2 > best_avg_ior:
-                best_avg_ior = (cur_unmasked_ior + cur_masked_ior) / 2
+            if cur_unmasked_ior > best_avg_ior:
+                best_avg_ior = cur_unmasked_ior
                 logging.info("======================")
                 logging.info(
                     f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
@@ -179,18 +150,9 @@ def train(
                 logging.info("======================")
             else:
                 logging.info(
-                    f"Avg IOR on epoch {epoch+1} is: {round((cur_unmasked_ior + cur_masked_ior) / 2, 2)}"
+                    f"Avg IOR on epoch {epoch+1} is: {round(cur_unmasked_ior, 2)}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            # torch.save(
-            #     {
-            #         "epoch": epoch + 1,
-            #         "model_state_dict": model.state_dict(),
-            #         "optimizer_state_dict": optimizer.state_dict(),
-            #         "best_avg_ior": best_avg_ior,
-            #     },
-            #     save_intermediate_model_path,
-            # )
 
 
 def main():
