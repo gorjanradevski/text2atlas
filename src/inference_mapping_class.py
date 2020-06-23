@@ -45,7 +45,6 @@ def inference(
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
-        num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
