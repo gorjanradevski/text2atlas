@@ -9,7 +9,6 @@ import os
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTestMaskedClassDataset,
     VoxelSentenceMappingTestClassDataset,
     collate_pad_sentence_class_batch,
 )
@@ -49,16 +48,6 @@ def inference(
         num_workers=4,
         collate_fn=collate_pad_sentence_class_batch,
     )
-    test_dataset_masked = VoxelSentenceMappingTestMaskedClassDataset(
-        test_json_path, tokenizer, num_classes
-    )
-
-    test_masked_loader = DataLoader(
-        test_dataset_masked,
-        batch_size=batch_size,
-        num_workers=4,
-        collate_fn=collate_pad_sentence_class_batch,
-    )
     config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
         SentenceMappingsProducer(bert_name, config, final_project_size=num_classes)
@@ -75,7 +64,6 @@ def inference(
         len(test_dataset),
     )
     with torch.no_grad():
-        # UNMASKED SETTING
         evaluator.reset_counters()
         for sentences, attn_mask, organs_indices in tqdm(test_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
@@ -89,41 +77,15 @@ def inference(
                 )
 
         print(
-            "The IOR on the non-masked test set is: "
+            "The IOR on the test set is: "
             f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
         )
         print(
-            "The avg distance on the non-masked test set is: "
+            "The avg distance on the test set is: "
             f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
         )
         print(
-            "The avg miss distance on the non-masked test set is: "
-            f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
-        )
-        # MASKED SETTING
-        evaluator.reset_counters()
-        for sentences, attn_mask, organs_indices in tqdm(test_masked_loader):
-            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-            y_pred = torch.argmax(output_mappings, dim=1)
-            # Measure distance
-            pred_organ_names = [ind2organ[str(ind.item())] for ind in y_pred]
-            pred_centers = [organ2center[organ_name] for organ_name in pred_organ_names]
-            for pred_center, organ_indices in zip(pred_centers, organs_indices):
-                evaluator.update_counters(
-                    np.array(pred_center), np.where(organ_indices == 1)[0]
-                )
-
-        print(
-            "The IOR on the masked test set is: "
-            f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
-        )
-        print(
-            "The avg distance on the masked test set is: "
-            f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
-        )
-        print(
-            "The avg miss distance on the masked test set is: "
+            "The avg miss distance on the test set is: "
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
 

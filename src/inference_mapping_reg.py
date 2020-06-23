@@ -8,7 +8,6 @@ from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
-    VoxelSentenceMappingTestMaskedRegDataset,
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import SentenceMappingsProducer
@@ -30,16 +29,8 @@ def inference(
     assert bert_name in bert_variants
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
-    test_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
-        test_json_path, tokenizer
-    )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
-        collate_fn=collate_pad_sentence_reg_test_batch,
-    )
-    test_masked_loader = DataLoader(
-        test_masked_dataset,
         batch_size=batch_size,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
@@ -86,28 +77,6 @@ def inference(
         )
         print(
             "The avg miss distance on the non-masked test set is: "
-            f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
-        )
-        # Restart counters
-        evaluator.reset_counters()
-        for sentences, attn_mask, organs_indices in tqdm(test_masked_loader):
-            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = (
-                model(input_ids=sentences, attention_mask=attn_mask).cpu() * center
-            )
-            for output_mapping, organ_indices in zip(output_mappings, organs_indices):
-                evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
-
-        print(
-            "The IOR on the masked test set is: "
-            f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
-        )
-        print(
-            "The avg distance on the masked test set is: "
-            f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
-        )
-        print(
-            "The avg miss distance on the masked test set is: "
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
 

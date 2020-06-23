@@ -3,7 +3,6 @@ from torch.utils.data import Dataset
 import json
 import torch
 from typing import Tuple, List
-import nltk
 from tqdm import tqdm
 from typing import Dict
 from utils.constants import VOXELMAN_CENTER
