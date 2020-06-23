@@ -47,17 +47,17 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        mask = {
-            word: torch.bernoulli(torch.tensor([0.5])).bool().item()
-            for word in self.keywords[idx]
-        }
-        masked_sentence = " ".join(
-            [
-                "[MASK]" if word in mask and mask[word] else word
-                for word in nltk.word_tokenize(self.sentences[idx])
-            ]
-        )
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
+        # mask = {
+        #     word: torch.bernoulli(torch.tensor([0.5])).bool().item()
+        #     for word in self.keywords[idx]
+        # }
+        # masked_sentence = " ".join(
+        #     [
+        #         "[MASK]" if word in mask and mask[word] else word
+        #         for word in nltk.word_tokenize(self.sentences[idx])
+        #     ]
+        # )
+        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         mapping = torch.tensor(self.mappings[idx]) / self.center
         num_organs = len(mapping)
 
@@ -74,31 +74,6 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
-        organ_indices = torch.tensor(self.organs_indices[idx])
-
-        return tokenized_sentence, organ_indices
-
-
-class VoxelSentenceMappingTestMaskedRegDataset(VoxelSentenceMappingRegDataset, Dataset):
-    def __init__(
-        self, json_path: str, tokenizer: BertTokenizer, ind2anchors: Dict = None
-    ):
-        super().__init__(json_path, tokenizer, ind2anchors)
-
-    def __len__(self):
-        return len(self.sentences)
-
-    def __getitem__(self, idx: int):
-        """
-        mask = {word for word in self.keywords[idx]}
-        masked_sentence = " ".join(
-            [
-                "[MASK]" if word in mask else word
-                for word in nltk.word_tokenize(self.sentences[idx])
-            ]
-        )
-        """
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         organ_indices = torch.tensor(self.organs_indices[idx])
 
@@ -161,18 +136,16 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        """
-        mask = {
-            word: torch.bernoulli(torch.tensor([0.5])).bool().item()
-            for word in self.keywords[idx]
-        }
-        masked_sentence = " ".join(
-            [
-                "[MASK]" if word in mask and mask[word] else word
-                for word in nltk.word_tokenize(self.sentences[idx])
-            ]
-        )
-        """
+        # mask = {
+        #     word: torch.bernoulli(torch.tensor([0.5])).bool().item()
+        #     for word in self.keywords[idx]
+        # }
+        # masked_sentence = " ".join(
+        #     [
+        #         "[MASK]" if word in mask and mask[word] else word
+        #         for word in nltk.word_tokenize(self.sentences[idx])
+        #     ]
+        # )
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         organ_indices = torch.tensor(self.organs_indices[idx])
         one_hot = torch.zeros(self.num_classes)
@@ -190,34 +163,6 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
 
     def __getitem__(self, idx: int):
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
-        organ_indices = torch.tensor(self.organs_indices[idx])
-        one_hot = torch.zeros(self.num_classes)
-        one_hot[organ_indices] = 1
-
-        return tokenized_sentence, one_hot
-
-
-class VoxelSentenceMappingTestMaskedClassDataset(
-    VoxelSentenceMappingClassDataset, Dataset
-):
-    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
-        super().__init__(json_path, tokenizer, num_classes)
-
-    def __len__(self):
-        return len(self.sentences)
-
-    def __getitem__(self, idx: int):
-        mask = {
-            word: torch.bernoulli(torch.tensor([0.5])).bool().item()
-            for word in self.keywords[idx]
-        }
-        masked_sentence = " ".join(
-            [
-                "[MASK]" if word in mask and mask[word] else word
-                for word in nltk.word_tokenize(self.sentences[idx])
-            ]
-        )
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(masked_sentence))
         organ_indices = torch.tensor(self.organs_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1

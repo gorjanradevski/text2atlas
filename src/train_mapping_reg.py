@@ -17,7 +17,6 @@ from utils.constants import VOXELMAN_CENTER
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainRegDataset,
     VoxelSentenceMappingTestRegDataset,
-    VoxelSentenceMappingTestMaskedRegDataset,
     collate_pad_sentence_reg_train_batch,
     collate_pad_sentence_reg_test_batch,
 )
@@ -108,11 +107,6 @@ def train(
     val_dataset = VoxelSentenceMappingTestRegDataset(
         val_json_path, tokenizer, ind2anchors
     )
-
-    val_masked_dataset = VoxelSentenceMappingTestMaskedRegDataset(
-        val_json_path, tokenizer, ind2anchors
-    )
-
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -121,11 +115,6 @@ def train(
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
-        collate_fn=collate_pad_sentence_reg_test_batch,
-    )
-    val_masked_loader = DataLoader(
-        val_masked_dataset,
         batch_size=batch_size,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
@@ -216,49 +205,16 @@ def train(
                     )
 
             logging.info(
-                f"The IOR on the non-masked validation set is {evaluator.get_current_ior()}"
+                f"The IOR on the validation set is {evaluator.get_current_ior()}"
             )
             logging.info(
-                f"The distance on the non-masked validation set is {evaluator.get_current_distance()}"
+                f"The distance on the validation set is {evaluator.get_current_distance()}"
             )
             logging.info(
-                f"The miss distance on the non-masked validation set is {evaluator.get_current_miss_distance()}"
+                f"The miss distance on the validation set is {evaluator.get_current_miss_distance()}"
             )
 
             evaluator.update_current_average_distance()
-            # Restart counters
-            evaluator.reset_counters()
-            for sentences_masked, attn_mask_masked, organs_indices_masked in tqdm(
-                val_masked_loader
-            ):
-                sentences_masked, attn_mask_masked = (
-                    sentences_masked.to(device),
-                    attn_mask_masked.to(device),
-                )
-                output_mappings_masked = model(
-                    input_ids=sentences_masked, attention_mask=attn_mask_masked
-                )
-                output_mappings_masked = output_mappings_masked.cpu() * center
-
-                for output_mapping_masked, organ_indices_masked in zip(
-                    output_mappings_masked.numpy(), organs_indices_masked
-                ):
-                    evaluator.update_counters(
-                        output_mapping_masked, organ_indices_masked.numpy()
-                    )
-
-            logging.info(
-                f"The IOR on the masked validation set is {evaluator.get_current_ior()}"
-            )
-            logging.info(
-                f"The distance on the masked validation set is {evaluator.get_current_distance()}"
-            )
-            logging.info(
-                f"The miss distance on the masked validation set is {evaluator.get_current_miss_distance()}"
-            )
-
-            evaluator.update_current_average_distance()
-            evaluator.finalize_current_average_distance()
 
             if evaluator.is_best_avg_distance():
                 evaluator.update_best_avg_distance()
@@ -276,15 +232,6 @@ def train(
                     f"{evaluator.current_average_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            # torch.save(
-            #     {
-            #         "epoch": epoch + 1,
-            #         "model_state_dict": model.state_dict(),
-            #         "optimizer_state_dict": optimizer.state_dict(),
-            #         "best_distance": evaluator.best_avg_distance,
-            #     },
-            #     save_intermediate_model_path,
-            # )
 
 
 def main():

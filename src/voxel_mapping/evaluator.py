@@ -170,9 +170,6 @@ class TrainingRegEvaluator(Evaluator):
     def update_current_average_distance(self):
         self.current_average_distance += self.get_current_distance()
 
-    def finalize_current_average_distance(self):
-        self.current_average_distance /= 2
-
     def is_best_avg_distance(self):
         return self.current_average_distance < self.best_avg_distance
 

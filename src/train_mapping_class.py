@@ -124,7 +124,7 @@ def train(
         with torch.no_grad():
             corrects = 0
             totals = 0
-            cur_unmasked_ior = 0
+            cur_ior = 0
             for sentences, attn_mask, organ_indices in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
@@ -135,12 +135,10 @@ def train(
                 corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
                 totals += organ_indices.size()[0]
 
-            cur_unmasked_ior = corrects * 100 / totals
-            logging.info(
-                f"The IOR on the non masked validation set is {round(cur_unmasked_ior, 2)}"
-            )
-            if cur_unmasked_ior > best_avg_ior:
-                best_avg_ior = cur_unmasked_ior
+            cur_ior = corrects * 100 / totals
+            logging.info(f"The IOR on the validation set is {round(cur_ior, 2)}")
+            if cur_ior > best_avg_ior:
+                best_avg_ior = cur_ior
                 logging.info("======================")
                 logging.info(
                     f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
@@ -149,9 +147,7 @@ def train(
                 torch.save(model.state_dict(), save_model_path)
                 logging.info("======================")
             else:
-                logging.info(
-                    f"Avg IOR on epoch {epoch+1} is: {round(cur_unmasked_ior, 2)}"
-                )
+                logging.info(f"Avg IOR on epoch {epoch+1} is: {round(cur_ior, 2)}")
             logging.info("Saving intermediate checkpoint...")
 
 
