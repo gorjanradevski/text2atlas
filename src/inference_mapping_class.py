@@ -12,7 +12,7 @@ from voxel_mapping.datasets import (
     VoxelSentenceMappingTestClassDataset,
     collate_pad_sentence_class_batch,
 )
-from voxel_mapping.models import SentenceMappingsProducer
+from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import InferenceEvaluator
 from utils.constants import bert_variants
 
@@ -49,7 +49,7 @@ def inference(
     )
     config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(
-        SentenceMappingsProducer(bert_name, config, final_project_size=num_classes)
+        ClassModel(bert_name, config, final_project_size=num_classes)
     ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode

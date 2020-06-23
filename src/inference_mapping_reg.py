@@ -10,7 +10,7 @@ from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
     collate_pad_sentence_reg_test_batch,
 )
-from voxel_mapping.models import SentenceMappingsProducer
+from voxel_mapping.models import RegModel
 from voxel_mapping.evaluator import InferenceEvaluator
 from utils.constants import bert_variants, VOXELMAN_CENTER
 
@@ -36,9 +36,9 @@ def inference(
     )
     # Create model
     config = BertConfig.from_pretrained(bert_name)
-    model = nn.DataParallel(
-        SentenceMappingsProducer(bert_name, config, final_project_size=3)
-    ).to(device)
+    model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
+        device
+    )
     # Load model
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode

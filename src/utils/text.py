@@ -26,7 +26,7 @@ punc = list(set(string.punctuation))
 
 
 def casual_tokenizer(
-    text
+    text,
 ):  # Splits words on white spaces (leaves contractions intact) and splits out trailing punctuation
     tokens = tokenizer.tokenize(text)
     return tokens

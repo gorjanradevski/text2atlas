@@ -20,7 +20,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_train_batch,
     collate_pad_sentence_reg_test_batch,
 )
-from voxel_mapping.models import SentenceMappingsProducer
+from voxel_mapping.models import RegModel
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 from utils.constants import bert_variants
@@ -119,9 +119,9 @@ def train(
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
-    model = nn.DataParallel(
-        SentenceMappingsProducer(bert_name, config, final_project_size=3)
-    ).to(device)
+    model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
+        device
+    )
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
