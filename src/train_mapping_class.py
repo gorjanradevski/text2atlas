@@ -30,6 +30,7 @@ def train(
     save_intermediate_model_path: str,
     log_filepath: str,
     learning_rate: float,
+    masking: bool,
     clip_val: float,
 ):
     # Set up logging
@@ -50,8 +51,9 @@ def train(
     ]
     num_classes = len(organ_names)
     tokenizer = BertTokenizer.from_pretrained(bert_name)
+    logging.warning(f"The masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, num_classes, organ_names
+        train_json_path, tokenizer, num_classes, organ_names, masking
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
         val_json_path, tokenizer, num_classes
@@ -166,6 +168,7 @@ def main():
         args.save_intermediate_model_path,
         args.log_filepath,
         args.learning_rate,
+        args.masking,
         args.clip_val,
     )
 
@@ -209,6 +212,7 @@ def parse_args():
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
+    parser.add_argument("--masking", action="store_true", help="Whether to use masking")
     parser.add_argument(
         "--learning_rate", type=float, default=2e-5, help="The learning rate."
     )

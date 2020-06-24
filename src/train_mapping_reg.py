@@ -55,6 +55,7 @@ def train(
     train_json_path: str,
     val_json_path: str,
     loss_type: str,
+    masking: bool,
     epochs: int,
     batch_size: int,
     bert_name: str,
@@ -101,8 +102,9 @@ def train(
 
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
+    logging.warning(f"Usage of masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, organ_names, ind2anchors
+        train_json_path, tokenizer, organ_names, ind2anchors, masking
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(
         val_json_path, tokenizer, ind2anchors
@@ -253,6 +255,7 @@ def main():
         args.train_json_path,
         args.val_json_path,
         args.loss_type,
+        args.masking,
         args.epochs,
         args.batch_size,
         args.bert_name,
@@ -336,6 +339,7 @@ def parse_args():
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
     )
+    parser.add_argument("--masking", action="store_true", help="Whether to use masking")
     parser.add_argument(
         "--bert_name",
         type=str,
