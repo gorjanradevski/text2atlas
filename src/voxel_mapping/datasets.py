@@ -11,7 +11,7 @@ from utils.constants import VOXELMAN_CENTER
 
 
 class VoxelSentenceMappingRegDataset:
-    def __init__(self, json_path: str, tokenizer: str, ind2anchors: Dict):
+    def __init__(self, json_path: str, tokenizer: str, ind2mapping: Dict):
         self.json_data = json.load(open(json_path))
         self.tokenizer = tokenizer
         self.sentences, self.mappings, self.keywords, self.organs_indices = (
@@ -22,12 +22,7 @@ class VoxelSentenceMappingRegDataset:
         )
         for element in tqdm(self.json_data):
             self.sentences.append(element["text"])
-            if ind2anchors:
-                self.mappings.append(
-                    [ind2anchors[ind] for ind in element["organ_indices"]]
-                )
-            else:
-                self.mappings.append(element["centers"])
+            self.mappings.append([ind2mapping[ind] for ind in element["organ_indices"]])
             self.keywords.append(element["keywords"])
             self.organs_indices.append(element["organ_indices"])
         self.center = torch.from_numpy(VOXELMAN_CENTER)

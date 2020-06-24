@@ -5,9 +5,6 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
-from typing import Dict
-import numpy as np
-import random
 import os
 import sys
 import logging
@@ -24,29 +21,7 @@ from voxel_mapping.models import RegModel
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingRegEvaluator
 from utils.constants import bert_variants
-
-
-def create_ind2anchors(
-    organ2ind_path: str, organ2voxels_path: str, num_anchors: int = 1000
-) -> Dict:
-    """CREATING A MAPPING FROM INDEX TO A SET OF ORGAN POINTS"""
-    """RANDOM SAMPLING ORGAN VOXELS - DONE IN THE BEGINING OF EVERY EPOCH"""
-
-    organ2ind = json.load(open(organ2ind_path))
-    organ2voxels = json.load(open(organ2voxels_path))
-    ind2voxels = {}
-
-    for organ, ind in organ2ind.items():
-        if len(organ2voxels[organ]) > num_anchors:
-            ind2voxels[ind] = random.sample(organ2voxels[organ], num_anchors)
-        else:
-            ind2voxels[ind] = np.array(organ2voxels[organ])[
-                np.random.choice(range(len(organ2voxels[organ])), num_anchors)
-            ].tolist()
-
-    ind2voxels[-1] = np.zeros(shape=(num_anchors, 3), dtype=np.float)
-
-    return ind2voxels
+from voxel_mapping.anchors import create_ind2anchors, create_ind2centers
 
 
 def train(
@@ -83,11 +58,12 @@ def train(
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
     organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
+    organ2center_path = os.path.join(organs_dir_path, "organ2center.json")
     # Check for the type of loss
-    ind2anchors = None
+    ind2mapping = None
     assert loss_type in ["one_voxel", "all_voxels"]
     if loss_type == "all_voxels":
-        ind2anchors = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
+        ind2mapping = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
         criterion = OrganDistanceLoss(
             device=device,
             voxel_temperature=voxel_temperature,
@@ -96,6 +72,7 @@ def train(
         logging.warning("Using all organ points!")
     elif loss_type == "one_voxel":
         logging.warning("Using only one organ center!")
+        ind2mapping = create_ind2centers(organ2ind_path, organ2center_path)
         criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
     else:
         raise ValueError("Invalid loss method!")
@@ -104,10 +81,10 @@ def train(
     organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
     logging.warning(f"Usage of masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, organ_names, ind2anchors, masking
+        train_json_path, tokenizer, organ_names, ind2mapping, masking
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(
-        val_json_path, tokenizer, ind2anchors
+        val_json_path, tokenizer, ind2mapping
     )
     train_loader = DataLoader(
         train_dataset,
