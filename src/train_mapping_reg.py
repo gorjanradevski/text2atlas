@@ -232,6 +232,15 @@ def train(
                     f"{evaluator.current_average_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "best_distance": evaluator.best_avg_distance,
+                },
+                save_intermediate_model_path,
+            )
 
 
 def main():
