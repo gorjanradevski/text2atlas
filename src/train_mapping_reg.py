@@ -4,7 +4,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
-import json
 import os
 import sys
 import logging
@@ -19,8 +18,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import RegModel
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
-from voxel_mapping.evaluator import TrainingRegEvaluator
-from utils.constants import bert_variants
+from voxel_mapping.evaluator import TrainingEvaluator
 from voxel_mapping.anchors import create_ind2anchors, create_ind2centers
 
 
@@ -48,8 +46,6 @@ def train(
         logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
     else:
         logging.basicConfig(level=logging.INFO)
-    # Check whether bert_name is valid
-    assert bert_name in bert_variants
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare paths
@@ -76,12 +72,11 @@ def train(
         criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
     else:
         raise ValueError("Invalid loss method!")
-
+    # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    organ_names = [organ_name for organ_name in json.load(open(organ2ind_path)).keys()]
     logging.warning(f"Usage of masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, organ_names, ind2mapping, masking
+        train_json_path, tokenizer, ind2mapping, masking
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(
         val_json_path, tokenizer, ind2mapping
@@ -98,12 +93,12 @@ def train(
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
+    # Prepare model
     model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
         device
     )
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
     # Load model
     cur_epoch = 0
     best_avg_distance = sys.maxsize
@@ -119,9 +114,8 @@ def train(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
         logging.warning(f"The previous best distance was: {best_avg_distance}!")
-
-    # Create evaluator
-    evaluator = TrainingRegEvaluator(
+    # Prepare evaluator
+    evaluator = TrainingEvaluator(
         ind2organ_path,
         organ2label_path,
         organ2summary_path,

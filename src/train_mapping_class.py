@@ -5,8 +5,10 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
+import sys
 import os
 import logging
+import numpy as np
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -15,11 +17,12 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_class_batch,
 )
 from voxel_mapping.models import ClassModel
-from utils.constants import bert_variants
+from voxel_mapping.evaluator import TrainingEvaluator
 
 
 def train(
     organs_dir_path: str,
+    voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
     epochs: int,
@@ -40,20 +43,20 @@ def train(
         logging.basicConfig(level=logging.INFO)
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # Check for valid bert
-    assert bert_name in bert_variants
-    # Load organ to indices to obtain the number of classes and organ names
-    organ_names = [
-        organ_name
-        for organ_name in json.load(
-            open(os.path.join(organs_dir_path, "ind2organ.json"))
-        ).values()
-    ]
-    num_classes = len(organ_names)
+    # Prepare paths
+    organ2mass_path = os.path.join(organs_dir_path, "organ2center.json")
+    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
+    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
+    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
+    # Load organ to indices to obtain the number of classes
+    ind2organ = json.load(open(ind2organ_path))
+    organ2center = json.load(open(organ2mass_path))
+    num_classes = len([index for index in ind2organ.keys()])
+    # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     logging.warning(f"The masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, num_classes, organ_names, masking
+        train_json_path, tokenizer, num_classes, masking
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
         val_json_path, tokenizer, num_classes
@@ -68,14 +71,16 @@ def train(
         val_dataset, batch_size=batch_size, collate_fn=collate_pad_sentence_class_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
+    # Prepare model
     model = nn.DataParallel(
         ClassModel(bert_name, config, final_project_size=num_classes)
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    best_avg_ior = -1
+    best_avg_distance = sys.maxsize
     cur_epoch = 0
+    # Load model
     if checkpoint_path is not None:
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
@@ -88,6 +93,16 @@ def train(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
         logging.warning(f"The previous best IOR was: {best_avg_ior}!")
+
+    # Prepare evaluator
+    evaluator = TrainingEvaluator(
+        ind2organ_path,
+        organ2label_path,
+        organ2summary_path,
+        voxelman_images_path,
+        len(val_dataset),
+        best_avg_distance,
+    )
     for epoch in range(cur_epoch, cur_epoch + epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
@@ -116,37 +131,56 @@ def train(
 
         # Set model in evaluation mode
         model.train(False)
+        evaluator.reset_current_average_distance()
         with torch.no_grad():
-            corrects = 0
-            totals = 0
-            for sentences, attn_mask, organ_indices in tqdm(val_loader):
+            evaluator.reset_counters()
+            for sentences, attn_mask, organs_indices in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 y_pred = torch.argmax(output_mappings, dim=-1)
-                y_one_hot = torch.zeros(organ_indices.size()[0], num_classes)
-                y_one_hot[torch.arange(organ_indices.size()[0]), y_pred] = 1
-                y_one_hot[torch.where(y_one_hot == 0)] = -100
-                corrects += (y_one_hot == organ_indices).sum(dim=1).sum().item()
-                totals += organ_indices.size()[0]
-            cur_ior = corrects * 100 / totals
-            if cur_ior > best_avg_ior:
-                best_avg_ior = cur_ior
+                pred_organ_names = [ind2organ[str(ind.item())] for ind in y_pred]
+                pred_centers = [
+                    organ2center[organ_name] for organ_name in pred_organ_names
+                ]
+                for pred_center, organ_indices in zip(pred_centers, organs_indices):
+                    evaluator.update_counters(
+                        np.array(pred_center), np.where(organ_indices == 1)[0]
+                    )
+
+            logging.info(
+                f"The IOR on the validation set is {evaluator.get_current_ior()}"
+            )
+            logging.info(
+                f"The distance on the validation set is {evaluator.get_current_distance()}"
+            )
+            logging.info(
+                f"The miss distance on the validation set is {evaluator.get_current_miss_distance()}"
+            )
+
+            evaluator.update_current_average_distance()
+
+            if evaluator.is_best_avg_distance():
+                evaluator.update_best_avg_distance()
                 logging.info("======================")
                 logging.info(
-                    f"Found new best with avg IOR {round(best_avg_ior, 2)} on epoch "
+                    f"Found new best with avg distance: "
+                    f"{evaluator.best_avg_distance} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
-                torch.save(model.state_dict(), save_model_path)
                 logging.info("======================")
+                torch.save(model.state_dict(), save_model_path)
             else:
-                logging.info(f"Avg IOR on epoch {epoch+1} is: {round(cur_ior, 2)}")
+                logging.info(
+                    f"Avg distance on epoch {epoch+1} is: "
+                    f"{evaluator.current_average_distance}"
+                )
             logging.info("Saving intermediate checkpoint...")
             torch.save(
                 {
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_iqr": best_avg_ior,
+                    "best_distance": evaluator.best_avg_distance,
                 },
                 save_intermediate_model_path,
             )
@@ -158,6 +192,7 @@ def main():
     args = parse_args()
     train(
         args.organs_dir_path,
+        args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
         args.epochs,
@@ -184,6 +219,12 @@ def parse_args():
         type=str,
         default="data/data_organs",
         help="Path to the data organs directory path.",
+    )
+    parser.add_argument(
+        "--voxelman_images_path",
+        type=str,
+        default="data/voxelman_images",
+        help="Path to the voxel-man images",
     )
     parser.add_argument(
         "--train_json_path",

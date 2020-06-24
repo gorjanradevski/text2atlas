@@ -4,7 +4,7 @@ import json
 import torch
 from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-from typing import Tuple, List
+from typing import Tuple
 from tqdm import tqdm
 from typing import Dict
 from utils.constants import VOXELMAN_CENTER
@@ -33,12 +33,10 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        organs_list: List[str],
         ind2anchors: Dict,
         masking: bool,
     ):
         super().__init__(json_path, tokenizer, ind2anchors)
-        self.organs_list = organs_list
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
 
@@ -122,15 +120,9 @@ class VoxelSentenceMappingClassDataset:
 
 class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Dataset):
     def __init__(
-        self,
-        json_path: str,
-        tokenizer: BertTokenizer,
-        num_classes: int,
-        organs_list: List[str],
-        masking: bool,
+        self, json_path: str, tokenizer: BertTokenizer, num_classes: int, masking: bool,
     ):
         super().__init__(json_path, tokenizer, num_classes)
-        self.organs_list = organs_list
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
 

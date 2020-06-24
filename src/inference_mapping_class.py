@@ -14,7 +14,6 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import InferenceEvaluator
-from utils.constants import bert_variants
 
 
 def inference(
@@ -27,8 +26,6 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # Check for valid bert
-    assert bert_name in bert_variants
     # Prepare paths
     organ2mass_path = os.path.join(organs_dir_path, "organ2center.json")
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")

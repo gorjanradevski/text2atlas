@@ -144,7 +144,7 @@ class InferenceEvaluator(Evaluator):
         )
 
 
-class TrainingRegEvaluator(Evaluator):
+class TrainingEvaluator(Evaluator):
     def __init__(
         self,
         ind2organ_path: str,

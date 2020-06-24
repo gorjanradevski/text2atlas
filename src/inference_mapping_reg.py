@@ -12,7 +12,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import RegModel
 from voxel_mapping.evaluator import InferenceEvaluator
-from utils.constants import bert_variants, VOXELMAN_CENTER
+from utils.constants import VOXELMAN_CENTER
 
 
 def inference(
@@ -25,8 +25,6 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # Check for valid bert
-    assert bert_name in bert_variants
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
     test_loader = DataLoader(
