@@ -30,7 +30,7 @@ def inference(
     # Check for valid bert
     assert bert_name in bert_variants
     # Prepare paths
-    organ2mass_path = os.path.join(organs_dir_path, "organ2mass.json")
+    organ2mass_path = os.path.join(organs_dir_path, "organ2center.json")
     ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
     organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")

@@ -144,7 +144,7 @@ def train(
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_distance": evaluator.best_avg_distance,
+                    "best_iqr": best_avg_ior,
                 },
                 save_intermediate_model_path,
             )
