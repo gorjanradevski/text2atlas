@@ -78,9 +78,7 @@ def train(
     train_dataset = VoxelSentenceMappingTrainRegDataset(
         train_json_path, tokenizer, ind2mapping, masking
     )
-    val_dataset = VoxelSentenceMappingTestRegDataset(
-        val_json_path, tokenizer, ind2mapping
-    )
+    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer)
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,

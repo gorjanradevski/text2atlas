@@ -34,7 +34,7 @@ def inference(
     # Load organ to indices to obtain the number of classes
     ind2organ = json.load(open(ind2organ_path))
     organ2center = json.load(open(organ2mass_path))
-    num_classes = len([index for index in ind2organ.keys()])
+    num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
         test_json_path, tokenizer, num_classes
