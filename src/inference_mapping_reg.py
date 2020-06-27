@@ -11,7 +11,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import RegModel
-from voxel_mapping.evaluator import InferenceEvaluator
+from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
 from utils.constants import VOXELMAN_CENTER
 
 
@@ -46,7 +46,7 @@ def inference(
     organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
     organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
     # Create evaluator
-    evaluator = InferenceEvaluator(
+    evaluator = InferenceEvaluatorPerOrgan(
         ind2organ_path,
         organ2label_path,
         organ2summary_path,
@@ -77,6 +77,15 @@ def inference(
             "The avg miss distance on the non-masked test set is: "
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
+        print("============================================")
+        for organ_name in evaluator.organ_names:
+            if evaluator.get_current_ior_for_organ(organ_name) > -1:
+                print(
+                    f"The IOR for {organ_name} is: {evaluator.get_current_ior_for_organ(organ_name)}"
+                )
+                print(
+                    f"The NVD for {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
+                )
 
 
 def main():

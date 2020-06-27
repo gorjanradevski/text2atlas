@@ -175,3 +175,65 @@ class TrainingEvaluator(Evaluator):
 
     def update_best_avg_distance(self):
         self.best_avg_distance = self.current_average_distance
+
+
+class InferenceEvaluatorPerOrgan(InferenceEvaluator):
+    def __init__(
+        self,
+        ind2organ_path: str,
+        organ2label_path: str,
+        organ2summary_path: str,
+        voxelman_images_path: str,
+        total_samples: int,
+    ):
+        super().__init__(
+            ind2organ_path,
+            organ2label_path,
+            organ2summary_path,
+            voxelman_images_path,
+            total_samples,
+        )
+
+        self.organ_names = list(self.organ2label.keys())
+        self.organ_totals = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
+        self.organ_corrects = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
+        self.organ_distances = dict(
+            zip(self.organ_names, np.zeros(len(self.ind2organ)))
+        )
+
+    def reset_counters(self):
+        super().reset_counters()
+        self.organ_totals = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
+        self.organ_corrects = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
+        self.organ_distances = dict(
+            zip(self.organ_names, np.zeros(len(self.ind2organ)))
+        )
+
+    def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
+        super().update_counters(output_mapping, organ_indices)
+        for organ_index in organ_indices:
+            if organ_index < 0:
+                continue
+            self.organ_totals[self.ind2organ[str(organ_index)]] += 1
+            self.organ_corrects[self.ind2organ[str(organ_index)]] += self.voxels_inside(
+                output_mapping, np.array([organ_index])
+            )
+            self.organ_distances[
+                self.ind2organ[str(organ_index)]
+            ] += self.voxels_distance(output_mapping, np.array([organ_index]))
+
+    def get_current_ior_for_organ(self, organ):
+        if self.organ_totals[organ]:
+            return np.round(
+                self.organ_corrects[organ] / self.organ_totals[organ] * 100, decimals=2,
+            )
+        else:
+            return -1
+
+    def get_current_distance_for_organ(self, organ):
+        if self.organ_totals[organ]:
+            return np.round(
+                self.organ_distances[organ] / self.organ_totals[organ] / 10, decimals=2,
+            )
+        else:
+            return -1

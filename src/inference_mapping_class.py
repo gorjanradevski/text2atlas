@@ -13,7 +13,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_class_batch,
 )
 from voxel_mapping.models import ClassModel
-from voxel_mapping.evaluator import InferenceEvaluator
+from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
 
 
 def inference(
@@ -56,7 +56,7 @@ def inference(
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
-    evaluator = InferenceEvaluator(
+    evaluator = InferenceEvaluatorPerOrgan(
         ind2organ_path,
         organ2label_path,
         organ2summary_path,
@@ -90,6 +90,15 @@ def inference(
             "The avg miss distance on the test set is: "
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
+        print("============================================")
+        for organ_name in evaluator.organ_names:
+            if evaluator.get_current_ior_for_organ(organ_name) > -1:
+                print(
+                    f"The IOR for {organ_name} is: {evaluator.get_current_ior_for_organ(organ_name)}"
+                )
+                print(
+                    f"The NVD {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
+                )
 
 
 def main():
