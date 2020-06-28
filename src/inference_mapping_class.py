@@ -27,18 +27,12 @@ def inference(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare paths
-    # organ2mass_path = os.path.join(organs_dir_path, "organ2center.json")
-    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
-    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
+    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
+    organ_center = json.load(open(os.path.join(organs_dir_path, "organ2center.json")))
     # Load organ to indices to obtain the number of classes
-    ind2organ_merged = json.load(
-        open("data/data_organs_mesh_merged_lung_liver/ind2organ.json")
-    )
-    organ2center_merged = json.load(
-        open("data/data_organs_mesh_merged_lung_liver/organ2center.json")
-    )
-    num_classes = max([int(index) for index in ind2organ_merged.keys()]) + 1
+    num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
         test_json_path, tokenizer, num_classes
@@ -57,11 +51,7 @@ def inference(
     model.train(False)
     # Create evaluator
     evaluator = InferenceEvaluatorPerOrgan(
-        ind2organ_path,
-        organ2label_path,
-        organ2summary_path,
-        voxelman_images_path,
-        len(test_dataset),
+        ind2organ, organ2label, organ2summary, voxelman_images_path, len(test_dataset),
     )
     with torch.no_grad():
         evaluator.reset_counters()
@@ -69,10 +59,8 @@ def inference(
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=-1)
-            pred_organ_names = [ind2organ_merged[str(ind.item())] for ind in y_pred]
-            pred_centers = [
-                organ2center_merged[organ_name] for organ_name in pred_organ_names
-            ]
+            pred_organ_names = [ind2organ[str(ind.item())] for ind in y_pred]
+            pred_centers = [organ_center[organ_name] for organ_name in pred_organ_names]
             for pred_center, organ_indices in zip(pred_centers, organs_indices):
                 evaluator.update_counters(
                     np.array(pred_center), np.where(organ_indices == 1)[0]
@@ -99,6 +87,7 @@ def inference(
                 print(
                     f"The NVD {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
                 )
+                print("============================================")
 
 
 def main():
