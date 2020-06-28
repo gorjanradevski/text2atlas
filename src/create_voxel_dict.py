@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import argparse
 from typing import List, Dict
 
 import natsort
@@ -108,9 +109,6 @@ def generate_organ2summary(organ2voxels: Dict):
                 np.random.choice(range(len(organ2voxels[organ])), 1000)
             ].tolist()
     return organ2summary
-
-
-import argparse
 
 
 def parse_args():

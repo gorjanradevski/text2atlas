@@ -6,8 +6,6 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from utils.general import flatten_list
-
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import TweetTokenizer
@@ -140,13 +138,8 @@ def delimit_occurrences(text: str, sub_list: List[str], sorting: bool = True) ->
     return text
 
 
-def detect_occurrences(
-    text: str, word_list: List[str], sorting: bool = True
-) -> List[str]:
-    if sorting:
-        word_list = sorted(
-            word_list, key=len, reverse=True
-        )  # SORT FROM LONGEST TO SHORTEST - MUST DO THIS, EITHER HERE OR IN PREPROCESSING
+def detect_occurrences(text: str, word_list: List[str]) -> List[str]:
+    word_list = sorted(word_list, key=len, reverse=True)
     hit_list = []
     for word in word_list:
         if word.startswith(" ") or word.endswith(" "):
@@ -160,7 +153,8 @@ def detect_occurrences(
             )
             matches = [match.strip() for match in matches]
         hit_list.extend(matches)
-    hit_list = flatten_list([word.split() for word in hit_list])
+    hit_list = [word.split() for word in hit_list]
+    hit_list = [item for sublist in hit_list for item in sublist]
     hit_list = [word.replace(",", "").replace(".", "") for word in hit_list]
     hit_list = list(set(hit_list))
     return hit_list
