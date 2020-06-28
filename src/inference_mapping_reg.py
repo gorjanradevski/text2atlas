@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import os
+import json
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -42,16 +43,12 @@ def inference(
     # Set model in evaluation mode
     model.train(False)
     # Prepare paths
-    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
-    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
+    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
     # Create evaluator
     evaluator = InferenceEvaluatorPerOrgan(
-        ind2organ_path,
-        organ2label_path,
-        organ2summary_path,
-        voxelman_images_path,
-        len(test_dataset),
+        ind2organ, organ2label, organ2summary, voxelman_images_path, len(test_dataset),
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
     with torch.no_grad():

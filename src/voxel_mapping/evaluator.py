@@ -108,18 +108,14 @@ class Evaluator:
 class InferenceEvaluator(Evaluator):
     def __init__(
         self,
-        ind2organ_path: str,
-        organ2label_path: str,
-        organ2summary_path: str,
+        ind2organ: Dict,
+        organ2label: Dict,
+        organ2summary: Dict,
         voxelman_images_path: str,
         total_samples: int,
     ):
         super().__init__(
-            ind2organ_path,
-            organ2label_path,
-            organ2summary_path,
-            voxelman_images_path,
-            total_samples,
+            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
         )
 
     def get_ior_error_bar(self):
@@ -146,19 +142,15 @@ class InferenceEvaluator(Evaluator):
 class TrainingEvaluator(Evaluator):
     def __init__(
         self,
-        ind2organ_path: str,
-        organ2label_path: str,
-        organ2summary_path: str,
+        ind2organ: Dict,
+        organ2label: Dict,
+        organ2summary: Dict,
         voxelman_images_path: str,
         total_samples: int,
         best_avg_distance: float,
     ):
         super().__init__(
-            ind2organ_path,
-            organ2label_path,
-            organ2summary_path,
-            voxelman_images_path,
-            total_samples,
+            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
         )
         self.best_avg_distance = best_avg_distance
         self.current_average_distance = 0
@@ -179,18 +171,14 @@ class TrainingEvaluator(Evaluator):
 class InferenceEvaluatorPerOrgan(InferenceEvaluator):
     def __init__(
         self,
-        ind2organ_path: str,
-        organ2label_path: str,
-        organ2summary_path: str,
+        ind2organ: str,
+        organ2label: str,
+        organ2summary: str,
         voxelman_images_path: str,
         total_samples: int,
     ):
         super().__init__(
-            ind2organ_path,
-            organ2label_path,
-            organ2summary_path,
-            voxelman_images_path,
-            total_samples,
+            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
         )
 
         self.organ_names = list(self.organ2label.keys())
