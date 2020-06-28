@@ -42,7 +42,7 @@ class Evaluator:
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
         # self.corrects[self.index] = self.voxels_inside(output_mapping, organ_indices)
         self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
-        self.corrects[self.index] = 1 if self.distances[self.index] < 1.0 else 0
+        self.corrects[self.index] = 1 if self.distances[self.index] < 10.0 else 0
         self.index += 1
 
     def get_current_ior(self):
@@ -203,14 +203,13 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
             if organ_index < 0:
                 continue
             self.organ_totals[self.ind2organ[str(organ_index)]] += 1
-            self.organ_corrects[self.ind2organ[str(organ_index)]] += self.voxels_inside(
-                output_mapping, np.array([organ_index])
-            )
             self.organ_distances[
                 self.ind2organ[str(organ_index)]
             ] += self.voxels_distance(output_mapping, np.array([organ_index]))
             self.organ_corrects[self.ind2organ[str(organ_index)]] = (
-                1 if self.organ_distances[self.ind2organ[str(organ_index)]] < 1.0 else 0
+                1
+                if self.organ_distances[self.ind2organ[str(organ_index)]] < 10.0
+                else 0
             )
 
     def get_current_ior_for_organ(self, organ):
