@@ -13,14 +13,14 @@ class Evaluator:
         self,
         ind2organ: Dict[int, str],
         organ2label: Dict,
-        organ2summary: str,
+        organ2sum_vox: str,
         voxelman_images_path: str,
         total_samples: int,
     ):
         self.total_samples = total_samples
         self.organ2label = organ2label
         self.ind2organ = ind2organ
-        self.organ2summary = organ2summary
+        self.organ2sum_vox = organ2sum_vox
         image_files = natsort.natsorted(
             [
                 os.path.join(voxelman_images_path, f)
@@ -40,7 +40,6 @@ class Evaluator:
         self.distances = np.zeros(self.total_samples)
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
-        # self.corrects[self.index] = self.voxels_inside(output_mapping, organ_indices)
         self.distances[self.index] = self.voxels_distance(output_mapping, organ_indices)
         self.corrects[self.index] = 1 if self.distances[self.index] < 10.0 else 0
         self.index += 1
@@ -55,29 +54,6 @@ class Evaluator:
         return np.round(
             (np.sum(self.distances) / np.count_nonzero(self.distances)) / 10, decimals=2
         )
-
-    def voxels_inside(
-        self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
-    ) -> int:
-        """
-        :param pred: prediction for one sample, numpy array or shape (3,)
-        :param organ_indices: set of true organ indices for the sample, list or numpy array
-        :return: Array with k entries
-         1.0 at i-th entry - pred is inside the voxels of the i-th organ,
-         0.0 at i-th entry - pred is outside of the voxels of the i-th organ
-        """
-        organ_indices = np.array(organ_indices)
-        corrects = np.zeros(organ_indices.size)
-        pred = np.round(pred + VOXELMAN_CENTER)
-        pred = np.clip(pred, a_min=[0, 0, 0], a_max=(VOXELMAN_CENTER * 2) - 1)
-        x, y, z = pred.astype(int)
-        for i, organ_index in enumerate(organ_indices):
-            if organ_index < 0:
-                continue
-            labels = self.organ2label[self.ind2organ[str(organ_index)]]
-            corrects[i] = int(self.voxelman[x, y, z] in labels)
-
-        return 1 if np.count_nonzero(corrects) > 0 else 0
 
     def voxels_distance(
         self, pred: np.ndarray, organ_indices: Union[List, np.ndarray]
@@ -99,7 +75,7 @@ class Evaluator:
                 return 0.0
             else:
                 summary_points = np.array(
-                    self.organ2summary[self.ind2organ[str_organ_index]]
+                    self.organ2sum_vox[self.ind2organ[str_organ_index]]
                 )
                 distances[i] = np.linalg.norm(pred - summary_points, axis=-1).min()
 
@@ -111,12 +87,12 @@ class InferenceEvaluator(Evaluator):
         self,
         ind2organ: Dict,
         organ2label: Dict,
-        organ2summary: Dict,
+        organ2sum_vox: Dict,
         voxelman_images_path: str,
         total_samples: int,
     ):
         super().__init__(
-            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
+            ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples,
         )
 
     def get_ior_error_bar(self):
@@ -145,13 +121,13 @@ class TrainingEvaluator(Evaluator):
         self,
         ind2organ: Dict,
         organ2label: Dict,
-        organ2summary: Dict,
+        organ2sum_vox: Dict,
         voxelman_images_path: str,
         total_samples: int,
         best_avg_distance: float,
     ):
         super().__init__(
-            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
+            ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples,
         )
         self.best_avg_distance = best_avg_distance
         self.current_average_distance = 0
@@ -174,12 +150,12 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
         self,
         ind2organ: str,
         organ2label: str,
-        organ2summary: str,
+        organ2sum_vox: str,
         voxelman_images_path: str,
         total_samples: int,
     ):
         super().__init__(
-            ind2organ, organ2label, organ2summary, voxelman_images_path, total_samples,
+            ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples,
         )
 
         self.organ_names = list(self.organ2label.keys())

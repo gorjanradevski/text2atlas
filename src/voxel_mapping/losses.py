@@ -39,38 +39,3 @@ class OrganDistanceLoss(nn.Module):
         )
         loss = (organ_distances_masked * organ_distances_weights).sum(dim=1).mean(dim=0)
         return loss
-
-
-class MinDistanceLoss(nn.Module):
-    def __init__(self, device, organ_temperature):
-        super(MinDistanceLoss, self).__init__()
-        self.organ_temperature = organ_temperature
-        self.device = device
-
-    def forward(
-        self, predictions: torch.Tensor, labels: torch.Tensor, lengths: torch.Tensor,
-    ):
-        """Computes the minimum distance to organ loss.
-
-        Arguments:
-            predictions: Tensor with shape [batch_size, 3]
-            labels: Tensor with shape [batch_size, max_organs_in_batch, 3]
-            lengths: Tensor with shape [batch_size]
-            devce: A torch device - either cpu or gpu
-        """
-        mask = (
-            torch.arange(torch.max(lengths))
-            .expand(lengths.size()[0], torch.max(lengths))
-            .to(self.device)
-            < lengths.unsqueeze(1)
-        ).float()
-        mask[torch.where(mask == 0)] = 1e15
-        # Preparing dimensions
-        predictions = predictions.unsqueeze(1)
-        labels = labels.squeeze(2)
-        # Computing loss
-        loss = (predictions - labels).norm(p=2, dim=-1)
-        loss_masked = loss * mask
-        softmin_weights = F.softmin(loss_masked / self.organ_temperature, dim=1)
-
-        return (loss_masked * softmin_weights).sum(-1).mean()

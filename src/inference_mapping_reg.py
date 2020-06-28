@@ -45,10 +45,10 @@ def inference(
     # Prepare paths
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
+    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
     # Create evaluator
     evaluator = InferenceEvaluatorPerOrgan(
-        ind2organ, organ2label, organ2summary, voxelman_images_path, len(test_dataset),
+        ind2organ, organ2label, organ2voxels, voxelman_images_path, len(test_dataset),
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
     with torch.no_grad():
