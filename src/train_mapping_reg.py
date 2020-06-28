@@ -18,7 +18,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import RegModel
-from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
+from voxel_mapping.losses import OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingEvaluator
 
 
@@ -53,17 +53,6 @@ def train(
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
     organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
-    # Check for the type of loss
-    if num_anchors > 1:
-        criterion = OrganDistanceLoss(
-            device=device,
-            voxel_temperature=voxel_temperature,
-            organ_temperature=organ_temperature,
-        )
-        logging.warning(f"Using {num_anchors} voxel points!")
-    else:
-        logging.warning(f"Using only {num_anchors} voxel point!")
-        criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     logging.warning(f"Usage of masking is set to: ---{masking}---")
@@ -91,6 +80,13 @@ def train(
     # Prepare model
     model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
         device
+    )
+    # Check for the type of loss
+    logging.warning(f"Using {num_anchors} voxel points!")
+    criterion = OrganDistanceLoss(
+        device=device,
+        voxel_temperature=voxel_temperature,
+        organ_temperature=organ_temperature,
     )
     # noinspection PyUnresolvedReferences
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
