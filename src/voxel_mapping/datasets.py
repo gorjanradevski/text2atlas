@@ -6,7 +6,7 @@ from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
 from typing import Tuple
 from tqdm import tqdm
-from typing import Dict
+import random
 from utils.constants import VOXELMAN_CENTER
 
 
@@ -26,16 +26,21 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        ind2anchors: Dict,
+        ind2organ: str,
+        organ2voxels: str,
+        num_anchors: int,
         masking: bool,
     ):
         super().__init__(json_path, tokenizer)
-        self.mappings, self.keywords = [], []
+        self.indices, self.keywords = [], []
         for element in tqdm(self.json_data):
-            self.mappings.append([ind2anchors[ind] for ind in element["organ_indices"]])
+            self.indices.append([ind for ind in element["organ_indices"]])
             self.keywords.append(element["keywords"])
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
+        self.num_anchors = num_anchors
+        self.organ2voxels = organ2voxels
+        self.ind2organ = ind2organ
 
     def __len__(self):
         return len(self.sentences)
@@ -54,7 +59,18 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
                 ]
             )
         tokenized_sentence = torch.tensor(self.tokenizer.encode(sentence))
-        mapping = torch.tensor(self.mappings[idx]) / self.center
+        # Obtain mapping
+        mapping = (
+            torch.tensor(
+                [
+                    random.sample(
+                        self.organ2voxels[self.ind2organ[str(index)]], self.num_anchors
+                    )
+                    for index in self.indices[idx]
+                ]
+            )
+            / self.center
+        )
         num_organs = len(mapping)
 
         return tokenized_sentence, mapping, num_organs

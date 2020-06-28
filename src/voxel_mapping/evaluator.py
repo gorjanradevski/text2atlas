@@ -1,6 +1,5 @@
-import json
 import os
-from typing import List, Union
+from typing import List, Union, Dict
 
 import natsort
 import numpy as np
@@ -12,16 +11,16 @@ from utils.constants import VOXELMAN_CENTER
 class Evaluator:
     def __init__(
         self,
-        ind2organ_path: str,
-        organ2label_path: str,
-        organ2summary_path: str,
+        ind2organ: Dict[int, str],
+        organ2label: Dict,
+        organ2summary: str,
         voxelman_images_path: str,
         total_samples: int,
     ):
         self.total_samples = total_samples
-        self.organ2label = json.load(open(organ2label_path))
-        self.ind2organ = json.load(open(ind2organ_path))
-        self.organ2summary = json.load(open(organ2summary_path))
+        self.organ2label = organ2label
+        self.ind2organ = ind2organ
+        self.organ2summary = organ2summary
         image_files = natsort.natsorted(
             [
                 os.path.join(voxelman_images_path, f)

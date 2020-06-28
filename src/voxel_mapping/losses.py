@@ -65,8 +65,11 @@ class MinDistanceLoss(nn.Module):
             < lengths.unsqueeze(1)
         ).float()
         mask[torch.where(mask == 0)] = 1e15
+        # Preparing dimensions
         predictions = predictions.unsqueeze(1)
-        loss = (predictions - labels).norm(p=2, dim=2)
+        labels = labels.squeeze(2)
+        # Computing loss
+        loss = (predictions - labels).norm(p=2, dim=-1)
         loss_masked = loss * mask
         softmin_weights = F.softmin(loss_masked / self.organ_temperature, dim=1)
 

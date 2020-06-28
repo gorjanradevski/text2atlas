@@ -8,6 +8,7 @@ import os
 import sys
 import logging
 from transformers import BertConfig, BertTokenizer
+import json
 from utils.constants import VOXELMAN_CENTER
 
 from voxel_mapping.datasets import (
@@ -19,7 +20,6 @@ from voxel_mapping.datasets import (
 from voxel_mapping.models import RegModel
 from voxel_mapping.losses import MinDistanceLoss, OrganDistanceLoss
 from voxel_mapping.evaluator import TrainingEvaluator
-from voxel_mapping.anchors import create_ind2anchors, create_ind2centers
 
 
 def train(
@@ -27,7 +27,7 @@ def train(
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
-    loss_type: str,
+    num_anchors: str,
     masking: bool,
     epochs: int,
     batch_size: int,
@@ -49,34 +49,31 @@ def train(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare paths
-    organ2voxels_path = os.path.join(organs_dir_path, "organ2voxels_eroded.json")
-    organ2ind_path = os.path.join(organs_dir_path, "organ2ind.json")
-    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
-    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
-    organ2center_path = os.path.join(organs_dir_path, "organ2center.json")
+    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
+    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
     # Check for the type of loss
-    ind2mapping = None
-    assert loss_type in ["one_voxel", "all_voxels"]
-    if loss_type == "all_voxels":
-        ind2mapping = create_ind2anchors(organ2ind_path, organ2voxels_path, 1000)
+    if num_anchors > 1:
         criterion = OrganDistanceLoss(
             device=device,
             voxel_temperature=voxel_temperature,
             organ_temperature=organ_temperature,
         )
-        logging.warning("Using all organ points!")
-    elif loss_type == "one_voxel":
-        logging.warning("Using only one organ center!")
-        ind2mapping = create_ind2centers(organ2ind_path, organ2center_path)
-        criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
+        logging.warning(f"Using {num_anchors} voxel points!")
     else:
-        raise ValueError("Invalid loss method!")
+        logging.warning(f"Using only {num_anchors} voxel point!")
+        criterion = MinDistanceLoss(device=device, organ_temperature=organ_temperature)
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     logging.warning(f"Usage of masking is set to: ---{masking}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path, tokenizer, ind2mapping, masking
+        train_json_path,
+        tokenizer,
+        ind2organ,
+        organ2voxels,
+        num_anchors=num_anchors,
+        masking=masking,
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer)
     train_loader = DataLoader(
@@ -114,9 +111,9 @@ def train(
         logging.warning(f"The previous best distance was: {best_avg_distance}!")
     # Prepare evaluator
     evaluator = TrainingEvaluator(
-        ind2organ_path,
-        organ2label_path,
-        organ2summary_path,
+        ind2organ,
+        organ2label,
+        organ2summary,
         voxelman_images_path,
         len(val_dataset),
         best_avg_distance,
@@ -223,7 +220,7 @@ def main():
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
-        args.loss_type,
+        args.num_anchors,
         args.masking,
         args.epochs,
         args.batch_size,
@@ -276,10 +273,10 @@ def parse_args():
         help="Where to save the model.",
     )
     parser.add_argument(
-        "--loss_type",
-        type=str,
-        default="all_voxels",
-        help="The type of loss to use to train the model",
+        "--num_anchors",
+        type=int,
+        default=1,
+        help="The number of anchor points to use.",
     )
     parser.add_argument(
         "--save_intermediate_model_path",
