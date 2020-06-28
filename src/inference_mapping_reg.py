@@ -83,6 +83,7 @@ def inference(
                 print(
                     f"The NVD for {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
                 )
+                print("============================================")
 
 
 def main():
