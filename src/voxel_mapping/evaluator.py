@@ -206,7 +206,7 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
             self.organ_distances[
                 self.ind2organ[str(organ_index)]
             ] += self.voxels_distance(output_mapping, np.array([organ_index]))
-            self.organ_corrects[self.ind2organ[str(organ_index)]] = (
+            self.organ_corrects[self.ind2organ[str(organ_index)]] += (
                 1
                 if self.organ_distances[self.ind2organ[str(organ_index)]] < 10.0
                 else 0
