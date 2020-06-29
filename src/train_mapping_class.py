@@ -43,14 +43,11 @@ def train(
         logging.basicConfig(level=logging.INFO)
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # Prepare paths
-    organ2mass_path = os.path.join(organs_dir_path, "organ2center.json")
-    ind2organ_path = os.path.join(organs_dir_path, "ind2organ.json")
-    organ2label_path = os.path.join(organs_dir_path, "organ2label.json")
-    organ2summary_path = os.path.join(organs_dir_path, "organ2summary.json")
-    # Load organ to indices to obtain the number of classes
-    ind2organ = json.load(open(ind2organ_path))
-    organ2center = json.load(open(organ2mass_path))
+    # Prepare jsons
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    organ2center = json.load(open(os.path.join(organs_dir_path, "organ2center.json")))
+    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
+    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
@@ -96,9 +93,9 @@ def train(
 
     # Prepare evaluator
     evaluator = TrainingEvaluator(
-        ind2organ_path,
-        organ2label_path,
-        organ2summary_path,
+        ind2organ,
+        organ2label,
+        organ2summary,
         voxelman_images_path,
         len(val_dataset),
         best_avg_distance,
@@ -168,22 +165,22 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                torch.save(model.state_dict(), save_model_path)
+                # torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
                     f"{evaluator.current_average_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            torch.save(
-                {
-                    "epoch": epoch + 1,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "best_distance": evaluator.best_avg_distance,
-                },
-                save_intermediate_model_path,
-            )
+            # torch.save(
+            #     {
+            #         "epoch": epoch + 1,
+            #         "model_state_dict": model.state_dict(),
+            #         "optimizer_state_dict": optimizer.state_dict(),
+            #         "best_distance": evaluator.best_avg_distance,
+            #     },
+            #     save_intermediate_model_path,
+            # )
 
 
 def main():

@@ -26,7 +26,7 @@ def inference(
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # Prepare paths
+    # Load jsons
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
     organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))

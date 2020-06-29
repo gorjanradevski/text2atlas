@@ -63,15 +63,15 @@ def inference(
                 evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
 
         print(
-            "The IOR on the non-masked test set is: "
+            "The IOR on the test set is: "
             f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
         )
         print(
-            "The avg distance on the non-masked test set is: "
+            "The avg distance on the test set is: "
             f"{evaluator.get_current_distance()} +/- {evaluator.get_distance_error_bar()}"
         )
         print(
-            "The avg miss distance on the non-masked test set is: "
+            "The avg miss distance on the test set is: "
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
         print("============================================")

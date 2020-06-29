@@ -13,7 +13,7 @@ class Evaluator:
         self,
         ind2organ: Dict[int, str],
         organ2label: Dict,
-        organ2sum_vox: str,
+        organ2sum_vox: Dict,
         voxelman_images_path: str,
         total_samples: int,
     ):
