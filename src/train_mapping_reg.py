@@ -37,6 +37,7 @@ def train(
     save_intermediate_model_path: str,
     log_filepath: str,
     learning_rate: float,
+    weight_decay: float,
     voxel_temperature: float,
     organ_temperature: float,
     clip_val: float,
@@ -89,7 +90,10 @@ def train(
         organ_temperature=organ_temperature,
     )
     # noinspection PyUnresolvedReferences
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # TODO: AdamW and weight decay 0.01
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    )
     # Load model
     cur_epoch = 0
     best_avg_distance = sys.maxsize
@@ -226,6 +230,7 @@ def main():
         args.save_intermediate_model_path,
         args.log_filepath,
         args.learning_rate,
+        args.weight_decay,
         args.voxel_temperature,
         args.organ_temperature,
         args.clip_val,
@@ -291,6 +296,9 @@ def parse_args():
     )
     parser.add_argument(
         "--learning_rate", type=float, default=2e-5, help="The learning rate."
+    )
+    parser.add_argument(
+        "--weight_decay", type=float, default=0.0, help="The weight decay."
     )
     parser.add_argument(
         "--voxel_temperature", type=float, default=1.0, help="The voxel temperature."

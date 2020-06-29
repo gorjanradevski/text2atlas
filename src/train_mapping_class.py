@@ -33,6 +33,7 @@ def train(
     save_intermediate_model_path: str,
     log_filepath: str,
     learning_rate: float,
+    weight_decay: float,
     masking: bool,
     clip_val: float,
 ):
@@ -74,7 +75,10 @@ def train(
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    # TODO: AdamW and weight decay 0.01
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+    )
     best_avg_distance = sys.maxsize
     cur_epoch = 0
     # Load model
@@ -200,6 +204,7 @@ def main():
         args.save_intermediate_model_path,
         args.log_filepath,
         args.learning_rate,
+        args.weight_decay,
         args.masking,
         args.clip_val,
     )
@@ -264,6 +269,9 @@ def parse_args():
         help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
         "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
         "google/bert_uncased_L-4_H-512_A-8]",
+    )
+    parser.add_argument(
+        "--weight_decay", type=float, default=0.0, help="The weight decay."
     )
     parser.add_argument(
         "--checkpoint_path",
