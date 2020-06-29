@@ -169,22 +169,22 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                # torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
                     f"{evaluator.current_average_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
-            # torch.save(
-            #     {
-            #         "epoch": epoch + 1,
-            #         "model_state_dict": model.state_dict(),
-            #         "optimizer_state_dict": optimizer.state_dict(),
-            #         "best_distance": evaluator.best_avg_distance,
-            #     },
-            #     save_intermediate_model_path,
-            # )
+            torch.save(
+                {
+                    "epoch": epoch + 1,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "best_distance": evaluator.best_avg_distance,
+                },
+                save_intermediate_model_path,
+            )
 
 
 def main():
