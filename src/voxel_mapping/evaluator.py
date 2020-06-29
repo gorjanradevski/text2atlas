@@ -124,25 +124,25 @@ class TrainingEvaluator(Evaluator):
         organ2sum_vox: Dict,
         voxelman_images_path: str,
         total_samples: int,
-        best_avg_distance: float,
+        best_distance: float,
     ):
         super().__init__(
             ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples,
         )
-        self.best_avg_distance = best_avg_distance
-        self.current_average_distance = 0
+        self.best_distance = best_distance
+        self.current_distance = 0
 
-    def reset_current_average_distance(self):
-        self.current_average_distance = 0
+    def reset_current_distance(self):
+        self.current_distance = 0
 
-    def update_current_average_distance(self):
-        self.current_average_distance += self.get_current_distance()
+    def update_current_distance(self):
+        self.current_distance += self.get_current_distance()
 
-    def is_best_avg_distance(self):
-        return self.current_average_distance < self.best_avg_distance
+    def is_best_distance(self):
+        return self.current_distance < self.best_distance
 
-    def update_best_avg_distance(self):
-        self.best_avg_distance = self.current_average_distance
+    def update_best_distance(self):
+        self.best_distance = self.current_distance
 
 
 class InferenceEvaluatorPerOrgan(InferenceEvaluator):

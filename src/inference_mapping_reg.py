@@ -63,7 +63,7 @@ def inference(
                 evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
 
         print(
-            "The IOR on the test set is: "
+            "The avg IOR on the test set is: "
             f"{evaluator.get_current_ior()} +/- {evaluator.get_ior_error_bar()}"
         )
         print(
@@ -78,10 +78,10 @@ def inference(
         for organ_name in evaluator.organ_names:
             if evaluator.get_current_ior_for_organ(organ_name) > -1:
                 print(
-                    f"The IOR for {organ_name} is: {evaluator.get_current_ior_for_organ(organ_name)}"
+                    f"The avg IOR for {organ_name} is: {evaluator.get_current_ior_for_organ(organ_name)}"
                 )
                 print(
-                    f"The NVD for {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
+                    f"The avg NVD for {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
                 )
                 print("============================================")
 

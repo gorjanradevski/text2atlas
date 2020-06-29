@@ -79,7 +79,7 @@ def train(
     optimizer = optim.Adam(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
-    best_avg_distance = sys.maxsize
+    best_distance = sys.maxsize
     cur_epoch = 0
     # Load model
     if checkpoint_path is not None:
@@ -87,13 +87,13 @@ def train(
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
-        best_avg_ior = checkpoint["best_avg_ior"]
+        best_distance = checkpoint["best_distance"]
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         logging.warning(
             f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
         )
-        logging.warning(f"The previous best IOR was: {best_avg_ior}!")
+        logging.warning(f"The previous best distance was: {best_distance}!")
 
     # Prepare evaluator
     evaluator = TrainingEvaluator(
@@ -102,7 +102,7 @@ def train(
         organ2summary,
         voxelman_images_path,
         len(val_dataset),
-        best_avg_distance,
+        best_distance,
     )
     for epoch in range(cur_epoch, cur_epoch + epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
@@ -132,7 +132,7 @@ def train(
 
         # Set model in evaluation mode
         model.train(False)
-        evaluator.reset_current_average_distance()
+        evaluator.reset_current_distance()
         with torch.no_grad():
             evaluator.reset_counters()
             for sentences, attn_mask, organs_indices in tqdm(val_loader):
@@ -158,14 +158,14 @@ def train(
                 f"The miss distance on the validation set is {evaluator.get_current_miss_distance()}"
             )
 
-            evaluator.update_current_average_distance()
+            evaluator.update_current_distance()
 
-            if evaluator.is_best_avg_distance():
-                evaluator.update_best_avg_distance()
+            if evaluator.is_best_distance():
+                evaluator.update_best_distance()
                 logging.info("======================")
                 logging.info(
-                    f"Found new best with avg distance: "
-                    f"{evaluator.best_avg_distance} on epoch "
+                    f"Found new best with distance: "
+                    f"{evaluator.best_distance} on epoch "
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
@@ -173,7 +173,7 @@ def train(
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
-                    f"{evaluator.current_average_distance}"
+                    f"{evaluator.current_distance}"
                 )
             logging.info("Saving intermediate checkpoint...")
             torch.save(
@@ -181,7 +181,7 @@ def train(
                     "epoch": epoch + 1,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict(),
-                    "best_distance": evaluator.best_avg_distance,
+                    "best_distance": evaluator.best_distance,
                 },
                 save_intermediate_model_path,
             )
