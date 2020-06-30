@@ -89,9 +89,8 @@ def train(
         voxel_temperature=voxel_temperature,
         organ_temperature=organ_temperature,
     )
-    # noinspection PyUnresolvedReferences
-    # TODO: AdamW and weight decay 0.01
-    optimizer = optim.Adam(
+    # noinspection PyUnresolvedReference
+    optimizer = optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     # Load model
@@ -298,7 +297,7 @@ def parse_args():
         "--learning_rate", type=float, default=2e-5, help="The learning rate."
     )
     parser.add_argument(
-        "--weight_decay", type=float, default=0.0, help="The weight decay."
+        "--weight_decay", type=float, default=0.01, help="The (default) weight decay."
     )
     parser.add_argument(
         "--voxel_temperature", type=float, default=1.0, help="The voxel temperature."

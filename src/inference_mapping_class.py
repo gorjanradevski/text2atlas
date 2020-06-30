@@ -62,7 +62,7 @@ def inference(
             pred_centers = [organ2center[ind2organ[str(ind.item())]] for ind in y_pred]
             for pred_center, organ_indices in zip(pred_centers, organs_indices):
                 evaluator.update_counters(
-                    pred_center.numpy(), np.where(organ_indices == 1)[0]
+                    np.array(pred_center), np.where(organ_indices == 1)[0]
                 )
 
         print(

@@ -75,8 +75,7 @@ def train(
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
-    # TODO: AdamW and weight decay 0.01
-    optimizer = optim.Adam(
+    optimizer = optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
     best_distance = sys.maxsize
@@ -271,7 +270,7 @@ def parse_args():
         "google/bert_uncased_L-4_H-512_A-8]",
     )
     parser.add_argument(
-        "--weight_decay", type=float, default=0.0, help="The weight decay."
+        "--weight_decay", type=float, default=0.01, help="The (default) weight decay."
     )
     parser.add_argument(
         "--checkpoint_path",

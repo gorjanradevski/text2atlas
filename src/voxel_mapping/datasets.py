@@ -32,10 +32,10 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         masking: bool,
     ):
         super().__init__(json_path, tokenizer)
-        self.indices, self.keywords = [], []
+        self.indices, self.organ_names = [], []
         for element in tqdm(self.json_data):
             self.indices.append([ind for ind in element["organ_indices"]])
-            self.keywords.append(element["keywords"])
+            self.keyorwords.append(element["organ_names"])
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
         self.num_anchors = num_anchors
@@ -50,7 +50,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         if self.masking:
             mask = {
                 word: torch.bernoulli(torch.tensor([0.5])).bool().item()
-                for word in self.keywords[idx]
+                for word in self.organ_names[idx]
             }
             sentence = self.detokenizer.detokenize(
                 [
@@ -122,13 +122,13 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
 class VoxelSentenceMappingClassDataset:
     def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
         self.json_data = json.load(open(json_path))
-        self.sentences, self.organs_indices, self.keywords = [], [], []
+        self.sentences, self.organs_indices, self.organ_names = [], [], []
         self.num_classes = num_classes
         self.tokenizer = tokenizer
         for element in tqdm(self.json_data):
             self.sentences.append(element["text"])
             self.organs_indices.append(element["organ_indices"])
-            self.keywords.append(element["keywords"])
+            self.organ_names.append(element["organ_names"])
 
 
 class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Dataset):
@@ -147,7 +147,7 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         if self.masking:
             mask = {
                 word: torch.bernoulli(torch.tensor([0.5])).bool().item()
-                for word in self.keywords[idx]
+                for word in self.organ_names[idx]
             }
             sentence = self.detokenizer.detokenize(
                 [
