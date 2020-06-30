@@ -35,7 +35,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self.indices, self.organ_names = [], []
         for element in tqdm(self.json_data):
             self.indices.append([ind for ind in element["organ_indices"]])
-            self.keyorwords.append(element["organ_names"])
+            self.organ_names.append(element["organ_names"])
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
         self.num_anchors = num_anchors
