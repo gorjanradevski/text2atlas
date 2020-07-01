@@ -84,7 +84,7 @@ def inference(
                     break
 
     for k, recall in recalls.items():
-        print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 2)}")
+        print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 1)}")
 
 
 def main():

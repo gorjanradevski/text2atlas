@@ -39,3 +39,12 @@ class OrganDistanceLoss(nn.Module):
         )
         loss = (organ_distances_masked * organ_distances_weights).sum(dim=1).mean(dim=0)
         return loss
+
+
+class BaselineRegLoss(nn.Module):
+    def __init__(self):
+        super(BaselineRegLoss, self).__init__()
+        self.mse = nn.MSELoss()
+
+    def forward(self, predictions: torch.Tensor, anchors: torch.Tensor) -> torch.Tensor:
+        return self.mse(predictions, anchors.view(3, -1, 3).mean(1))

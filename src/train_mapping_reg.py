@@ -18,7 +18,7 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import RegModel
-from voxel_mapping.losses import OrganDistanceLoss
+from voxel_mapping.losses import OrganDistanceLoss, BaselineRegLoss
 from voxel_mapping.evaluator import TrainingEvaluator
 
 
@@ -28,6 +28,7 @@ def train(
     train_json_path: str,
     val_json_path: str,
     num_anchors: str,
+    loss_type: str,
     masking: bool,
     epochs: int,
     batch_size: int,
@@ -82,13 +83,20 @@ def train(
     model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
         device
     )
-    # Check for the type of loss
     logging.warning(f"Using {num_anchors} voxel points!")
-    criterion = OrganDistanceLoss(
-        device=device,
-        voxel_temperature=voxel_temperature,
-        organ_temperature=organ_temperature,
-    )
+    # Check for the type of loss
+    if loss_type == "organ_loss":
+        criterion = OrganDistanceLoss(
+            device=device,
+            voxel_temperature=voxel_temperature,
+            organ_temperature=organ_temperature,
+        )
+        logging.warning("Using SSL loss!")
+    elif loss_type == "baseline_loss":
+        criterion = BaselineRegLoss()
+        logging.warning("Using baseline REG loss!")
+    else:
+        raise ValueError(f"Invalid loss type {loss_type}")
     # noinspection PyUnresolvedReference
     optimizer = optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
@@ -134,7 +142,12 @@ def train(
                     num_organs.to(device),
                 )
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                loss = criterion(output_mappings, true_mappings, num_organs)
+                if loss_type == "organ_loss":
+                    loss = criterion(output_mappings, true_mappings, num_organs)
+                elif loss_type == "baseline_loss":
+                    loss = criterion(output_mappings, true_mappings)
+                else:
+                    raise ValueError(f"Invalid loss type: {loss_type}")
                 # backward
                 loss.backward()
                 # clip the gradients
@@ -220,6 +233,7 @@ def main():
         args.train_json_path,
         args.val_json_path,
         args.num_anchors,
+        args.loss_type,
         args.masking,
         args.epochs,
         args.batch_size,
@@ -277,6 +291,9 @@ def parse_args():
         type=int,
         default=100,
         help="The number of anchor points to use.",
+    )
+    parser.add_argument(
+        "--loss_type", type=str, default="organ_loss", help="The loss type",
     )
     parser.add_argument(
         "--save_intermediate_model_path",

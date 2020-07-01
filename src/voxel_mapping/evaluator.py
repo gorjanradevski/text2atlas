@@ -45,15 +45,15 @@ class Evaluator:
         self.index += 1
 
     def get_current_ior(self):
-        return np.round((np.sum(self.corrects) / self.total_samples) * 100, decimals=2)
+        return np.round((np.sum(self.corrects) / self.total_samples) * 100, decimals=1)
 
     def get_current_distance(self):
-        return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=2)
+        return np.round((np.sum(self.distances) / self.total_samples) / 10, decimals=1)
 
     def get_current_miss_distance(self):
         return np.round(
             (np.sum(self.distances) / (np.count_nonzero(self.distances) + 1e-15)) / 10,
-            decimals=2,
+            decimals=1,
         )
 
     def voxels_distance(
@@ -99,13 +99,13 @@ class InferenceEvaluator(Evaluator):
     def get_ior_error_bar(self):
         return np.round(
             np.std(self.corrects, ddof=1) / np.sqrt(self.total_samples) * 100,
-            decimals=2,
+            decimals=1,
         )
 
     def get_distance_error_bar(self):
         return np.round(
             np.std(self.distances, ddof=1) / np.sqrt(self.total_samples) / 10,
-            decimals=2,
+            decimals=1,
         )
 
     def get_miss_distance_error_bar(self):
@@ -113,7 +113,7 @@ class InferenceEvaluator(Evaluator):
             np.std(self.distances[np.nonzero(self.distances)], ddof=1)
             / np.sqrt(np.count_nonzero(self.distances))
             / 10,
-            decimals=2,
+            decimals=1,
         )
 
 
@@ -191,7 +191,7 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
     def get_current_ior_for_organ(self, organ):
         if self.organ_totals[organ]:
             return np.round(
-                self.organ_corrects[organ] / self.organ_totals[organ] * 100, decimals=2,
+                self.organ_corrects[organ] / self.organ_totals[organ] * 100, decimals=1,
             )
         else:
             return -1
@@ -199,7 +199,7 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
     def get_current_distance_for_organ(self, organ):
         if self.organ_totals[organ]:
             return np.round(
-                self.organ_distances[organ] / self.organ_totals[organ] / 10, decimals=2,
+                self.organ_distances[organ] / self.organ_totals[organ] / 10, decimals=1,
             )
         else:
             return -1
