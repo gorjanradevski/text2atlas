@@ -275,7 +275,7 @@ def parse_args():
     parser.add_argument(
         "--num_anchors",
         type=int,
-        default=1,
+        default=100,
         help="The number of anchor points to use.",
     )
     parser.add_argument(

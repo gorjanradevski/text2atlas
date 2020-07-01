@@ -4,7 +4,7 @@ import json
 import torch
 from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-from typing import Tuple
+from typing import Tuple, Dict
 from tqdm import tqdm
 import random
 from utils.constants import VOXELMAN_CENTER
@@ -14,10 +14,10 @@ class VoxelSentenceMappingRegDataset:
     def __init__(self, json_path: str, tokenizer: str):
         self.json_data = json.load(open(json_path))
         self.tokenizer = tokenizer
-        self.sentences, self.organs_indices = [], []
+        self.sentences, self.organ_indices = [], []
         for element in tqdm(self.json_data):
             self.sentences.append(element["text"])
-            self.organs_indices.append(element["organ_indices"])
+            self.organ_indices.append(element["organ_indices"])
         self.center = torch.from_numpy(VOXELMAN_CENTER)
 
 
@@ -26,16 +26,13 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        ind2organ: str,
+        ind2organ: Dict[int, str],
         organ2voxels: str,
         num_anchors: int,
         masking: bool,
     ):
         super().__init__(json_path, tokenizer)
-        self.indices, self.organ_names = [], []
-        for element in tqdm(self.json_data):
-            self.indices.append([ind for ind in element["organ_indices"]])
-            self.organ_names.append(element["organ_names"])
+        self.organ_names = [element["organ_names"] for element in self.json_data]
         self.masking = masking
         self.detokenizer = TreebankWordDetokenizer()
         self.num_anchors = num_anchors
@@ -66,7 +63,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
                     random.sample(
                         self.organ2voxels[self.ind2organ[str(index)]], self.num_anchors
                     )
-                    for index in self.indices[idx]
+                    for index in self.organ_indices[idx]
                 ]
             )
             / self.center
@@ -79,15 +76,17 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
 class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset):
     def __init__(self, json_path: str, tokenizer: BertTokenizer):
         super().__init__(json_path, tokenizer)
+        self.ids = [element["pmid"] for element in self.json_data]
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
-        organ_indices = torch.tensor(self.organs_indices[idx])
+        organ_indices = torch.tensor(self.organ_indices[idx])
+        doc_id = self.ids[idx]
 
-        return tokenized_sentence, organ_indices
+        return tokenized_sentence, organ_indices, doc_id
 
 
 def collate_pad_sentence_reg_train_batch(
@@ -108,7 +107,7 @@ def collate_pad_sentence_reg_train_batch(
 
 
 def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
-    sentences, organ_indices = zip(*batch)
+    sentences, organ_indices, doc_ids = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
         organ_indices, batch_first=True, padding_value=-1
@@ -116,18 +115,18 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, padded_organ_indices
+    return (padded_sentences, attn_mask, padded_organ_indices, doc_ids)
 
 
 class VoxelSentenceMappingClassDataset:
     def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
         self.json_data = json.load(open(json_path))
-        self.sentences, self.organs_indices, self.organ_names = [], [], []
+        self.sentences, self.organ_indices, self.organ_names = [], [], []
         self.num_classes = num_classes
         self.tokenizer = tokenizer
         for element in tqdm(self.json_data):
             self.sentences.append(element["text"])
-            self.organs_indices.append(element["organ_indices"])
+            self.organ_indices.append(element["organ_indices"])
             self.organ_names.append(element["organ_names"])
 
 
@@ -156,7 +155,7 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
                 ]
             )
         tokenized_sentence = torch.tensor(self.tokenizer.encode(sentence))
-        organ_indices = torch.tensor(self.organs_indices[idx])
+        organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
 
@@ -172,7 +171,7 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
 
     def __getitem__(self, idx: int):
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
-        organ_indices = torch.tensor(self.organs_indices[idx])
+        organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
 
