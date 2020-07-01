@@ -52,7 +52,8 @@ class Evaluator:
 
     def get_current_miss_distance(self):
         return np.round(
-            (np.sum(self.distances) / np.count_nonzero(self.distances)) / 10, decimals=2
+            (np.sum(self.distances) / (np.count_nonzero(self.distances) + 1e-15)) / 10,
+            decimals=2,
         )
 
     def voxels_distance(
