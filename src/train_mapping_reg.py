@@ -152,7 +152,7 @@ def train(
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
-            for sentences_normal, attn_mask_normal, organs_indices_normal in tqdm(
+            for sentences_normal, attn_mask_normal, organs_indices_normal, _ in tqdm(
                 val_loader
             ):
                 sentences_normal, attn_mask_normal = (
