@@ -80,7 +80,9 @@ def train(
                     organ_indices.to(device),
                 )
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                loss, _ = batch_all_triplet_loss(organ_indices, output_mappings, margin)
+                loss, _ = batch_all_triplet_loss(
+                    organ_indices, output_mappings, margin, device
+                )
                 # backward
                 loss.backward()
                 # clip the gradients
