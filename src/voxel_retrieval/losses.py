@@ -39,7 +39,7 @@ def _pairwise_distances(embeddings, squared=False):
     return distances
 
 
-def _get_triplet_mask(labels):
+def _get_triplet_mask(labels, device):
     """Return a 3D mask where mask[a, p, n] is True iff the triplet (a, p, n) is valid.
     A triplet (i, j, k) is valid if:
         - i, j, k are distinct
@@ -48,7 +48,7 @@ def _get_triplet_mask(labels):
         labels: tf.int32 `Tensor` with shape [batch_size]
     """
     # Check that i, j and k are distinct
-    indices_equal = torch.eye(labels.size(0)).bool()
+    indices_equal = torch.eye(labels.size(0)).to(device).bool()
     indices_not_equal = ~indices_equal
     i_not_equal_j = indices_not_equal.unsqueeze(2)
     i_not_equal_k = indices_not_equal.unsqueeze(1)
@@ -97,7 +97,7 @@ def _get_anchor_negative_triplet_mask(labels):
 
 
 # Cell
-def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
+def batch_all_triplet_loss(labels, embeddings, margin, device, squared=False):
     """Build the triplet loss over a batch of embeddings.
 
     We generate all the valid triplets and average the loss over the positive ones.
@@ -126,7 +126,7 @@ def batch_all_triplet_loss(labels, embeddings, margin, squared=False):
 
     # Put to zero the invalid triplets
     # (where label(a) != label(p) or label(n) == label(a) or a == p)
-    mask = _get_triplet_mask(labels)
+    mask = _get_triplet_mask(labels, device)
     triplet_loss = mask.float() * triplet_loss
 
     # Remove negative losses (i.e. the easy triplets)
