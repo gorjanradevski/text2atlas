@@ -6,7 +6,6 @@ from torch import nn
 from tqdm import tqdm
 import json
 import os
-import logging
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -65,8 +64,9 @@ def train(
     optimizer = optim.AdamW(
         model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
+    best_recall = -1
     for epoch in range(epochs):
-        logging.info(f"Starting epoch {epoch + 1}...")
+        print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
@@ -96,6 +96,7 @@ def train(
         # Set model in evaluation mode
         model.train(False)
         embedded_docs = []
+        cur_recall = 0
         with torch.no_grad():
             for sentences, attn_mask, organs_indices, docs_ids in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
@@ -129,7 +130,19 @@ def train(
                             break
 
         for k, recall in recalls.items():
-            print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 1)}")
+            cur_recall += round(recall / len(embedded_docs) * 100, 1)
+            print(f"The recall at {k} is: {cur_recall}")
+
+        if cur_recall > best_recall:
+            print("======================")
+            print(
+                f"Found new best with avg recall: "
+                f"{round(cur_recall / 3, 2)} on epoch "
+                f"{epoch+1}. Saving model!!!"
+            )
+            print("======================")
+            best_recall = cur_recall
+            torch.save(model.state_dict(), save_model_path)
 
 
 def main():
