@@ -4,7 +4,7 @@ import json
 import torch
 from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from tqdm import tqdm
 import random
 from utils.constants import VOXELMAN_CENTER
@@ -84,9 +84,9 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
     def __getitem__(self, idx: int):
         tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
         organ_indices = torch.tensor(self.organ_indices[idx])
-        doc_id = self.ids[idx]
+        doc_ids = self.ids[idx]
 
-        return tokenized_sentence, organ_indices, doc_id
+        return tokenized_sentence, organ_indices, doc_ids
 
 
 def collate_pad_sentence_reg_train_batch(
@@ -106,8 +106,10 @@ def collate_pad_sentence_reg_train_batch(
     return padded_sentences, attn_mask, padded_mappings, num_organs
 
 
-def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
-    sentences, organ_indices, doc_ids = zip(*batch)
+def collate_pad_sentence_reg_test_batch(
+    batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
+):
+    sentences, organ_indices, docs_ids = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
         organ_indices, batch_first=True, padding_value=-1
@@ -115,19 +117,20 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, padded_organ_indices, doc_ids
+    return padded_sentences, attn_mask, padded_organ_indices, docs_ids
 
 
 class VoxelSentenceMappingClassDataset:
     def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
         self.json_data = json.load(open(json_path))
-        self.sentences, self.organ_indices, self.organ_names = [], [], []
+        self.sentences, self.organ_indices, self.organ_names, self.ids = [], [], [], []
         self.num_classes = num_classes
         self.tokenizer = tokenizer
         for element in tqdm(self.json_data):
             self.sentences.append(element["text"])
             self.organ_indices.append(element["organ_indices"])
             self.organ_names.append(element["organ_names"])
+            self.ids.append(element["pmid"])
 
 
 class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Dataset):
@@ -158,8 +161,9 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
+        doc_ids = self.ids[idx]
 
-        return tokenized_sentence, one_hot
+        return tokenized_sentence, one_hot, doc_ids
 
 
 class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dataset):
@@ -174,14 +178,17 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
         organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
+        doc_ids = self.ids[idx]
 
-        return tokenized_sentence, one_hot
+        return tokenized_sentence, one_hot, doc_ids
 
 
-def collate_pad_sentence_class_batch(batch: Tuple[torch.Tensor, torch.Tensor]):
-    sentences, organ_indices = zip(*batch)
+def collate_pad_sentence_class_batch(
+    batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
+):
+    sentences, organ_indices, docs_ids = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0)
+    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0), docs_ids

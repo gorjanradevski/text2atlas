@@ -55,7 +55,7 @@ def inference(
     )
     with torch.no_grad():
         evaluator.reset_counters()
-        for sentences, attn_mask, organs_indices in tqdm(test_loader):
+        for sentences, attn_mask, organs_indices, _ in tqdm(test_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=-1)

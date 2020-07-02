@@ -165,24 +165,18 @@ def train(
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
-            for sentences_normal, attn_mask_normal, organs_indices_normal, _ in tqdm(
-                val_loader
-            ):
-                sentences_normal, attn_mask_normal = (
-                    sentences_normal.to(device),
-                    attn_mask_normal.to(device),
+            for sentences, attn_mask, organs_indices, _ in tqdm(val_loader):
+                sentences, attn_mask = (
+                    sentences.to(device),
+                    attn_mask.to(device),
                 )
-                output_mappings_normal = model(
-                    input_ids=sentences_normal, attention_mask=attn_mask_normal
-                )
-                output_mappings_normal = output_mappings_normal.cpu() * center
+                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
+                output_mappings = output_mappings.cpu() * center
 
-                for output_mapping_normal, organ_indices_normal in zip(
-                    output_mappings_normal.numpy(), organs_indices_normal
+                for output_mapping, organ_indices in zip(
+                    output_mappings.numpy(), organs_indices
                 ):
-                    evaluator.update_counters(
-                        output_mapping_normal, organ_indices_normal.numpy()
-                    )
+                    evaluator.update_counters(output_mapping, organ_indices.numpy())
 
             logging.info(
                 f"The IOR on the validation set is {evaluator.get_current_ior()}"

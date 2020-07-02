@@ -108,7 +108,7 @@ def train(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, attn_mask, organ_indices in train_loader:
+            for sentences, attn_mask, organ_indices, _ in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
@@ -134,7 +134,7 @@ def train(
         evaluator.reset_current_distance()
         with torch.no_grad():
             evaluator.reset_counters()
-            for sentences, attn_mask, organs_indices in tqdm(val_loader):
+            for sentences, attn_mask, organs_indices, _ in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
                 output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 y_pred = torch.argmax(output_mappings, dim=-1)

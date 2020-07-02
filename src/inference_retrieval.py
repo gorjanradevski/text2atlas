@@ -3,8 +3,6 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
-import numpy as np
-from typing import List
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -12,19 +10,8 @@ from voxel_mapping.datasets import (
     collate_pad_sentence_reg_test_batch,
 )
 from voxel_mapping.models import RegModel
+from voxel_retrieval.embedded_doc import EmbeddedDoc
 from utils.constants import VOXELMAN_CENTER
-
-
-class EmbeddedDoc:
-    def __init__(
-        self, doc_id: int, mesh_terms_ids: List[int], doc_embedding: np.ndarray
-    ):
-        self.doc_id = doc_id
-        self.mesh_terms_ids = mesh_terms_ids
-        self.doc_embedding = doc_embedding
-
-    def docs_distance(self, other):
-        return np.linalg.norm(self.doc_embedding - other.doc_embedding, axis=-1)
 
 
 def inference(
@@ -69,17 +56,12 @@ def inference(
             if document1.doc_id == document2.doc_id:
                 continue
             cur_doc_distances.append(
-                (document2.mesh_terms_ids, document1.docs_distance(document2))
+                (document2.organ_indices, document1.docs_distance(document2))
             )
         cur_doc_distances_sorted = sorted(cur_doc_distances, key=lambda tup: tup[1])
         for k in recalls.keys():
-            mesh_terms = set()
-            for cur_doc_dist in cur_doc_distances_sorted[: int(k)]:
-                for mesh_term in cur_doc_dist[0]:
-                    mesh_terms.add(mesh_term)
-
-            for mesh_term in mesh_terms:
-                if mesh_term in document1.mesh_terms_ids:
+            for cur_doc in cur_doc_distances_sorted[: int(k)]:
+                if (cur_doc[0] == document1.organ_indices).all():
                     recalls[k] += 1
                     break
 
