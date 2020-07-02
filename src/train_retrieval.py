@@ -137,7 +137,7 @@ def train(
 
         if total_recall > best_recall:
             print("===================================")
-            print(f"Found new best with avg recall on epoch {epoch+1}. Saving model!!!")
+            print(f"Found new best on epoch {epoch+1}. Saving model!!!")
             print("===================================")
             best_recall = total_recall
             torch.save(model.state_dict(), save_model_path)
@@ -230,7 +230,7 @@ def parse_args():
         "--weight_decay", type=float, default=0.01, help="The (default) weight decay."
     )
     parser.add_argument(
-        "--margin", type=float, default=10.0, help="The (default) margin."
+        "--margin", type=float, default=2.0, help="The (default) margin."
     )
 
     return parser.parse_args()
