@@ -1,7 +1,7 @@
 import argparse
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 import json
@@ -24,6 +24,7 @@ def train(
     voxelman_images_path: str,
     train_json_path: str,
     val_json_path: str,
+    project_size: int,
     epochs: int,
     batch_size: int,
     bert_name: str,
@@ -40,15 +41,11 @@ def train(
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    train_dataset = Subset(
-        VoxelSentenceMappingTrainClassDataset(
-            train_json_path, tokenizer, num_classes, masking=False
-        ),
-        [0, 1, 2, 3, 4],
+    train_dataset = VoxelSentenceMappingTrainClassDataset(
+        train_json_path, tokenizer, num_classes, masking=False
     )
-    val_dataset = Subset(
-        VoxelSentenceMappingTestClassDataset(val_json_path, tokenizer, num_classes),
-        [0, 1, 2],
+    val_dataset = VoxelSentenceMappingTestClassDataset(
+        val_json_path, tokenizer, num_classes
     )
     train_loader = DataLoader(
         train_dataset,
@@ -62,7 +59,7 @@ def train(
     config = BertConfig.from_pretrained(bert_name)
     # Prepare model
     model = nn.DataParallel(
-        SiameseModel(bert_name, config, final_project_size=num_classes)
+        SiameseModel(bert_name, config, final_project_size=project_size)
     ).to(device)
     # noinspection PyUnresolvedReferences
     optimizer = optim.AdamW(
@@ -124,9 +121,10 @@ def train(
             cur_doc_distances_sorted = sorted(cur_doc_distances, key=lambda tup: tup[1])
             for k in recalls.keys():
                 for cur_doc in cur_doc_distances_sorted[: int(k)]:
-                    if (cur_doc[0] == document1.organ_indices).all():
-                        recalls[k] += 1
-                        break
+                    if cur_doc[0].shape == document1.organ_indices.shape:
+                        if (cur_doc[0] == document1.organ_indices).all():
+                            recalls[k] += 1
+                            break
 
         for k, recall in recalls.items():
             print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 1)}")
@@ -141,6 +139,7 @@ def main():
         args.voxelman_images_path,
         args.train_json_path,
         args.val_json_path,
+        args.project_size,
         args.epochs,
         args.batch_size,
         args.bert_name,
@@ -202,6 +201,9 @@ def parse_args():
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
+    )
+    parser.add_argument(
+        "--project_size", type=int, default=3, help="The projection size."
     )
     parser.add_argument(
         "--bert_name",
