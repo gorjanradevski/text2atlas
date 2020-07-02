@@ -5,6 +5,7 @@ import json
 import os
 from tqdm import tqdm
 import numpy as np
+import random
 
 from voxel_mapping.datasets import VoxelSentenceMappingTestRegDataset
 from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
@@ -12,11 +13,14 @@ from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
 
 def naive_evaluation(
     naive_type: str,
+    train_json_path: str,
     test_json_path: str,
     organs_dir_path: str,
     voxelman_images_path: str,
 ):
+    print(f"Using {naive_type} baseline!")
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+    train_json_dataset = json.load(open(train_json_path))
     test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
     test_loader = DataLoader(test_dataset, batch_size=1)
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
@@ -26,8 +30,25 @@ def naive_evaluation(
     evaluator = InferenceEvaluatorPerOrgan(
         ind2organ, organ2label, organ2voxels, voxelman_images_path, len(test_dataset),
     )
-    pred = np.array([0.0, 0.0, 0.0])
+    # Compute frequencies
+    print("Aggregating from training set...")
+    frequencies = np.zeros(len(ind2organ))
+    for sample in tqdm(train_json_dataset):
+        indices = sample["organ_indices"]
+        for index in indices:
+            frequencies[index] += 1
+    most_freq_organ = ind2organ[str(frequencies.argmax())]
+    print("Evaluating...")
     for _, organs_indices, _ in tqdm(test_loader):
+        if naive_type == "center":
+            pred = np.array([0.0, 0.0, 0.0])
+        elif naive_type == "frequency":
+            pred = np.array(random.sample(organ2voxels[most_freq_organ], 1))[0]
+        elif naive_type == "random":
+            random_organ = random.sample(list(organ2voxels.keys()), 1)[0]
+            pred = np.array(random.sample(organ2voxels[random_organ], 1))[0]
+        else:
+            raise ValueError(f"{naive_type} doesn't exist!")
         evaluator.update_counters(pred, organs_indices[0].numpy())
 
     print(
@@ -60,6 +81,12 @@ def parse_args():
         help="Path to the voxelman images",
     )
     parser.add_argument(
+        "--train_json_path",
+        type=str,
+        default="data/mesh_dataset_train.json",
+        help="Path to the test set",
+    )
+    parser.add_argument(
         "--test_json_path",
         type=str,
         default="data/mesh_dataset_test.json",
@@ -78,6 +105,7 @@ def main():
     args = parse_args()
     naive_evaluation(
         args.naive_type,
+        args.train_json_path,
         args.test_json_path,
         args.organs_dir_path,
         args.voxelman_images_path,
