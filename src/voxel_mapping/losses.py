@@ -47,4 +47,5 @@ class BaselineRegLoss(nn.Module):
         self.mse = nn.MSELoss()
 
     def forward(self, predictions: torch.Tensor, anchors: torch.Tensor) -> torch.Tensor:
-        return self.mse(predictions, anchors.view(3, -1, 3).mean(1))
+        batch_size = predictions.size()[0]
+        return self.mse(predictions, anchors.view(batch_size, -1, 3).mean(1))

@@ -115,7 +115,7 @@ def collate_pad_sentence_reg_test_batch(batch: Tuple[torch.Tensor, torch.Tensor]
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return (padded_sentences, attn_mask, padded_organ_indices, doc_ids)
+    return padded_sentences, attn_mask, padded_organ_indices, doc_ids
 
 
 class VoxelSentenceMappingClassDataset:
