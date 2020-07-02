@@ -96,7 +96,7 @@ def train(
         # Set model in evaluation mode
         model.train(False)
         embedded_docs = []
-        cur_recall = 0
+        total_recall = 0
         with torch.no_grad():
             for sentences, attn_mask, organs_indices, docs_ids in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
@@ -130,18 +130,16 @@ def train(
                             break
 
         for k, recall in recalls.items():
-            cur_recall += round(recall / len(embedded_docs) * 100, 1)
-            print(f"The recall at {k} is: {cur_recall}")
-
-        if cur_recall > best_recall:
-            print("======================")
+            total_recall += round(recall / len(embedded_docs) * 100, 1)
             print(
-                f"Found new best with avg recall: "
-                f"{round(cur_recall / 3, 2)} on epoch "
-                f"{epoch+1}. Saving model!!!"
+                f"The recall at {k} is: {round(recall / len(embedded_docs) * 100, 1)}"
             )
-            print("======================")
-            best_recall = cur_recall
+
+        if total_recall > best_recall:
+            print("===================================")
+            print(f"Found new best with avg recall on epoch {epoch+1}. Saving model!!!")
+            print("===================================")
+            best_recall = total_recall
             torch.save(model.state_dict(), save_model_path)
 
 
