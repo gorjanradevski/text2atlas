@@ -61,9 +61,10 @@ def inference(
         cur_doc_distances_sorted = sorted(cur_doc_distances, key=lambda tup: tup[1])
         for k in recalls.keys():
             for cur_doc in cur_doc_distances_sorted[: int(k)]:
-                if (cur_doc[0] == document1.organ_indices).all():
-                    recalls[k] += 1
-                    break
+                if cur_doc[0].shape == document1.organ_indices.shape:
+                    if (cur_doc[0] == document1.organ_indices).all():
+                        recalls[k] += 1
+                        break
 
     for k, recall in recalls.items():
         print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 1)}")
