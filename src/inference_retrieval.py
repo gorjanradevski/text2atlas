@@ -36,7 +36,10 @@ def inference(
     model = nn.DataParallel(
         model_factory(model_name, bert_name, config, project_size)
     ).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    if checkpoint_path:
+        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    else:
+        print(f"Not loading from checkpoint! Inference from {bert_name}")
     model.train(False)
     # Get voxelman center
     center = torch.from_numpy(VOXELMAN_CENTER)
@@ -44,9 +47,10 @@ def inference(
     with torch.no_grad():
         for sentences, attn_mask, organs_indices, docs_ids in tqdm(test_loader):
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = (
-                model(input_ids=sentences, attention_mask=attn_mask).cpu() * center
-            )
+            output_mappings = model(input_ids=sentences, attention_mask=attn_mask).cpu()
+            if model_name == "reg_model":
+                # The reg_model normalizes the embeddings between -1 and 1
+                output_mappings *= center
             for output_mapping, organ_indices, doc_id in zip(
                 output_mappings, organs_indices, docs_ids
             ):
@@ -107,7 +111,7 @@ def parse_args():
         "--model_name", type=str, default="reg_model", help="The model name.",
     )
     parser.add_argument(
-        "--batch_size", type=int, default=128, help="The size of the batch."
+        "--batch_size", type=int, default=64, help="The size of the batch."
     )
     parser.add_argument(
         "--bert_name",

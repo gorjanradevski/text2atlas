@@ -96,7 +96,6 @@ def train(
         # Set model in evaluation mode
         model.train(False)
         embedded_docs = []
-        total_recall = 0
         with torch.no_grad():
             for sentences, attn_mask, organs_indices, docs_ids in tqdm(val_loader):
                 sentences, attn_mask = sentences.to(device), attn_mask.to(device)
@@ -115,6 +114,7 @@ def train(
                     )
 
         recalls = {"1": 0, "5": 0, "10": 0}
+        total_recall = 0
         for document1 in tqdm(embedded_docs):
             cur_doc_distances = []
             for document2 in embedded_docs:

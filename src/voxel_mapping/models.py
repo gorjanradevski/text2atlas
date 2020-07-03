@@ -58,12 +58,17 @@ def model_factory(
     model_name: str, bert_name: str, config: BertConfig, final_project_size: int
 ):
     if model_name == "reg_model":
+        print(f"Using {model_name}!")
         return RegModel(bert_name, config, final_project_size)
     elif model_name == "class_model":
+        print(f"Using {model_name}!")
         return ClassModel(bert_name, config, final_project_size)
     elif model_name == "siamese_model":
+        print(f"Using {model_name}!")
         return SiameseModel(bert_name, config, final_project_size)
-    elif model_name == "pretrained_bert":
+    elif model_name == "pretrained_model":
+        print(f"Using {model_name}!")
         return OnlyPretrainedBert(bert_name)
+
     else:
         raise ValueError(f"Invalid {model_name}!")
