@@ -107,7 +107,7 @@ def train(
                     output_mappings, organs_indices, docs_ids
                 ):
                     # Get only non -1 indices
-                    organ_indices = organ_indices[: (organ_indices > 0).sum()]
+                    organ_indices = organ_indices[: (organ_indices >= 0).sum()]
                     embedded_docs.append(
                         EmbeddedDoc(
                             doc_id, organ_indices.numpy(), output_mapping.numpy()
