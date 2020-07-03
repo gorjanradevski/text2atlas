@@ -1,6 +1,6 @@
 import argparse
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
@@ -25,9 +25,7 @@ def inference(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    test_dataset = Subset(
-        VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer), list(range(32))
-    )
+    test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -52,6 +50,8 @@ def inference(
             for output_mapping, organ_indices, doc_id in zip(
                 output_mappings, organs_indices, docs_ids
             ):
+                # Get only non -1 indices
+                organ_indices = organ_indices[: (organ_indices > 0).sum()]
                 embedded_docs.append(
                     EmbeddedDoc(doc_id, organ_indices.numpy(), output_mapping.numpy())
                 )
