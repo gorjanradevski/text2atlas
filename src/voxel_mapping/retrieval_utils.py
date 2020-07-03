@@ -1,5 +1,5 @@
-# https://github.com/NegatioN/OnlineMiningTripletLoss/blob/master/online_triplet_loss/losses.py
 import torch
+import numpy as np
 
 
 def _pairwise_distances(embeddings, squared=False):
@@ -96,7 +96,7 @@ def _get_anchor_negative_triplet_mask(labels):
     return ~(labels.unsqueeze(0) == labels.unsqueeze(1)).all(-1)
 
 
-# Cell
+# https://github.com/NegatioN/OnlineMiningTripletLoss/blob/master/online_triplet_loss/losses.py
 def batch_all_triplet_loss(labels, embeddings, margin, device, squared=False):
     """Build the triplet loss over a batch of embeddings.
 
@@ -145,3 +145,15 @@ def batch_all_triplet_loss(labels, embeddings, margin, device, squared=False):
     triplet_loss = triplet_loss.sum() / (num_positive_triplets + 1e-16)
 
     return triplet_loss, fraction_positive_triplets
+
+
+class EmbeddedDoc:
+    def __init__(
+        self, doc_id: int, organ_indices: np.ndarray, doc_embedding: np.ndarray
+    ):
+        self.doc_id = doc_id
+        self.organ_indices = organ_indices
+        self.doc_embedding = doc_embedding
+
+    def docs_distance(self, other):
+        return np.linalg.norm(self.doc_embedding - other.doc_embedding, axis=-1)

@@ -1,6 +1,6 @@
 import argparse
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
@@ -9,18 +9,25 @@ from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
     collate_pad_sentence_reg_test_batch,
 )
-from voxel_mapping.models import RegModel
-from voxel_retrieval.embedded_doc import EmbeddedDoc
+from voxel_mapping.models import model_factory
+from voxel_mapping.retrieval_utils import EmbeddedDoc
 from utils.constants import VOXELMAN_CENTER
 
 
 def inference(
-    test_json_path: str, batch_size: int, bert_name: str, checkpoint_path: str,
+    test_json_path: str,
+    model_name: str,
+    batch_size: int,
+    bert_name: str,
+    project_size: int,
+    checkpoint_path: str,
 ):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
+    test_dataset = Subset(
+        VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer), list(range(32))
+    )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -28,9 +35,9 @@ def inference(
     )
     # Create and load model, then set it to eval mode
     config = BertConfig.from_pretrained(bert_name)
-    model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
-        device
-    )
+    model = nn.DataParallel(
+        model_factory(model_name, bert_name, config, project_size)
+    ).to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.train(False)
     # Get voxelman center
@@ -75,7 +82,12 @@ def main():
     # imported as a module.
     args = parse_args()
     inference(
-        args.test_json_path, args.batch_size, args.bert_name, args.checkpoint_path,
+        args.test_json_path,
+        args.model_name,
+        args.batch_size,
+        args.bert_name,
+        args.project_size,
+        args.checkpoint_path,
     )
 
 
@@ -90,6 +102,9 @@ def parse_args():
         type=str,
         default="data/dataset_text_atlas_mapping_test_fixd.json",
         help="Path to the test set",
+    )
+    parser.add_argument(
+        "--model_name", type=str, default="reg_model", help="The model name.",
     )
     parser.add_argument(
         "--batch_size", type=int, default=128, help="The size of the batch."
@@ -107,6 +122,9 @@ def parse_args():
         type=str,
         default=None,
         help="Path to a pretrained checkpoint.",
+    )
+    parser.add_argument(
+        "--project_size", type=int, default=3, help="The projection size."
     )
 
     return parser.parse_args()

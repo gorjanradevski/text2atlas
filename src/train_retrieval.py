@@ -13,9 +13,9 @@ from voxel_mapping.datasets import (
     VoxelSentenceMappingTestClassDataset,
     collate_pad_sentence_class_batch,
 )
-from voxel_retrieval.models import SiameseModel
-from voxel_retrieval.losses import batch_all_triplet_loss
-from voxel_retrieval.embedded_doc import EmbeddedDoc
+from voxel_mapping.models import SiameseModel
+from voxel_mapping.retrieval_utils import batch_all_triplet_loss
+from voxel_mapping.retrieval_utils import EmbeddedDoc
 
 
 def train(
