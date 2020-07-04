@@ -160,22 +160,26 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
         )
 
         self.organ_names = list(self.organ2label.keys())
-        self.organ_totals = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
-        self.organ_corrects = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
+        self.total_organs = len(self.ind2organ)
+        self.organ_totals = dict(zip(self.organ_names, np.zeros(self.total_organs)))
+        self.organ_corrects = dict(
+            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
+        )
         self.organ_distances = dict(
-            zip(self.organ_names, np.zeros(len(self.ind2organ)))
+            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
         )
 
     def reset_counters(self):
-        super().reset_counters()
-        self.organ_totals = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
-        self.organ_corrects = dict(zip(self.organ_names, np.zeros(len(self.ind2organ))))
-        self.organ_distances = dict(
-            zip(self.organ_names, np.zeros(len(self.ind2organ)))
+        self.organ_totals = dict(zip(self.organ_names, np.zeros(self.total_organs)))
+        self.organ_corrects = dict(
+            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
         )
+        self.organ_distances = dict(
+            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
+        )
+        super().reset_counters()
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
-        super().update_counters(output_mapping, organ_indices)
         for organ_index in organ_indices:
             if organ_index < 0:
                 continue
@@ -183,15 +187,19 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
             sample_distance = self.voxels_distance(
                 output_mapping, np.array([organ_index])
             )
-            self.organ_distances[self.ind2organ[str(organ_index)]] += sample_distance
-            self.organ_corrects[self.ind2organ[str(organ_index)]] += (
+            self.organ_distances[self.ind2organ[str(organ_index)]][
+                self.index
+            ] += sample_distance
+            self.organ_corrects[self.ind2organ[str(organ_index)]][self.index] += (
                 1 if sample_distance < 10.0 else 0
             )
+        super().update_counters(output_mapping, organ_indices)
 
     def get_current_ior_for_organ(self, organ):
         if self.organ_totals[organ]:
             return np.round(
-                self.organ_corrects[organ] / self.organ_totals[organ] * 100, decimals=1,
+                np.sum(self.organ_corrects[organ]) / self.organ_totals[organ] * 100,
+                decimals=1,
             )
         else:
             return -1
@@ -199,7 +207,54 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
     def get_current_distance_for_organ(self, organ):
         if self.organ_totals[organ]:
             return np.round(
-                self.organ_distances[organ] / self.organ_totals[organ] / 10, decimals=1,
+                np.sum(self.organ_distances[organ]) / self.organ_totals[organ] / 10,
+                decimals=1,
             )
         else:
             return -1
+
+    def get_current_miss_distance_for_organ(self, organ):
+        if self.organ_totals[organ]:
+            return np.round(
+                (
+                    np.sum(self.organ_distances[organ])
+                    / (np.count_nonzero(self.distances) + 1e-15)
+                )
+                / 10,
+                decimals=1,
+            )
+        else:
+            return -1
+
+    def get_ior_error_bar_for_organ(self, organ):
+        if self.organ_totals[organ]:
+            return np.round(
+                np.std(self.organ_corrects[organ], ddof=1)
+                / np.sqrt(self.organ_totals[organ])
+                * 100,
+                decimals=1,
+            )
+        else:
+            return -1
+
+    def get_distance_error_bar_for_organ(self, organ):
+        if self.organ_totals[organ]:
+            return np.round(
+                np.std(self.organ_distances[organ], ddof=1)
+                / np.sqrt(self.organ_totals[organ])
+                / 10,
+                decimals=1,
+            )
+        else:
+            return -1
+
+    def get_miss_distance_error_bar_for_organ(self, organ):
+        return np.round(
+            np.std(
+                self.organ_distances[organ][np.nonzero(self.organ_distances[organ])],
+                ddof=1,
+            )
+            / np.sqrt(np.count_nonzero(self.organ_distances[organ]) + 1e-15)
+            / 10,
+            decimals=1,
+        )

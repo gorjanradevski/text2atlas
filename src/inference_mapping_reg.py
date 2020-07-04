@@ -78,10 +78,19 @@ def inference(
         for organ_name in evaluator.organ_names:
             if evaluator.get_current_ior_for_organ(organ_name) > -1:
                 print(
-                    f"The avg IOR for {organ_name} is: {evaluator.get_current_ior_for_organ(organ_name)}"
+                    f"The avg IOR for {organ_name} is: "
+                    f"{evaluator.get_current_ior_for_organ(organ_name)} +/- "
+                    f"{evaluator.get_ior_error_bar_for_organ(organ_name)}"
                 )
                 print(
-                    f"The avg NVD for {organ_name} is: {evaluator.get_current_distance_for_organ(organ_name)}"
+                    f"The avg NVD {organ_name} is: "
+                    f"{evaluator.get_current_distance_for_organ(organ_name)} +/- "
+                    f"{evaluator.get_distance_error_bar_for_organ(organ_name)}"
+                )
+                print(
+                    f"The avg NVD-O {organ_name} is: "
+                    f"{evaluator.get_current_miss_distance_for_organ(organ_name)} +/- "
+                    f"{evaluator.get_miss_distance_error_bar_for_organ(organ_name)}"
                 )
                 print("============================================")
 
