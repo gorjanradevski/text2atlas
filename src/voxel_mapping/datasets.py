@@ -198,7 +198,7 @@ def collate_pad_sentence_class_batch(
     return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0), docs_ids
 
 
-def truncate_sentence(tokenized_sentence: List[int], max_len: int):
+def truncate_sentence(tokenized_sentence: List[int], max_len: int = 512):
     if len(tokenized_sentence) > max_len:
         tokenized_sentence = tokenized_sentence[: max_len - 1] + tokenized_sentence[-1:]
     return torch.tensor(tokenized_sentence)

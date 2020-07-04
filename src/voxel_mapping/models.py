@@ -2,7 +2,6 @@ from transformers import BertModel, BertConfig
 from torch import nn
 import torch
 
-# https://huggingface.co/emilyalsentzer/Bio_ClinicalBERT
 # https://huggingface.co/allenai/scibert_scivocab_uncased
 # https://huggingface.co/monologg/biobert_v1.1_pubmed
 # https://huggingface.co/google

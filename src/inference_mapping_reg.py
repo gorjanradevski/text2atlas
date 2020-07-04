@@ -131,9 +131,7 @@ def parse_args():
         "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
-        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
-        "google/bert_uncased_L-4_H-512_A-8]",
+        help="The pre-trained Bert model.",
     )
     parser.add_argument(
         "--checkpoint_path",
