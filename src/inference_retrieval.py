@@ -36,6 +36,10 @@ def inference(
     model = nn.DataParallel(
         model_factory(model_name, bert_name, config, project_size)
     ).to(device)
+    assert (
+        model.module.bert.embeddings.word_embeddings.num_embeddings
+        == tokenizer.vocab_size
+    )
     if checkpoint_path:
         model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     else:
@@ -117,9 +121,7 @@ def parse_args():
         "--bert_name",
         type=str,
         default="bert-base-uncased",
-        help="Should be one of [bert-base-uncased, allenai/scibert_scivocab_uncased,"
-        "monologg/biobert_v1.1_pubmed, emilyalsentzer/Bio_ClinicalBERT,"
-        "google/bert_uncased_L-4_H-512_A-8]",
+        help="The pre-trained Bert model.",
     )
     parser.add_argument(
         "--checkpoint_path",

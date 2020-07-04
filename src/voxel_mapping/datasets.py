@@ -55,7 +55,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
                     for word in word_tokenize(self.sentences[idx])
                 ]
             )
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(sentence))
+        tokenized_sentence = truncate_sentence(self.tokenizer.encode(sentence))
         # Obtain mapping
         mapping = (
             torch.tensor(
@@ -82,7 +82,9 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
+        tokenized_sentence = truncate_sentence(
+            self.tokenizer.encode(self.sentences[idx])
+        )
         organ_indices = torch.tensor(self.organ_indices[idx])
         doc_ids = self.ids[idx]
 
@@ -157,7 +159,7 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
                     for word in word_tokenize(self.sentences[idx])
                 ]
             )
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(sentence))
+        tokenized_sentence = truncate_sentence(self.tokenizer.encode(sentence))
         organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
@@ -174,7 +176,9 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
         return len(self.sentences)
 
     def __getitem__(self, idx: int):
-        tokenized_sentence = torch.tensor(self.tokenizer.encode(self.sentences[idx]))
+        tokenized_sentence = truncate_sentence(
+            self.tokenizer.encode(self.sentences[idx])
+        )
         organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
@@ -192,3 +196,9 @@ def collate_pad_sentence_class_batch(
     attn_mask[torch.where(attn_mask > 0)] = 1
 
     return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0), docs_ids
+
+
+def truncate_sentence(tokenized_sentence: List[int], max_len: int):
+    if len(tokenized_sentence) > max_len:
+        tokenized_sentence = tokenized_sentence[: max_len - 1] + tokenized_sentence[-1:]
+    return torch.tensor(tokenized_sentence)

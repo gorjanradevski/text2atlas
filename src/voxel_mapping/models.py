@@ -30,28 +30,43 @@ class ClassModel(nn.Module):
         return self.projector(hidden_states[0][:, 0, :])
 
 
+class L2Normalize(nn.Module):
+    def __init__(self):
+        super(L2Normalize, self).__init__()
+
+    def forward(self, x):
+        norm = torch.pow(x, 2).sum(dim=1, keepdim=True).sqrt()
+        normalized = torch.div(x, norm)
+
+        return normalized
+
+
 class SiameseModel(nn.Module):
     def __init__(self, bert_name: str, config: BertConfig, final_project_size: int):
         super(SiameseModel, self).__init__()
         self.bert = BertModel.from_pretrained(bert_name)
         self.projector = nn.Linear(config.hidden_size, final_project_size)
+        self.l2_normalizer = L2Normalize()
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask)
-        return self.projector(hidden_states[0][:, 0, :])
+        return self.l2_normalizer(self.projector(hidden_states[0][:, 0, :]))
 
 
 class OnlyPretrainedBert(nn.Module):
     def __init__(self, bert_name: str):
         super(OnlyPretrainedBert, self).__init__()
         self.bert = BertModel.from_pretrained(bert_name)
+        self.l2_normalizer = L2Normalize()
 
     def forward(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         hidden_states = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         max_pooled = torch.max(hidden_states[0], dim=1)[0]
         mean_pooled = torch.mean(hidden_states[0], dim=1)
         last_state = hidden_states[0][:, 0, :]
-        return torch.cat([last_state, max_pooled, mean_pooled], dim=1)
+        return self.l2_normalizer(
+            torch.cat([last_state, max_pooled, mean_pooled], dim=1)
+        )
 
 
 def model_factory(
