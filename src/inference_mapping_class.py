@@ -6,6 +6,7 @@ import json
 import numpy as np
 from torch import nn
 import os
+import random
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -30,7 +31,6 @@ def inference(
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
     organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
-    organ2center = json.load(open(os.path.join(organs_dir_path, "organ2center.json")))
     # Load organ to indices to obtain the number of classes
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     tokenizer = BertTokenizer.from_pretrained(bert_name)
@@ -59,7 +59,10 @@ def inference(
             sentences, attn_mask = sentences.to(device), attn_mask.to(device)
             output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=-1)
-            pred_centers = [organ2center[ind2organ[str(ind.item())]] for ind in y_pred]
+            pred_centers = [
+                random.sample(organ2voxels[ind2organ[str(ind.item())]], 1)[0]
+                for ind in y_pred
+            ]
             for pred_center, organ_indices in zip(pred_centers, organs_indices):
                 evaluator.update_counters(
                     np.array(pred_center), np.where(organ_indices == 1)[0]
