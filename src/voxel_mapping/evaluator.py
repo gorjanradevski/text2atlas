@@ -140,7 +140,7 @@ class TrainingEvaluator(Evaluator):
         self.current_distance += self.get_current_distance()
 
     def is_best_distance(self):
-        return self.current_distance < self.best_distance
+        return self.current_distance <= self.best_distance
 
     def update_best_distance(self):
         self.best_distance = self.current_distance

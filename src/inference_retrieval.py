@@ -1,6 +1,6 @@
 import argparse
 import torch
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer

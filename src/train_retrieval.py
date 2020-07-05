@@ -137,7 +137,7 @@ def train(
                 f"The recall at {k} is: {round(recall / len(embedded_docs) * 100, 1)}"
             )
 
-        if total_recall > best_recall:
+        if total_recall >= best_recall:
             print("===================================")
             print(f"Found new best on epoch {epoch+1}. Saving model!!!")
             print("===================================")

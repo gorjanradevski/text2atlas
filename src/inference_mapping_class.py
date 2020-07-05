@@ -31,8 +31,13 @@ def inference(
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
     organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
+
+    ind2organ_merged = json.load(open("data/data_organs_merged_duodenum_small_intestine/ind2organ.json"))
+    organ2voxels_merged = json.load(
+        open("data/data_organs_merged_duodenum_small_intestine/organ2voxels.json")
+    )
     # Load organ to indices to obtain the number of classes
-    num_classes = max([int(index) for index in ind2organ.keys()]) + 1
+    num_classes = max([int(index) for index in ind2organ_merged.keys()]) + 1
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
         test_json_path, tokenizer, num_classes
@@ -60,7 +65,9 @@ def inference(
             output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
             y_pred = torch.argmax(output_mappings, dim=-1)
             pred_centers = [
-                random.sample(organ2voxels[ind2organ[str(ind.item())]], 1)[0]
+                random.sample(
+                    organ2voxels_merged[ind2organ_merged[str(ind.item())]], 1
+                )[0]
                 for ind in y_pred
             ]
             for pred_center, organ_indices in zip(pred_centers, organs_indices):
