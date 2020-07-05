@@ -1,6 +1,6 @@
 import argparse
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
@@ -65,6 +65,7 @@ def inference(
                 )
 
     recalls = {"1": 0, "5": 0, "10": 0}
+    precisions = {"1": 0, "5": 0, "10": 0}
     for document1 in tqdm(embedded_docs):
         cur_doc_distances = []
         for document2 in embedded_docs:
@@ -80,9 +81,22 @@ def inference(
                     if (cur_doc[0] == document1.organ_indices).all():
                         recalls[k] += 1
                         break
+        for k in precisions.keys():
+            for cur_doc in cur_doc_distances_sorted[: int(k)]:
+                cur_precision = 0
+                if cur_doc[0].shape == document1.organ_indices.shape:
+                    if (cur_doc[0] == document1.organ_indices).all():
+                        cur_precision += 1
+            cur_precision /= int(k)
+            precisions[k] += cur_precision
 
     for k, recall in recalls.items():
         print(f"The recall at {k} is: {round(recall/len(embedded_docs) * 100, 1)}")
+
+    for k, precision in precisions.items():
+        print(
+            f"The precision at {k} is: {round(precision/len(embedded_docs) * 100, 1)}"
+        )
 
 
 def main():
