@@ -212,7 +212,7 @@ def parse_args():
         "--batch_size", type=int, default=16, help="The size of the batch."
     )
     parser.add_argument(
-        "--learning_rate", type=float, default=5e-5, help="The learning rate."
+        "--learning_rate", type=float, default=1e-5, help="The learning rate."
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."

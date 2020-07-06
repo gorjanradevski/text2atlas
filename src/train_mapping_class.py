@@ -256,7 +256,7 @@ def parse_args():
     )
     parser.add_argument("--masking", action="store_true", help="Whether to use masking")
     parser.add_argument(
-        "--learning_rate", type=float, default=2e-5, help="The learning rate."
+        "--learning_rate", type=float, default=1e-5, help="The learning rate."
     )
     parser.add_argument(
         "--clip_val", type=float, default=2.0, help="The clipping threshold."
