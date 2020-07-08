@@ -82,8 +82,8 @@ def inference(
                         recalls[k] += 1
                         break
         for k in precisions.keys():
+            cur_precision = 0
             for cur_doc in cur_doc_distances_sorted[: int(k)]:
-                cur_precision = 0
                 if cur_doc[0].shape == document1.organ_indices.shape:
                     if (cur_doc[0] == document1.organ_indices).all():
                         cur_precision += 1

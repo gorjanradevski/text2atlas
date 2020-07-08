@@ -36,6 +36,7 @@ def train(
     learning_rate: float,
     weight_decay: float,
     masking: bool,
+    use_occurences: bool,
     clip_val: float,
 ):
     # Set up logging
@@ -52,9 +53,10 @@ def train(
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    logging.warning(f"The masking is set to: ---{masking}---")
+    logging.warning(f"Usage of masking is set to: ---{masking}---")
+    logging.warning(f"Usage of occurences is set to: ---{use_occurences}---")
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, num_classes, masking
+        train_json_path, tokenizer, num_classes, masking, use_occurences
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
         val_json_path, tokenizer, num_classes
@@ -205,6 +207,7 @@ def main():
         args.learning_rate,
         args.weight_decay,
         args.masking,
+        args.use_occurences,
         args.clip_val,
     )
 
@@ -255,6 +258,11 @@ def parse_args():
         "--batch_size", type=int, default=128, help="The size of the batch."
     )
     parser.add_argument("--masking", action="store_true", help="Whether to use masking")
+    parser.add_argument(
+        "--use_occurences",
+        action="store_true",
+        help="Whether to use organ occurences as training.",
+    )
     parser.add_argument(
         "--learning_rate", type=float, default=1e-5, help="The learning rate."
     )
