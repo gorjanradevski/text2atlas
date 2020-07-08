@@ -15,7 +15,8 @@ from transformers import BertConfig, BertTokenizer
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTrainClassDataset,
     VoxelSentenceMappingTestClassDataset,
-    collate_pad_sentence_class_batch,
+    collate_pad_sentence_train_class_batch,
+    collate_pad_sentence_test_class_batch,
 )
 from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import TrainingEvaluator
@@ -65,10 +66,12 @@ def train(
         train_dataset,
         batch_size=batch_size,
         shuffle=True,
-        collate_fn=collate_pad_sentence_class_batch,
+        collate_fn=collate_pad_sentence_train_class_batch,
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=batch_size, collate_fn=collate_pad_sentence_class_batch,
+        val_dataset,
+        batch_size=batch_size,
+        collate_fn=collate_pad_sentence_test_class_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
     # Prepare model
@@ -110,7 +113,7 @@ def train(
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, attn_mask, organ_indices, _ in train_loader:
+            for sentences, attn_mask, organ_indices in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward

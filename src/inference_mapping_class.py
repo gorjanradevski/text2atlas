@@ -11,7 +11,7 @@ from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestClassDataset,
-    collate_pad_sentence_class_batch,
+    collate_pad_sentence_test_class_batch,
 )
 from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
@@ -40,7 +40,7 @@ def inference(
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
-        collate_fn=collate_pad_sentence_class_batch,
+        collate_fn=collate_pad_sentence_test_class_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
     model = nn.DataParallel(

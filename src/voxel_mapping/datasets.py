@@ -173,9 +173,8 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         organ_indices = torch.tensor(self.organ_indices[idx])
         one_hot = torch.zeros(self.num_classes)
         one_hot[organ_indices] = 1
-        doc_ids = self.ids[idx]
 
-        return tokenized_sentence, one_hot, doc_ids
+        return tokenized_sentence, one_hot
 
 
 class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dataset):
@@ -201,7 +200,18 @@ class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dat
         return tokenized_sentence, one_hot, doc_ids
 
 
-def collate_pad_sentence_class_batch(
+def collate_pad_sentence_class_train_batch(
+    batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
+):
+    sentences, organ_indices = zip(*batch)
+    padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
+    attn_mask = padded_sentences.clone()
+    attn_mask[torch.where(attn_mask > 0)] = 1
+
+    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0)
+
+
+def collate_pad_sentence_class_test_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
 ):
     sentences, organ_indices, docs_ids = zip(*batch)
