@@ -30,7 +30,7 @@ def train(
     num_anchors: str,
     loss_type: str,
     masking: bool,
-    use_occurences: bool,
+    use_occurrences: bool,
     epochs: int,
     batch_size: int,
     bert_name: str,
@@ -59,7 +59,7 @@ def train(
     # Prepare datasets
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     logging.warning(f"Usage of masking is set to: ---{masking}---")
-    logging.warning(f"Usage of occurences is set to: ---{use_occurences}---")
+    logging.warning(f"Usage of occurences is set to: ---{use_occurrences}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
         train_json_path,
         tokenizer,
@@ -67,7 +67,7 @@ def train(
         organ2voxels,
         num_anchors=num_anchors,
         masking=masking,
-        use_occurences=use_occurences,
+        use_occurences=use_occurrences,
     )
     val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer)
     train_loader = DataLoader(
@@ -232,7 +232,7 @@ def main():
         args.num_anchors,
         args.loss_type,
         args.masking,
-        args.use_occurences,
+        args.use_occurrences,
         args.epochs,
         args.batch_size,
         args.bert_name,
@@ -325,7 +325,7 @@ def parse_args():
     )
     parser.add_argument("--masking", action="store_true", help="Whether to use masking")
     parser.add_argument(
-        "--use_occurences",
+        "--use_occurrences",
         action="store_true",
         help="Whether to use organ occurences as training.",
     )
