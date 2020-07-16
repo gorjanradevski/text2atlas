@@ -55,6 +55,7 @@ def inference(
         organ2voxels,
         voxelman_images_path,
         test_dataset.organ2count,
+        len(test_dataset),
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
     with torch.no_grad():

@@ -154,15 +154,12 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
         organ2sum_vox: str,
         voxelman_images_path: str,
         organ2count: Dict[str, int],
+        total_samples: int,
     ):
-        self.organ2count = organ2count
         super().__init__(
-            ind2organ,
-            organ2label,
-            organ2sum_vox,
-            voxelman_images_path,
-            sum(self.organ2count.values()),
+            ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples
         )
+        self.organ2count = organ2count
         self.organ_totals = {organ_name: 0 for organ_name in self.organ2count.keys()}
         self.organ_corrects = {
             organ_name: np.zeros((organ_count,))
@@ -199,7 +196,7 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
             self.organ_distances[organ_name][
                 self.index_organs[organ_name]
             ] += sample_distance
-            self.organ_corrects[organ_name][self.index_organs[organ_name]] += (
+            self.organ_corrects[organ_name][self.index_organs[organ_name]] = (
                 1 if sample_distance < 10.0 else 0
             )
             self.index_organs[organ_name] += 1
