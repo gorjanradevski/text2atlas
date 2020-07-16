@@ -27,7 +27,13 @@ def inference(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
+    # Prepare jsons
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
+    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
+    test_dataset = VoxelSentenceMappingTestRegDataset(
+        test_json_path, tokenizer, ind2organ
+    )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -42,13 +48,13 @@ def inference(
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     # Set model in evaluation mode
     model.train(False)
-    # Prepare paths
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
-    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
     # Create evaluator
     evaluator = InferenceEvaluatorPerOrgan(
-        ind2organ, organ2label, organ2voxels, voxelman_images_path, len(test_dataset),
+        ind2organ,
+        organ2label,
+        organ2voxels,
+        voxelman_images_path,
+        test_dataset.organ2count,
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
     with torch.no_grad():
@@ -75,7 +81,7 @@ def inference(
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
         print("============================================")
-        for organ_name in evaluator.organ_names:
+        for organ_name in evaluator.organ2count.keys():
             if evaluator.get_current_ior_for_organ(organ_name) > -1:
                 print(
                     f"The avg IOR for {organ_name} is: "

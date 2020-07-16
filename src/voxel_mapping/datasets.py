@@ -11,11 +11,12 @@ from utils.constants import VOXELMAN_CENTER
 
 
 class VoxelSentenceMappingRegDataset:
-    def __init__(self, json_path: str, tokenizer: str):
+    def __init__(self, json_path: str, tokenizer: str, ind2organ: Dict[int, str]):
         self.json_data = json.load(open(json_path))
         self.tokenizer = tokenizer
         self.sentences = [element["text"] for element in tqdm(self.json_data)]
         self.center = torch.from_numpy(VOXELMAN_CENTER)
+        self.ind2organ = ind2organ
 
 
 class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Dataset):
@@ -29,7 +30,7 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         masking: bool,
         use_occurences: bool,
     ):
-        super().__init__(json_path, tokenizer)
+        super().__init__(json_path, tokenizer, ind2organ)
         self.organ_indices = [
             element["occ_organ_indices"] if use_occurences else element["organ_indices"]
             for element in tqdm(self.json_data)
@@ -39,7 +40,6 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
         self.detokenizer = TreebankWordDetokenizer()
         self.num_anchors = num_anchors
         self.organ2voxels = organ2voxels
-        self.ind2organ = ind2organ
 
     def __len__(self):
         return len(self.sentences)
@@ -76,12 +76,20 @@ class VoxelSentenceMappingTrainRegDataset(VoxelSentenceMappingRegDataset, Datase
 
 
 class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset):
-    def __init__(self, json_path: str, tokenizer: BertTokenizer):
-        super().__init__(json_path, tokenizer)
+    def __init__(
+        self, json_path: str, tokenizer: BertTokenizer, ind2organ: Dict[int, str]
+    ):
+        super().__init__(json_path, tokenizer, ind2organ)
         self.organ_indices = [
             element["organ_indices"] for element in tqdm(self.json_data)
         ]
         self.ids = [element["pmid"] for element in self.json_data]
+        self.organ2count = {}
+        for indices_sublist in self.organ_indices:
+            for index in indices_sublist:
+                if self.ind2organ[str(index)] not in self.organ2count:
+                    self.organ2count[self.ind2organ[str(index)]] = 0
+                self.organ2count[self.ind2organ[str(index)]] += 1
 
     def __len__(self):
         return len(self.sentences)
@@ -128,10 +136,12 @@ def collate_pad_sentence_reg_test_batch(
 
 
 class VoxelSentenceMappingClassDataset:
-    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
+    def __init__(
+        self, json_path: str, tokenizer: BertTokenizer, ind2organ: Dict[int, str]
+    ):
         self.json_data = json.load(open(json_path))
         self.sentences = [element["text"] for element in tqdm(self.json_data)]
-        self.num_classes = num_classes
+        self.num_classes = max([int(index) for index in ind2organ.keys()]) + 1
         self.tokenizer = tokenizer
 
 
@@ -140,11 +150,11 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
         self,
         json_path: str,
         tokenizer: BertTokenizer,
-        num_classes: int,
+        ind2organ: Dict[int, str],
         masking: bool,
         use_occurences: bool,
     ):
-        super().__init__(json_path, tokenizer, num_classes)
+        super().__init__(json_path, tokenizer, ind2organ)
         self.keywords = [element["keywords"] for element in self.json_data]
         self.organ_indices = [
             element["occ_organ_indices"] if use_occurences else element["organ_indices"]
@@ -178,12 +188,20 @@ class VoxelSentenceMappingTrainClassDataset(VoxelSentenceMappingClassDataset, Da
 
 
 class VoxelSentenceMappingTestClassDataset(VoxelSentenceMappingClassDataset, Dataset):
-    def __init__(self, json_path: str, tokenizer: BertTokenizer, num_classes: int):
-        super().__init__(json_path, tokenizer, num_classes)
+    def __init__(
+        self, json_path: str, tokenizer: BertTokenizer, ind2organ: Dict[int, str]
+    ):
+        super().__init__(json_path, tokenizer, ind2organ)
         self.organ_indices = [
             element["organ_indices"] for element in tqdm(self.json_data)
         ]
         self.ids = [element["pmid"] for element in self.json_data]
+        self.organ2count = {}
+        for indices_sublist in self.organ_indices:
+            for index in indices_sublist:
+                if self.ind2organ[str(index)] not in self.organ2count:
+                    self.organ2count[self.ind2organ[str(index)]] = 0
+                self.organ2count[self.ind2organ[str(index)]] += 1
 
     def __len__(self):
         return len(self.sentences)

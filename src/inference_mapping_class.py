@@ -31,11 +31,9 @@ def inference(
     ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
     organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
     organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
-    # Load organ to indices to obtain the number of classes
-    num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     tokenizer = BertTokenizer.from_pretrained(bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
-        test_json_path, tokenizer, num_classes
+        test_json_path, tokenizer, ind2organ
     )
     test_loader = DataLoader(
         test_dataset,
@@ -43,6 +41,7 @@ def inference(
         collate_fn=collate_pad_sentence_class_test_batch,
     )
     config = BertConfig.from_pretrained(bert_name)
+    num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     model = nn.DataParallel(
         ClassModel(bert_name, config, final_project_size=num_classes)
     ).to(device)
@@ -81,7 +80,7 @@ def inference(
             f"{evaluator.get_current_miss_distance()} +/- {evaluator.get_miss_distance_error_bar()}"
         )
         print("============================================")
-        for organ_name in evaluator.organ_names:
+        for organ_name in evaluator.organ2count.keys():
             if evaluator.get_current_ior_for_organ(organ_name) > -1:
                 print(
                     f"The avg IOR for {organ_name} is: "

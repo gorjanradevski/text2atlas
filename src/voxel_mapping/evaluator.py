@@ -153,49 +153,59 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
         organ2label: str,
         organ2sum_vox: str,
         voxelman_images_path: str,
-        total_samples: int,
+        organ2count: Dict[str, int],
     ):
+        self.organ2count = organ2count
         super().__init__(
-            ind2organ, organ2label, organ2sum_vox, voxelman_images_path, total_samples,
+            ind2organ,
+            organ2label,
+            organ2sum_vox,
+            voxelman_images_path,
+            sum(self.organ2count.values()),
         )
-
-        self.organ_names = list(self.organ2label.keys())
-        self.total_organs = len(self.ind2organ)
-        self.organ_totals = dict(zip(self.organ_names, np.zeros(self.total_organs)))
-        self.organ_corrects = dict(
-            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
-        )
-        self.organ_distances = dict(
-            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
-        )
+        self.organ_totals = {organ_name: 0 for organ_name in self.organ2count.keys()}
+        self.organ_corrects = {
+            organ_name: np.zeros((organ_count,))
+            for organ_name, organ_count in self.organ2count.items()
+        }
+        self.organ_distances = {
+            organ_name: np.zeros((organ_count,))
+            for organ_name, organ_count in self.organ2count.items()
+        }
+        self.index_organs = {organ_name: 0 for organ_name in self.organ2count.keys()}
 
     def reset_counters(self):
-        self.organ_totals = dict(zip(self.organ_names, np.zeros(self.total_organs)))
-        self.organ_corrects = dict(
-            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
-        )
-        self.organ_distances = dict(
-            zip(self.organ_names, np.zeros((self.total_organs, self.total_samples)))
-        )
+        self.organ_totals = {organ_name: 0 for organ_name in self.organ2count.keys()}
+        self.organ_corrects = {
+            organ_name: np.zeros((organ_count,))
+            for organ_name, organ_count in self.organ2count.items()
+        }
+        self.organ_distances = {
+            organ_name: np.zeros((organ_count,))
+            for organ_name, organ_count in self.organ2count.items()
+        }
+        self.index_organs = {organ_name: 0 for organ_name in self.organ2count.keys()}
         super().reset_counters()
 
     def update_counters(self, output_mapping: np.ndarray, organ_indices: np.ndarray):
         for organ_index in organ_indices:
             if organ_index < 0:
                 continue
-            self.organ_totals[self.ind2organ[str(organ_index)]] += 1
+            organ_name = self.ind2organ[str(organ_index)]
+            self.organ_totals[organ_name] += 1
             sample_distance = self.voxels_distance(
                 output_mapping, np.array([organ_index])
             )
-            self.organ_distances[self.ind2organ[str(organ_index)]][
-                self.index
+            self.organ_distances[organ_name][
+                self.index_organs[organ_name]
             ] += sample_distance
-            self.organ_corrects[self.ind2organ[str(organ_index)]][self.index] += (
+            self.organ_corrects[organ_name][self.index_organs[organ_name]] += (
                 1 if sample_distance < 10.0 else 0
             )
+            self.index_organs[organ_name] += 1
         super().update_counters(output_mapping, organ_indices)
 
-    def get_current_ior_for_organ(self, organ):
+    def get_current_ior_for_organ(self, organ: str):
         if self.organ_totals[organ]:
             return np.round(
                 np.sum(self.organ_corrects[organ]) / self.organ_totals[organ] * 100,
@@ -204,7 +214,7 @@ class InferenceEvaluatorPerOrgan(InferenceEvaluator):
         else:
             return -1
 
-    def get_current_distance_for_organ(self, organ):
+    def get_current_distance_for_organ(self, organ: str):
         if self.organ_totals[organ]:
             return np.round(
                 np.sum(self.organ_distances[organ]) / self.organ_totals[organ] / 10,
