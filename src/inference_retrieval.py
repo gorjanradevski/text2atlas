@@ -3,6 +3,8 @@ import torch
 from torch.utils.data import DataLoader
 from torch import nn
 from tqdm import tqdm
+import os
+import json
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
@@ -16,6 +18,7 @@ from utils.constants import VOXELMAN_CENTER
 
 def inference(
     test_json_path: str,
+    organs_dir_path: str,
     model_name: str,
     batch_size: int,
     bert_name: str,
@@ -25,7 +28,10 @@ def inference(
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizer.from_pretrained(bert_name)
-    test_dataset = VoxelSentenceMappingTestRegDataset(test_json_path, tokenizer)
+    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    test_dataset = VoxelSentenceMappingTestRegDataset(
+        test_json_path, tokenizer, ind2organ
+    )
     test_loader = DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -105,6 +111,7 @@ def main():
     args = parse_args()
     inference(
         args.test_json_path,
+        args.organs_dir_path,
         args.model_name,
         args.batch_size,
         args.bert_name,
@@ -124,6 +131,12 @@ def parse_args():
         type=str,
         default="data/dataset_text_atlas_mapping_test_fixd.json",
         help="Path to the test set",
+    )
+    parser.add_argument(
+        "--organs_dir_path",
+        type=str,
+        default="data/data_organs",
+        help="Path to the data organs directory path.",
     )
     parser.add_argument(
         "--model_name", type=str, default="reg_model", help="The model name.",
