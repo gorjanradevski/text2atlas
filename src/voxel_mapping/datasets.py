@@ -141,6 +141,7 @@ class VoxelSentenceMappingClassDataset:
     ):
         self.json_data = json.load(open(json_path))
         self.sentences = [element["text"] for element in tqdm(self.json_data)]
+        self.ind2organ = ind2organ
         self.num_classes = max([int(index) for index in ind2organ.keys()]) + 1
         self.tokenizer = tokenizer
 
