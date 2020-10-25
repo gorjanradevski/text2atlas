@@ -4,7 +4,6 @@ import os
 import random
 import logging
 
-import seaborn as sns  # noqa: F401
 from matplotlib import pyplot as plt  # noqa: F401
 from sklearn.model_selection import train_test_split as dataset_split
 from tqdm import tqdm
