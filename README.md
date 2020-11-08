@@ -13,7 +13,12 @@ If you are using [Poetry](https://python-poetry.org/), navigating to the project
 If you found this code useful, or use some of our resources for your work, we will appreciate if you cite our paper.
 
 ```tex
-BibTeX entry should go here.
+@inproceedings{Grujicic2020b,
+  title={Learning to ground medical text in a {3D} human atlas},
+  AUTHOR = {Grujicic, D. and G. Radevski and T. Tuytelaars and M. B. Blaschko},
+  YEAR = {2020},
+  booktitle= {The SIGNLL Conference on Computational Natural Language Learning},
+}
 ```
 
 ## License
