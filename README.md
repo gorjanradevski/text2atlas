@@ -1,6 +1,6 @@
 # Learning to ground medical text in a 3D human atlas
 
-This repository is the official implementation of "Learning to ground medical text in a 3D human atlas" authored by Dusan Grujicic<sup>*</sup>, [Gorjan Radevski<sup>*</sup>](http://gorjanradevski.github.io/), [Tinne Tuytelaars](https://homes.esat.kuleuven.be/~tuytelaa/), [Matthew Blaschko](https://homes.esat.kuleuven.be/~mblaschk/) published at [CoNLL 2020](https://www.conll.org/2020).
+This repository is the official implementation of [Learning to ground medical text in a 3D human atlas](https://www.aclweb.org/anthology/2020.conll-1.23/) authored by Dusan Grujicic<sup>*</sup>, [Gorjan Radevski<sup>*</sup>](http://gorjanradevski.github.io/), [Tinne Tuytelaars](https://homes.esat.kuleuven.be/~tuytelaa/), [Matthew Blaschko](https://homes.esat.kuleuven.be/~mblaschk/) published at [CoNLL 2020](https://www.conll.org/2020).
 
 ><sup>*</sup> Equal contribution
 
