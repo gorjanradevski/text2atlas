@@ -7,7 +7,6 @@ from typing import Dict, List
 
 import natsort
 import numpy as np
-import scispacy  # noqa: F401
 import spacy
 import tifffile
 from scipy.ndimage import binary_erosion, generate_binary_structure

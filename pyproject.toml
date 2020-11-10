@@ -18,6 +18,7 @@ jupyter = "^1.0.0"
 ipympl = "^0.5.6"
 ndjson = "^0.3.1"
 spacy = "^2.3.2"
+scikit-image = "^0.17.2"
 
 [tool.poetry.dev-dependencies]
 black = {version = "^19.10b0", allow-prereleases = true}
