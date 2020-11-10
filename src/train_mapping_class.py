@@ -1,93 +1,83 @@
 import argparse
+import json
+import logging
+import os
+import random
+import sys
+
+import numpy as np
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from torch import nn
+from torch.utils.data import DataLoader
 from tqdm import tqdm
-import json
-import sys
-import os
-import logging
-import numpy as np
-import random
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTrainClassDataset,
     VoxelSentenceMappingTestClassDataset,
-    collate_pad_sentence_class_train_batch,
+    VoxelSentenceMappingTrainClassDataset,
     collate_pad_sentence_class_test_batch,
+    collate_pad_sentence_class_train_batch,
 )
-from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import TrainingEvaluator
+from voxel_mapping.models import ClassModel
 
 
-def train(
-    organs_dir_path: str,
-    voxelman_images_path: str,
-    train_json_path: str,
-    val_json_path: str,
-    epochs: int,
-    batch_size: int,
-    bert_name: str,
-    checkpoint_path: str,
-    save_model_path: str,
-    save_intermediate_model_path: str,
-    log_filepath: str,
-    learning_rate: float,
-    weight_decay: float,
-    masking: bool,
-    use_occurrences: bool,
-    clip_val: float,
-):
+def train(args):
     # Set up logging
-    if log_filepath:
-        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    if args.log_filepath:
+        logging.basicConfig(
+            level=logging.INFO, filename=args.log_filepath, filemode="w"
+        )
     else:
         logging.basicConfig(level=logging.INFO)
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare jsons
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
-    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2label.json"))
+    )
+    organ2summary = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2summary.json"))
+    )
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     # Prepare datasets
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
-    logging.warning(f"Usage of masking is set to: ---{masking}---")
-    logging.warning(f"Usage of occurences is set to: ---{use_occurrences}---")
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
+    logging.warning(f"Usage of masking is set to: ---{args.masking}---")
+    logging.warning(f"Usage of occurences is set to: ---{args.use_occurrences}---")
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, num_classes, masking, use_occurrences
+        args.train_json_path, tokenizer, num_classes, args.masking, args.use_occurrences
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
-        val_json_path, tokenizer, num_classes
+        args.val_json_path, tokenizer, num_classes
     )
     train_loader = DataLoader(
         train_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=True,
         collate_fn=collate_pad_sentence_class_train_batch,
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         collate_fn=collate_pad_sentence_class_test_batch,
     )
-    config = BertConfig.from_pretrained(bert_name)
+    config = BertConfig.from_pretrained(args.bert_name)
     # Prepare model
     model = nn.DataParallel(
-        ClassModel(bert_name, config, final_project_size=num_classes)
+        ClassModel(args.bert_name, config, final_project_size=num_classes)
     ).to(device)
     criterion = nn.BCEWithLogitsLoss()
     # noinspection PyUnresolvedReferences
     optimizer = optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
     )
     best_distance = sys.maxsize
     cur_epoch = 0
     # Load model
-    if checkpoint_path is not None:
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+    if args.checkpoint_path is not None:
+        checkpoint = torch.load(args.checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
@@ -95,7 +85,7 @@ def train(
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         logging.warning(
-            f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
+            f"Starting training from checkpoint {args.checkpoint_path} with starting epoch {cur_epoch}!"
         )
         logging.warning(f"The previous best distance was: {best_distance}!")
 
@@ -104,30 +94,28 @@ def train(
         ind2organ,
         organ2label,
         organ2summary,
-        voxelman_images_path,
+        args.voxelman_images_path,
         len(val_dataset),
         best_distance,
     )
-    for epoch in range(cur_epoch, cur_epoch + epochs):
+    for epoch in range(cur_epoch, cur_epoch + args.epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, attn_mask, organ_indices in train_loader:
+            for batch in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                sentences, attn_mask, organ_indices = (
-                    sentences.to(device),
-                    attn_mask.to(device),
-                    organ_indices.to(device),
+                batch = {key: val.to(device) for key, val in batch.items()}
+                output_mappings = model(
+                    input_ids=batch["sentences"], attention_mask=batch["attn_mask"]
                 )
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                loss = criterion(output_mappings, organ_indices)
+                loss = criterion(output_mappings, batch["organ_indices"])
                 # backward
                 loss.backward()
                 # clip the gradients
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_val)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
                 # Update progress bar
@@ -139,9 +127,12 @@ def train(
         evaluator.reset_current_distance()
         with torch.no_grad():
             evaluator.reset_counters()
-            for sentences, attn_mask, organs_indices, _ in tqdm(val_loader):
-                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
+            for input_batch, organs_indices, _ in tqdm(val_loader):
+                input_batch = {key: val.to(device) for key, val in input_batch.items()}
+                output_mappings = model(
+                    input_ids=input_batch["sentences"],
+                    attention_mask=input_batch["attn_mask"],
+                )
                 y_pred = torch.argmax(output_mappings, dim=-1)
                 pred_centers = [
                     random.sample(organ2summary[ind2organ[str(ind.item())]], 1)[0]
@@ -173,7 +164,7 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
@@ -187,7 +178,7 @@ def train(
                     "optimizer_state_dict": optimizer.state_dict(),
                     "best_distance": evaluator.best_distance,
                 },
-                save_intermediate_model_path,
+                args.save_intermediate_model_path,
             )
 
 
@@ -195,24 +186,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    train(
-        args.organs_dir_path,
-        args.voxelman_images_path,
-        args.train_json_path,
-        args.val_json_path,
-        args.epochs,
-        args.batch_size,
-        args.bert_name,
-        args.checkpoint_path,
-        args.save_model_path,
-        args.save_intermediate_model_path,
-        args.log_filepath,
-        args.learning_rate,
-        args.weight_decay,
-        args.masking,
-        args.use_occurrences,
-        args.clip_val,
-    )
+    train(args)
 
 
 def parse_args():

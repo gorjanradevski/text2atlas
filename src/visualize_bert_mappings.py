@@ -7,7 +7,6 @@ import numpy as np
 import torch
 from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
@@ -48,7 +47,7 @@ def visualize_mappings(
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
 
-    for i, organ in enumerate(organs):
+    for organ in organs:
         points = organ2voxels[organ]
         points = random.sample(points, int(len(points) / 500))
         points = np.array(points)

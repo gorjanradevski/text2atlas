@@ -1,10 +1,10 @@
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class OrganDistanceLoss(nn.Module):
-    def __init__(self, device, voxel_temperature, organ_temperature):
+    def __init__(self, device, voxel_temperature: float, organ_temperature: float):
         super(OrganDistanceLoss, self).__init__()
         self.device = device
         self.voxel_temperature = voxel_temperature

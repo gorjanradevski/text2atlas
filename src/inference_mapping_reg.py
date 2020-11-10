@@ -1,51 +1,50 @@
 import argparse
-import torch
-from torch.utils.data import DataLoader
-from torch import nn
-from tqdm import tqdm
-import os
 import json
+import os
+
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
 
+from utils.constants import VOXELMAN_CENTER
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
     collate_pad_sentence_reg_test_batch,
 )
-from voxel_mapping.models import RegModel
 from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.models import RegModel
 
 
-def inference(
-    organs_dir_path: str,
-    voxelman_images_path: str,
-    test_json_path: str,
-    batch_size: int,
-    bert_name: str,
-    checkpoint_path: str,
-):
+@torch.no_grad()
+def inference(args):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
     # Prepare jsons
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
-    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2label.json"))
+    )
+    organ2voxels = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2voxels.json"))
+    )
     test_dataset = VoxelSentenceMappingTestRegDataset(
-        test_json_path, tokenizer, ind2organ
+        args.test_json_path, tokenizer, ind2organ
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     # Create model
-    config = BertConfig.from_pretrained(bert_name)
-    model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
+    config = BertConfig.from_pretrained(args.bert_name)
+    model = nn.DataParallel(RegModel(args.bert_name, config, final_project_size=3)).to(
         device
     )
     # Load model
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.load_state_dict(torch.load(args.checkpoint_path, map_location=device))
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
@@ -53,21 +52,23 @@ def inference(
         ind2organ,
         organ2label,
         organ2voxels,
-        voxelman_images_path,
+        args.voxelman_images_path,
         test_dataset.organ2count,
         len(test_dataset),
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
-    with torch.no_grad():
-        # Restart counters
-        evaluator.reset_counters()
-        for sentences, attn_mask, organs_indices, _ in tqdm(test_loader):
-            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = (
-                model(input_ids=sentences, attention_mask=attn_mask).cpu() * center
-            )
-            for output_mapping, organ_indices in zip(output_mappings, organs_indices):
-                evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
+    # Restart counters
+    evaluator.reset_counters()
+    for input_batch, organs_indices, _ in tqdm(test_loader):
+        input_batch = {key: val.to(device) for key, val in input_batch.items()}
+        output_mappings = (
+            model(
+                input_ids=input["sentences"], attention_mask=input_batch["attn_mask"],
+            ).cpu()
+            * center
+        )
+        for output_mapping, organ_indices in zip(output_mappings, organs_indices):
+            evaluator.update_counters(output_mapping.numpy(), organ_indices.numpy())
 
         print(
             "The avg IOR on the test set is: "
@@ -106,14 +107,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    inference(
-        args.organs_dir_path,
-        args.voxelman_images_path,
-        args.test_json_path,
-        args.batch_size,
-        args.bert_name,
-        args.checkpoint_path,
-    )
+    inference(args)
 
 
 def parse_args():

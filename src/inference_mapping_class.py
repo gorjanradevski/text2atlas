@@ -17,35 +17,32 @@ from voxel_mapping.models import ClassModel
 from voxel_mapping.evaluator import InferenceEvaluatorPerOrgan
 
 
-def inference(
-    test_json_path: str,
-    organs_dir_path: str,
-    voxelman_images_path: str,
-    batch_size: int,
-    bert_name: str,
-    checkpoint_path: str,
-):
+def inference(args):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Load jsons
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
-    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2label.json"))
+    )
+    organ2voxels = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2voxels.json"))
+    )
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
     test_dataset = VoxelSentenceMappingTestClassDataset(
-        test_json_path, tokenizer, ind2organ
+        args.test_json_path, tokenizer, ind2organ
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         collate_fn=collate_pad_sentence_class_test_batch,
     )
-    config = BertConfig.from_pretrained(bert_name)
+    config = BertConfig.from_pretrained(args.bert_name)
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     model = nn.DataParallel(
-        ClassModel(bert_name, config, final_project_size=num_classes)
+        ClassModel(args.bert_name, config, final_project_size=num_classes)
     ).to(device)
-    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    model.load_state_dict(torch.load(args.checkpoint_path, map_location=device))
     # Set model in evaluation mode
     model.train(False)
     # Create evaluator
@@ -53,15 +50,18 @@ def inference(
         ind2organ,
         organ2label,
         organ2voxels,
-        voxelman_images_path,
+        args.voxelman_images_path,
         test_dataset.organ2count,
         len(test_dataset),
     )
     with torch.no_grad():
         evaluator.reset_counters()
-        for sentences, attn_mask, organs_indices, _ in tqdm(test_loader):
-            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
+        for input_batch, organs_indices, _ in tqdm(test_loader):
+            input_batch = {key: val.to(device) for key, val in input_batch.items()}
+            output_mappings = model(
+                input_ids=input_batch["sentences"],
+                attention_mask=input_batch["attn_mask"],
+            )
             y_pred = torch.argmax(output_mappings, dim=-1)
             pred_centers = [
                 random.sample(organ2voxels[ind2organ[str(ind.item())]], 1)[0]
@@ -109,14 +109,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    inference(
-        args.test_json_path,
-        args.organs_dir_path,
-        args.voxelman_images_path,
-        args.batch_size,
-        args.bert_name,
-        args.checkpoint_path,
-    )
+    inference(args)
 
 
 def parse_args():

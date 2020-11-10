@@ -1,114 +1,102 @@
 import argparse
-import torch
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torch import nn
-from tqdm import tqdm
+import json
+import logging
 import os
 import sys
-import logging
+
+import torch
+import torch.optim as optim
+from torch import nn
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
-import json
+
 from utils.constants import VOXELMAN_CENTER
-
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTrainRegDataset,
     VoxelSentenceMappingTestRegDataset,
-    collate_pad_sentence_reg_train_batch,
+    VoxelSentenceMappingTrainRegDataset,
     collate_pad_sentence_reg_test_batch,
+    collate_pad_sentence_reg_train_batch,
 )
-from voxel_mapping.models import RegModel
-from voxel_mapping.losses import OrganDistanceLoss, BaselineRegLoss
 from voxel_mapping.evaluator import TrainingEvaluator
+from voxel_mapping.losses import BaselineRegLoss, OrganDistanceLoss
+from voxel_mapping.models import RegModel
 
 
-def train(
-    organs_dir_path: str,
-    voxelman_images_path: str,
-    train_json_path: str,
-    val_json_path: str,
-    num_anchors: str,
-    loss_type: str,
-    masking: bool,
-    use_occurrences: bool,
-    epochs: int,
-    batch_size: int,
-    bert_name: str,
-    checkpoint_path: str,
-    save_model_path: str,
-    save_intermediate_model_path: str,
-    log_filepath: str,
-    learning_rate: float,
-    weight_decay: float,
-    voxel_temperature: float,
-    organ_temperature: float,
-    clip_val: float,
-):
+def train(args):
     # Set up logging
-    if log_filepath:
-        logging.basicConfig(level=logging.INFO, filename=log_filepath, filemode="w")
+    if args.log_filepath:
+        logging.basicConfig(
+            level=logging.INFO, filename=args.log_filepath, filemode="w"
+        )
     else:
         logging.basicConfig(level=logging.INFO)
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare paths
-    organ2voxels = json.load(open(os.path.join(organs_dir_path, "organ2voxels.json")))
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
-    organ2label = json.load(open(os.path.join(organs_dir_path, "organ2label.json")))
-    organ2summary = json.load(open(os.path.join(organs_dir_path, "organ2summary.json")))
+    organ2voxels = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2voxels.json"))
+    )
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
+    organ2label = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2label.json"))
+    )
+    organ2summary = json.load(
+        open(os.path.join(args.organs_dir_path, "organ2summary.json"))
+    )
     # Prepare datasets
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
-    logging.warning(f"Usage of masking is set to: ---{masking}---")
-    logging.warning(f"Usage of occurences is set to: ---{use_occurrences}---")
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
+    logging.warning(f"Usage of masking is set to: ---{args.masking}---")
+    logging.warning(f"Usage of occurences is set to: ---{args.use_occurrences}---")
     train_dataset = VoxelSentenceMappingTrainRegDataset(
-        train_json_path,
+        args.train_json_path,
         tokenizer,
         ind2organ,
         organ2voxels,
-        num_anchors=num_anchors,
-        masking=masking,
-        use_occurences=use_occurrences,
+        num_anchors=args.num_anchors,
+        masking=args.masking,
+        use_occurences=args.use_occurrences,
     )
-    val_dataset = VoxelSentenceMappingTestRegDataset(val_json_path, tokenizer)
+    val_dataset = VoxelSentenceMappingTestRegDataset(args.val_json_path, tokenizer)
     train_loader = DataLoader(
         train_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=True,
         collate_fn=collate_pad_sentence_reg_train_batch,
     )
     val_loader = DataLoader(
         val_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
-    config = BertConfig.from_pretrained(bert_name)
+    config = BertConfig.from_pretrained(args.bert_name)
     # Prepare model
-    model = nn.DataParallel(RegModel(bert_name, config, final_project_size=3)).to(
+    model = nn.DataParallel(RegModel(args.bert_name, config, final_project_size=3)).to(
         device
     )
-    logging.warning(f"Using {num_anchors} voxel points!")
+    logging.warning(f"Using {args.num_anchors} voxel points!")
     # Check for the type of loss
-    if loss_type == "organ_loss":
+    if args.loss_type == "organ_loss":
         criterion = OrganDistanceLoss(
             device=device,
-            voxel_temperature=voxel_temperature,
-            organ_temperature=organ_temperature,
+            voxel_temperature=args.voxel_temperature,
+            organ_temperature=args.organ_temperature,
         )
         logging.warning("Using SSL loss!")
-    elif loss_type == "baseline_loss":
+    elif args.loss_type == "baseline_loss":
         criterion = BaselineRegLoss()
         logging.warning("Using baseline REG loss!")
     else:
-        raise ValueError(f"Invalid loss type {loss_type}")
+        raise ValueError(f"Invalid loss type {args.loss_type}")
     # noinspection PyUnresolvedReference
     optimizer = optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
     )
     # Load model
     cur_epoch = 0
     best_distance = sys.maxsize
-    if checkpoint_path is not None:
-        checkpoint = torch.load(checkpoint_path, map_location=device)
+    if args.checkpoint_path is not None:
+        checkpoint = torch.load(args.checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         cur_epoch = checkpoint["epoch"]
@@ -116,7 +104,7 @@ def train(
         # https://discuss.pytorch.org/t/cuda-out-of-memory-after-loading-model/50681
         del checkpoint
         logging.warning(
-            f"Starting training from checkpoint {checkpoint_path} with starting epoch {cur_epoch}!"
+            f"Starting training from checkpoint {args.checkpoint_path} with starting epoch {cur_epoch}!"
         )
         logging.warning(f"The previous best distance was: {best_distance}!")
     # Prepare evaluator
@@ -124,37 +112,36 @@ def train(
         ind2organ,
         organ2label,
         organ2summary,
-        voxelman_images_path,
+        args.voxelman_images_path,
         len(val_dataset),
         best_distance,
     )
     center = torch.from_numpy(VOXELMAN_CENTER)
-    for epoch in range(cur_epoch, cur_epoch + epochs):
+    for epoch in range(cur_epoch, cur_epoch + args.epochs):
         logging.info(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, attn_mask, true_mappings, num_organs in train_loader:
+            for batch in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                sentences, attn_mask, true_mappings, num_organs = (
-                    sentences.to(device),
-                    attn_mask.to(device),
-                    true_mappings.to(device),
-                    num_organs.to(device),
+                batch = {key: val.to(device) for key, val in batch.items()}
+                output_mappings = model(
+                    input_ids=batch["sentences"], attention_mask=batch["attn_mask"]
                 )
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
-                if loss_type == "organ_loss":
-                    loss = criterion(output_mappings, true_mappings, num_organs)
-                elif loss_type == "baseline_loss":
-                    loss = criterion(output_mappings, true_mappings)
+                if args.loss_type == "organ_loss":
+                    loss = criterion(
+                        output_mappings, batch["mappings"], batch["num_organs"]
+                    )
+                elif args.loss_type == "baseline_loss":
+                    loss = criterion(output_mappings, batch["true_mappings"])
                 else:
-                    raise ValueError(f"Invalid loss type: {loss_type}")
+                    raise ValueError(f"Invalid loss type: {args.loss_type}")
                 # backward
                 loss.backward()
                 # clip the gradients
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_val)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
                 # Update progress bar
@@ -168,14 +155,13 @@ def train(
         with torch.no_grad():
             # Restart counters
             evaluator.reset_counters()
-            for sentences, attn_mask, organs_indices, _ in tqdm(val_loader):
-                sentences, attn_mask = (
-                    sentences.to(device),
-                    attn_mask.to(device),
+            for input_batch, organs_indices, _ in tqdm(val_loader):
+                input_batch = {key: val.to(device) for key, val in input_batch.items()}
+                output_mappings = model(
+                    input_ids=input_batch["sentences"],
+                    attention_mask=input_batch["attn_mask"],
                 )
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 output_mappings = output_mappings.cpu() * center
-
                 for output_mapping, organ_indices in zip(
                     output_mappings.numpy(), organs_indices
                 ):
@@ -202,7 +188,7 @@ def train(
                     f"{epoch+1}. Saving model!!!"
                 )
                 logging.info("======================")
-                torch.save(model.state_dict(), save_model_path)
+                torch.save(model.state_dict(), args.save_model_path)
             else:
                 logging.info(
                     f"Avg distance on epoch {epoch+1} is: "
@@ -216,7 +202,7 @@ def train(
                     "optimizer_state_dict": optimizer.state_dict(),
                     "best_distance": evaluator.best_distance,
                 },
-                save_intermediate_model_path,
+                args.save_intermediate_model_path,
             )
 
 
@@ -224,28 +210,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    train(
-        args.organs_dir_path,
-        args.voxelman_images_path,
-        args.train_json_path,
-        args.val_json_path,
-        args.num_anchors,
-        args.loss_type,
-        args.masking,
-        args.use_occurrences,
-        args.epochs,
-        args.batch_size,
-        args.bert_name,
-        args.checkpoint_path,
-        args.save_model_path,
-        args.save_intermediate_model_path,
-        args.log_filepath,
-        args.learning_rate,
-        args.weight_decay,
-        args.voxel_temperature,
-        args.organ_temperature,
-        args.clip_val,
-    )
+    train(args)
 
 
 def parse_args():

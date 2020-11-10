@@ -1,13 +1,20 @@
-from transformers import BertTokenizer
-from torch.utils.data import Dataset
 import json
+import random
+from typing import Dict, List, Tuple
+
 import torch
 from nltk import word_tokenize
 from nltk.tokenize.treebank import TreebankWordDetokenizer
-from typing import Tuple, Dict, List
+from torch.utils.data import Dataset
 from tqdm import tqdm
-import random
+from transformers import BertTokenizer
 from utils.constants import VOXELMAN_CENTER
+
+
+def truncate_sentence(tokenized_sentence: List[int], max_len: int = 512):
+    if len(tokenized_sentence) > max_len:
+        tokenized_sentence = tokenized_sentence[: max_len - 1] + tokenized_sentence[-1:]
+    return torch.tensor(tokenized_sentence)
 
 
 class VoxelSentenceMappingRegDataset:
@@ -106,7 +113,7 @@ class VoxelSentenceMappingTestRegDataset(VoxelSentenceMappingRegDataset, Dataset
 
 def collate_pad_sentence_reg_train_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
-):
+) -> Dict[str, torch.Tensor]:
     sentences, mappings, num_organs = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(
         sentences, batch_first=True, padding_value=0
@@ -118,12 +125,17 @@ def collate_pad_sentence_reg_train_batch(
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, padded_mappings, num_organs
+    return {
+        "sentences": padded_sentences,
+        "attn_mask": attn_mask,
+        "mappings": padded_mappings,
+        "num_organs": num_organs,
+    }
 
 
 def collate_pad_sentence_reg_test_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
-):
+) -> Tuple[Dict[str, torch.Tensor], torch.Tensor, List[int]]:
     sentences, organ_indices, docs_ids = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     padded_organ_indices = torch.nn.utils.rnn.pad_sequence(
@@ -132,7 +144,11 @@ def collate_pad_sentence_reg_test_batch(
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, padded_organ_indices, docs_ids
+    return (
+        {"sentences": padded_sentences, "attn_mask": attn_mask},
+        padded_organ_indices,
+        docs_ids,
+    )
 
 
 class VoxelSentenceMappingClassDataset:
@@ -227,21 +243,23 @@ def collate_pad_sentence_class_train_batch(
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0)
+    return {
+        "sentences": padded_sentences,
+        "attn_mask": attn_mask,
+        "organ_indices": torch.stack([*organ_indices], dim=0),
+    }
 
 
 def collate_pad_sentence_class_test_batch(
     batch: Tuple[torch.Tensor, torch.Tensor, List[int]]
-):
+) -> Tuple[Dict[str, torch.Tensor], torch.Tensor, List[int]]:
     sentences, organ_indices, docs_ids = zip(*batch)
     padded_sentences = torch.nn.utils.rnn.pad_sequence(sentences, batch_first=True)
     attn_mask = padded_sentences.clone()
     attn_mask[torch.where(attn_mask > 0)] = 1
 
-    return padded_sentences, attn_mask, torch.stack([*organ_indices], dim=0), docs_ids
-
-
-def truncate_sentence(tokenized_sentence: List[int], max_len: int = 512):
-    if len(tokenized_sentence) > max_len:
-        tokenized_sentence = tokenized_sentence[: max_len - 1] + tokenized_sentence[-1:]
-    return torch.tensor(tokenized_sentence)
+    return (
+        {"sentences": padded_sentences, "attn_mask": attn_mask},
+        torch.stack([*organ_indices], dim=0),
+        docs_ids,
+    )

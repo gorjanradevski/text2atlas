@@ -1,92 +1,79 @@
 import argparse
-import torch
-import torch.optim as optim
-from torch.utils.data import DataLoader
-from torch import nn
-from tqdm import tqdm
 import json
 import os
+
+import torch
+import torch.optim as optim
+from torch import nn
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
 
 from voxel_mapping.datasets import (
-    VoxelSentenceMappingTrainClassDataset,
     VoxelSentenceMappingTestClassDataset,
-    collate_pad_sentence_class_batch,
+    VoxelSentenceMappingTrainClassDataset,
+    collate_pad_sentence_class_test_batch,
+    collate_pad_sentence_class_train_batch,
 )
 from voxel_mapping.models import SiameseModel
-from voxel_mapping.retrieval_utils import batch_all_triplet_loss
-from voxel_mapping.retrieval_utils import EmbeddedDoc
+from voxel_mapping.retrieval_utils import EmbeddedDoc, batch_all_triplet_loss
 
 
-def train(
-    organs_dir_path: str,
-    voxelman_images_path: str,
-    train_json_path: str,
-    val_json_path: str,
-    project_size: int,
-    epochs: int,
-    batch_size: int,
-    bert_name: str,
-    save_model_path: str,
-    learning_rate: float,
-    weight_decay: float,
-    clip_val: float,
-    margin: float,
-):
+def train(args):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare jsons
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
     num_classes = max([int(index) for index in ind2organ.keys()]) + 1
     # Prepare datasets
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
     train_dataset = VoxelSentenceMappingTrainClassDataset(
-        train_json_path, tokenizer, num_classes, masking=False
+        args.train_json_path, tokenizer, num_classes, masking=False
     )
     val_dataset = VoxelSentenceMappingTestClassDataset(
-        val_json_path, tokenizer, num_classes
+        args.val_json_path, tokenizer, num_classes
     )
     train_loader = DataLoader(
         train_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         shuffle=True,
-        collate_fn=collate_pad_sentence_class_batch,
+        collate_fn=collate_pad_sentence_class_train_batch,
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=batch_size, collate_fn=collate_pad_sentence_class_batch,
+        val_dataset,
+        batch_size=args.batch_size,
+        collate_fn=collate_pad_sentence_class_test_batch,
     )
-    config = BertConfig.from_pretrained(bert_name)
+    config = BertConfig.from_pretrained(args.bert_name)
     # Prepare model
     model = nn.DataParallel(
-        SiameseModel(bert_name, config, final_project_size=project_size)
+        SiameseModel(args.bert_name, config, final_project_size=args.project_size)
     ).to(device)
     # noinspection PyUnresolvedReferences
     optimizer = optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=weight_decay
+        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay
     )
     best_recall = -1
-    for epoch in range(epochs):
+    for epoch in range(args.epochs):
         print(f"Starting epoch {epoch + 1}...")
         # Set model in train mode
         model.train(True)
         with tqdm(total=len(train_loader)) as pbar:
-            for sentences, attn_mask, organ_indices, _ in train_loader:
+            for batch in train_loader:
                 # remove past gradients
                 optimizer.zero_grad()
                 # forward
-                sentences, attn_mask, organ_indices = (
-                    sentences.to(device),
-                    attn_mask.to(device),
-                    organ_indices.to(device),
+                batch = {key: val.to(device) for key, val in batch.items()}
+                output_mappings = model(
+                    input_ids=batch["sentences"], attention_mask=batch["attn_mask"]
                 )
-                output_mappings = model(input_ids=sentences, attention_mask=attn_mask)
                 loss, _ = batch_all_triplet_loss(
-                    organ_indices, output_mappings, margin, device
+                    batch["organ_indices"], output_mappings, args.margin, device
                 )
                 # backward
                 loss.backward()
                 # clip the gradients
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_val)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip_val)
                 # update weights
                 optimizer.step()
                 # Update progress bar
@@ -97,10 +84,11 @@ def train(
         model.train(False)
         embedded_docs = []
         with torch.no_grad():
-            for sentences, attn_mask, organs_indices, docs_ids in tqdm(val_loader):
-                sentences, attn_mask = sentences.to(device), attn_mask.to(device)
+            for input_batch, organs_indices, docs_ids in tqdm(val_loader):
+                input_batch = {key: val.to(device) for key, val in input_batch.items()}
                 output_mappings = model(
-                    input_ids=sentences, attention_mask=attn_mask
+                    input_ids=input_batch["sentences"],
+                    attention_mask=input_batch["attn_mask"],
                 ).cpu()
                 for output_mapping, organ_indices, doc_id in zip(
                     output_mappings, organs_indices, docs_ids
@@ -142,28 +130,14 @@ def train(
             print(f"Found new best on epoch {epoch+1}. Saving model!!!")
             print("===================================")
             best_recall = total_recall
-            torch.save(model.state_dict(), save_model_path)
+            torch.save(model.state_dict(), args.save_model_path)
 
 
 def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    train(
-        args.organs_dir_path,
-        args.voxelman_images_path,
-        args.train_json_path,
-        args.val_json_path,
-        args.project_size,
-        args.epochs,
-        args.batch_size,
-        args.bert_name,
-        args.save_model_path,
-        args.learning_rate,
-        args.weight_decay,
-        args.clip_val,
-        args.margin,
-    )
+    train(args)
 
 
 def parse_args():

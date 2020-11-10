@@ -1,6 +1,6 @@
-from transformers import BertModel, BertConfig
-from torch import nn
 import torch
+from torch import nn
+from transformers import BertConfig, BertModel
 
 # https://huggingface.co/allenai/scibert_scivocab_uncased
 # https://huggingface.co/monologg/biobert_v1.1_pubmed

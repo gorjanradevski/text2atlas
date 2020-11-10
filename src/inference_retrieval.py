@@ -17,59 +17,53 @@ from voxel_mapping.retrieval_utils import EmbeddedDoc
 from utils.constants import VOXELMAN_CENTER
 
 
-def inference(
-    test_json_path: str,
-    organs_dir_path: str,
-    model_name: str,
-    batch_size: int,
-    bert_name: str,
-    project_size: int,
-    checkpoint_path: str,
-):
+@torch.no_grad()
+def inference(args):
     # Check for CUDA
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokenizer = BertTokenizer.from_pretrained(bert_name)
-    ind2organ = json.load(open(os.path.join(organs_dir_path, "ind2organ.json")))
+    tokenizer = BertTokenizer.from_pretrained(args.bert_name)
+    ind2organ = json.load(open(os.path.join(args.organs_dir_path, "ind2organ.json")))
     test_dataset = VoxelSentenceMappingTestRegDataset(
-        test_json_path, tokenizer, ind2organ
+        args.test_json_path, tokenizer, ind2organ
     )
     test_loader = DataLoader(
         test_dataset,
-        batch_size=batch_size,
+        batch_size=args.batch_size,
         collate_fn=collate_pad_sentence_reg_test_batch,
     )
     # Create and load model, then set it to eval mode
-    config = BertConfig.from_pretrained(bert_name)
+    config = BertConfig.from_pretrained(args.bert_name)
     model = nn.DataParallel(
-        model_factory(model_name, bert_name, config, project_size)
+        model_factory(args.model_name, args.bert_name, config, args.project_size)
     ).to(device)
     assert (
         model.module.bert.embeddings.word_embeddings.num_embeddings
         == tokenizer.vocab_size
     )
-    if checkpoint_path:
-        model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    if args.checkpoint_path:
+        model.load_state_dict(torch.load(args.checkpoint_path, map_location=device))
     else:
-        print(f"Not loading from checkpoint! Inference from {bert_name}")
+        print(f"Not loading from checkpoint! Inference from {args.bert_name}")
     model.train(False)
     # Get voxelman center
     center = torch.from_numpy(VOXELMAN_CENTER)
     embedded_docs = []
-    with torch.no_grad():
-        for sentences, attn_mask, organs_indices, docs_ids in tqdm(test_loader):
-            sentences, attn_mask = sentences.to(device), attn_mask.to(device)
-            output_mappings = model(input_ids=sentences, attention_mask=attn_mask).cpu()
-            if model_name == "reg_model":
-                # The reg_model normalizes the embeddings between -1 and 1
-                output_mappings *= center
-            for output_mapping, organ_indices, doc_id in zip(
-                output_mappings, organs_indices, docs_ids
-            ):
-                # Get only non -1 indices
-                organ_indices = organ_indices[: (organ_indices >= 0).sum()]
-                embedded_docs.append(
-                    EmbeddedDoc(doc_id, organ_indices.numpy(), output_mapping.numpy())
-                )
+    for input_batch, organs_indices, docs_ids in tqdm(test_loader):
+        input_batch = {key: val.to(device) for key, val in input_batch.items()}
+        output_mappings = model(
+            input_ids=input_batch["sentences"], attention_mask=input["attn_mask"]
+        ).cpu()
+        if args.model_name == "reg_model":
+            # The reg_model normalizes the embeddings between -1 and 1
+            output_mappings *= center
+        for output_mapping, organ_indices, doc_id in zip(
+            output_mappings, organs_indices, docs_ids
+        ):
+            # Get only non -1 indices
+            organ_indices = organ_indices[: (organ_indices >= 0).sum()]
+            embedded_docs.append(
+                EmbeddedDoc(doc_id, organ_indices.numpy(), output_mapping.numpy())
+            )
 
     recalls = {
         "1": np.zeros(len(test_dataset)),
@@ -107,15 +101,7 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    inference(
-        args.test_json_path,
-        args.organs_dir_path,
-        args.model_name,
-        args.batch_size,
-        args.bert_name,
-        args.project_size,
-        args.checkpoint_path,
-    )
+    inference(args)
 
 
 def parse_args():
