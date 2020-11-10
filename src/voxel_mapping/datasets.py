@@ -8,7 +8,7 @@ from nltk.tokenize.treebank import TreebankWordDetokenizer
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from transformers import BertTokenizer
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 
 def truncate_sentence(tokenized_sentence: List[int], max_len: int = 512):

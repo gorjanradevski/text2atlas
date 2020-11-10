@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from voxel_mapping.anchors import create_ind2anchors, create_ind2centers
 from voxel_mapping.losses import OrganDistanceLoss, MinDistanceLoss, BaselineRegLoss
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 colors = mcolors.CSS4_COLORS
 logging.basicConfig(level=logging.INFO)

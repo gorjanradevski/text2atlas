@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 import natsort
 import numpy as np
 import tifffile
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 
 class Evaluator:

@@ -14,7 +14,7 @@ from voxel_mapping.datasets import (
 )
 from voxel_mapping.models import model_factory
 from voxel_mapping.retrieval_utils import EmbeddedDoc
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 
 @torch.no_grad()

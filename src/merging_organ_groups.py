@@ -10,7 +10,7 @@ import tifffile
 from scipy.ndimage import binary_erosion, generate_binary_structure
 from skimage.measure import label
 
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 
 def store_json(data, path: str):

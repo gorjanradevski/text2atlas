@@ -11,7 +11,7 @@ from torch import nn
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
 
-from utils.constants import VOXELMAN_CENTER, bert_variants
+from voxel_mapping.constants import VOXELMAN_CENTER, bert_variants
 from voxel_mapping.models import SentenceMappingsProducer
 
 colors = mcolors.CSS4_COLORS

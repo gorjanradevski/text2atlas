@@ -13,7 +13,7 @@ from scipy.ndimage import binary_erosion, generate_binary_structure
 from scispacy.umls_linking import UmlsEntityLinker
 from skimage.measure import label
 
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 
 
 def getLargestCC(points):

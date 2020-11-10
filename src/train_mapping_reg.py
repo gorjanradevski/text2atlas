@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import BertConfig, BertTokenizer
 
-from utils.constants import VOXELMAN_CENTER
+from voxel_mapping.constants import VOXELMAN_CENTER
 from voxel_mapping.datasets import (
     VoxelSentenceMappingTestRegDataset,
     VoxelSentenceMappingTrainRegDataset,
