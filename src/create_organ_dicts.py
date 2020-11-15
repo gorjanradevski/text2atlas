@@ -7,13 +7,14 @@ from typing import Dict, List
 
 import natsort
 import numpy as np
+import scispacy  # noqa: F401
 import spacy
 import tifffile
 from scipy.ndimage import binary_erosion, generate_binary_structure
 from scispacy.umls_linking import UmlsEntityLinker
 from skimage.measure import label
 
-from voxel_mapping.constants import VOXELMAN_CENTER
+from utils.constants import VOXELMAN_CENTER
 
 
 def getLargestCC(points):
@@ -116,9 +117,7 @@ def return_voxels_eroded(
         center = np.array(images.shape).reshape(1, -1) / 2
     else:
         center = np.zeros(shape=(1, 3))
-
-    #     indices = np.logical_or.reduce([images == label for label in labels])
-
+        
     indices = np.zeros(images.shape).astype(bool)
     for _label in labels:
         indices = np.logical_or.reduce([indices, images == _label])
@@ -163,16 +162,7 @@ def create_organ2summary(organ2voxels, num_anchors: int = 1000):
 
 
 def retrieve_alias_terms(organ_names: List[str], nlp, linker):
-
-    # This line takes a while, because we have to download ~1GB of data
-    # and load a large JSON file (the knowledge base). Be patient!
-    # Thankfully it should be faster after the first time you use it, because
-    # the downloads are cached.
-    # NOTE: The resolve_abbreviations parameter is optional, and requires that
-    # the AbbreviationDetector pipe has already been added to the pipeline. Adding
-    # the AbbreviationDetector pipe and setting resolve_abbreviations to True means
-    # that linking will only be performed on the long form of abbreviations.
-
+    
     organ_name_aliases = {}
     for organ in organ_names:
         names = [organ]
@@ -213,33 +203,40 @@ def create_organ_dicts(sio_atlas_path, organs_dir_path):
         organ2alias[organ] = [organ]
 
     """Removal of bones, limb tissues and location unspecific tissues"""
-    organs_to_remove = "bones of the left hand, bones of the right hand, cervical vertebra C5, cervical vertebra C6, cervical vertebra C7, coccyx, grey matter, intervertebral disc C6/C7, intervertebral disc C7/T1, intervertebral disc L1/L2, intervertebral disc L2/L3, intervertebral disc L3/L4, intervertebral disc L4/L5, intervertebral disc L5/S1, intervertebral disc S1/S2, intervertebral disc T1/T2, intervertebral disc T2/T3, intervertebral disc T3/T4, intervertebral disc T4/T5, intervertebral disc T5/T6, intervertebral disc T6/T7, intervertebral disc T7/T8, intervertebral disc T8/T9, intervertebral disc T9/T10, intervertebral disc T10/T11, intervertebral disc T11/T12, intervertebral disc T12/L1, left rib 1, left rib 2, left rib 3, left rib 4, left rib 5, left rib 6, left rib 7, left rib 8, left rib 9, left rib 10, left rib 11, left rib 12, left ulna, left scapula, left radius, left humerus, left hip bone, left femur, left clavicle, muscles of the left arm, muscles of the right arm, lumbar vertebra L1, lumbar vertebra L2, lumbar vertebra L3, lumbar vertebra L4, lumbar vertebra L5, marker 1, marker 2, marker 3, right rib 1, right rib 2, right rib 3, right rib 4, right rib 5, right rib 6, right rib 7, right rib 8, right rib 9, right rib 10, right rib 11, right rib 12, right ulna, right scapula, right radius, right humerus, right hip bone, right femur, right clavicle, skin of the left arm, skin of the right arm, thoracic vertebra T1, thoracic vertebra T2, thoracic vertebra T3, thoracic vertebra T4, thoracic vertebra T5, thoracic vertebra T6, thoracic vertebra T7, thoracic vertebra T8, thoracic vertebra T9, thoracic vertebra T10, thoracic vertebra T11, thoracic vertebra T12, unclassified bones, unclassified cartilage, unclassified muscles, unclassified skin, unclassified tissue, unclassified tissue of the left arm, unclassified tissue of the right arm, unclassified veins, white matter, sternum, sacrum, left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9, right costal cartilage 1, right costal cartilage 2, right costal cartilage 3, right costal cartilage 4, right costal cartilage 5, right costal cartilage 6-9, right clavicular cartilage, left clavicular cartilage"
+    organs_to_remove = "bones of the left hand, bones of the right hand, cervical vertebra C5, cervical vertebra C6, cervical vertebra C7, coccyx, grey matter, intervertebral disc C6/C7, intervertebral disc C7/T1, intervertebral disc L1/L2, intervertebral disc L2/L3, intervertebral disc L3/L4, intervertebral disc L4/L5, intervertebral disc L5/S1, intervertebral disc S1/S2, intervertebral disc T1/T2, intervertebral disc T2/T3, intervertebral disc T3/T4, intervertebral disc T4/T5, intervertebral disc T5/T6, intervertebral disc T6/T7, intervertebral disc T7/T8, intervertebral disc T8/T9, intervertebral disc T9/T10, intervertebral disc T10/T11, intervertebral disc T11/T12, intervertebral disc T12/L1, left rib 1, left rib 2, left rib 3, left rib 4, left rib 5, left rib 6, left rib 7, left rib 8, left rib 9, left rib 10, left rib 11, left rib 12, left ulna, left scapula, left radius, left humerus, left hip bone, left femur, left clavicle, muscles of the left arm, muscles of the right arm, lumbar vertebra L1, lumbar vertebra L2, lumbar vertebra L3, lumbar vertebra L4, lumbar vertebra L5, marker 1, marker 2, marker 3, right rib 1, right rib 2, right rib 3, right rib 4, right rib 5, right rib 6, right rib 7, right rib 8, right rib 9, right rib 10, right rib 11, right rib 12, right ulna, right scapula, right radius, right humerus, right hip bone, right femur, right clavicle, skin of the left arm, skin of the right arm, thoracic vertebra T1, thoracic vertebra T2, thoracic vertebra T3, thoracic vertebra T4, thoracic vertebra T5, thoracic vertebra T6, thoracic vertebra T7, thoracic vertebra T8, thoracic vertebra T9, thoracic vertebra T10, thoracic vertebra T11, thoracic vertebra T12, unclassified bones, unclassified cartilage, unclassified muscles, unclassified skin, unclassified tissue, unclassified tissue of the left arm, unclassified tissue of the right arm, unclassified veins, white matter, sternum, sacrum, left costal cartilage 1, left costal cartilage 2, left costal cartilage 3, left costal cartilage 4, left costal cartilage 5, left costal cartilage 6-9, right costal cartilage 1, right costal cartilage 2, right costal cartilage 3, right costal cartilage 4, right costal cartilage 5, right costal cartilage 6-9, right clavicular cartilage, left clavicular cartilage"  # noqa: E501
     organs_to_remove = organs_to_remove.split(", ")
     for item in organs_to_remove:
         del organ2label[item]
         del organ2alias[item]
 
     """Removal of bilateral organs on the right side"""
-    organs_to_remove_right = "right atrium, right external oblique, right iliacus, right internal oblique, right jugular vein, right kidney, right lung, right obturator internus, right psoas, right rectus abdominis, right renal medulla, right renal vein, right subclavian vein, right transversus abdominis, right ventricle"
+    organs_to_remove_right = "right atrium, right external oblique, right iliacus, right internal oblique, right jugular vein, right kidney, right lung, right obturator internus, right psoas, right rectus abdominis, right renal medulla, right renal vein, right subclavian vein, right transversus abdominis, right ventricle"  # noqa: E501
     organs_to_remove_right = organs_to_remove_right.split(", ")
     for item in organs_to_remove_right:
         del organ2label[item]
         del organ2alias[item]
 
     """Removal of thorax muscles, scrotum visceral fat"""
-    organs_to_remove_muscles = "scrotum, visceral fat, left psoas, left iliacus, left external oblique, left rectus abdominis, left internal oblique, left transversus abdominis, left obturator internus, ischiocavernosus, pelvic diaphragm, rectus sheath"
+    organs_to_remove_muscles = "scrotum, visceral fat, left psoas, left iliacus, left external oblique, left rectus abdominis, left internal oblique, left transversus abdominis, left obturator internus, ischiocavernosus, pelvic diaphragm, rectus sheath"  # noqa: E501
     organs_to_remove_muscles = organs_to_remove_muscles.split(", ")
     for item in organs_to_remove_muscles:
         del organ2label[item]
         del organ2alias[item]
 
     """Removal of blood vessels"""
-    organs_to_remove_blood_vessels = "superior vena cava, superior mesenteric vein, splenic vein, pulmonary veins, pulmonary trunk, pulmonary arteries, portal vein, left subclavian vein, left jugular vein, inferior vena cava, inferior mesenteric vein, hepatic veins, descending aorta, brachiocephalic vein, azygos vein, arch of aorta, abdominal aorta, left renal vein, ascending aorta"
+    organs_to_remove_blood_vessels = "superior vena cava, superior mesenteric vein, splenic vein, pulmonary veins, pulmonary trunk, pulmonary arteries, portal vein, left subclavian vein, left jugular vein, inferior vena cava, inferior mesenteric vein, hepatic veins, descending aorta, brachiocephalic vein, azygos vein, arch of aorta, abdominal aorta, left renal vein, ascending aorta"  # noqa: E501
     organs_to_remove_blood_vessels = organs_to_remove_blood_vessels.split(", ")
     for item in organs_to_remove_blood_vessels:
         del organ2label[item]
         del organ2alias[item]
 
+    """Removal of small organs with less than 1000 voxels"""
+    organs_to_remove_small = "cystic duct"
+    organs_to_remove_small = organs_to_remove_small.split(", ")
+    for item in organs_to_remove_small:
+        del organ2label[item]
+        del organ2alias[item]
+        
     """Mergers of stomach segments into "stomach"""
     organs_to_merge_stomach = "fundus of stomach, greater curvature, lesser curvature, body of stomach, cardia, stomach"
     organs_to_merge_stomach = organs_to_merge_stomach.split(", ")
@@ -255,7 +252,7 @@ def create_organ_dicts(sio_atlas_path, organs_dir_path):
     organ2alias[dest_organ] = list(set([dest_organ] + names))
 
     """Mergers of colon segments into "colon"""
-    organs_to_merge_colon = "ascending colon, descending colon, transverse colon, sigmoid colon, left colic flexure, right colic flexure"
+    organs_to_merge_colon = "ascending colon, descending colon, transverse colon, sigmoid colon, left colic flexure, right colic flexure"  # noqa: E501
     organs_to_merge_colon = organs_to_merge_colon.split(", ")
     dest_organ = "colon"
     labels = []
@@ -406,7 +403,7 @@ def create_organ_dicts(sio_atlas_path, organs_dir_path):
         organ2alias[target_organ].append(alias)
 
     """
-    Adding colon, ascending, colon, descending, colon, transverse, colon, sigmoid alias, and colic flexure names to colon
+    Adding colon, ascending, colon, descending, colon, transverse, colon, sigmoid alias, and colic flexure names to colon  # noqa: E501
     """
     target_organ = "colon"
     aliases = [
@@ -475,9 +472,6 @@ def create_organ_dicts(sio_atlas_path, organs_dir_path):
         json.dump(organ2alias, outfile)
 
     organ2voxels = generate_organ2voxels(voxelman_images_path, organ2label)
-    organ2voxels_eroded = generate_organ2voxels_eroded(
-        voxelman_images_path, organ2label
-    )
     organ2center = {}
     for organ, labels in organ2label.items():
         organ2center[organ] = get_center_of_mass(labels, voxelman_images_path)
@@ -492,10 +486,6 @@ def create_organ_dicts(sio_atlas_path, organs_dir_path):
         json.dump(organ2center, outfile)
     with open(os.path.join(organs_dir_path, "organ2voxels.json"), "w") as outfile:
         json.dump(organ2voxels, outfile)
-    with open(
-        os.path.join(organs_dir_path, "organ2voxels_eroded.json"), "w"
-    ) as outfile:
-        json.dump(organ2voxels_eroded, outfile)
     with open(os.path.join(organs_dir_path, "organ2summary.json"), "w") as outfile:
         json.dump(organ2summary, outfile)
 
@@ -507,7 +497,8 @@ def parse_args():
     parser.add_argument(
         "--sio_atlas_path",
         type=str,
-        help="Path to the directory with the images and the text file with human atlas classes.",
+        help="Path to the directory with a subdirectory containing images ('labels/')\
+            and the text file with atlas classes ('classes.txt').",
     )
     parser.add_argument(
         "--organs_dir_path",
