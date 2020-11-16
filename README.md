@@ -2,8 +2,8 @@
 
 
 <p float="left">
-  <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/animation.gif" width="740" height="600"/>
-  <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/image.png" width="260" height="600"/> 
+  <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/animation.gif" width="592" height="480"/>
+  <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/image.png" width="180" height="360"/> 
 </p>
 
 ___
