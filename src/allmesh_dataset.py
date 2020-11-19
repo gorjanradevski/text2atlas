@@ -194,8 +194,6 @@ def create_all_mesh_dataset(
     for json_file in tqdm(os.listdir(all_mesh_path)):
         abstracts = ndjson.load(open(os.path.join(all_mesh_path, json_file)))
         dset.extend(abstracts)
-        
-    dset = dset[:10000]
 
     organ2alias = json.load(open(os.path.join(organs_dir_path, "organ2alias.json")))
     organ2ind = json.load(open(os.path.join(organs_dir_path, "organ2ind.json")))
@@ -396,7 +394,7 @@ def parse_args():
     parser.add_argument(
         "--organ_cap_single",
         type=int,
-        default=750,
+        default=500,
         help="Soft cap to the number of organ appearances in the dataset.",
     )
     parser.add_argument(

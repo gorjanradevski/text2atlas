@@ -186,9 +186,9 @@ def retrieve_alias_terms(organ_names: List[str], nlp, linker):
 def create_organ_dicts(sio_atlas_path, organs_dir_path):
 
     voxelman_images_path = os.path.join(sio_atlas_path, "labels")
-    organ_list_path = os.path.join(sio_atlas_path, "classes.txt")
+    organ_list_path = os.path.join(sio_atlas_path, "objectlist.txt")
 
-    organ_list = open(organ_list_path).read().strip().split("\n")
+    organ_list = open(organ_list_path).read().strip().split("\n")[17:]
 
     """Extract list of labels"""
     organ2label = {}
@@ -498,7 +498,7 @@ def parse_args():
         "--sio_atlas_path",
         type=str,
         help="Path to the directory with a subdirectory containing images ('labels/')\
-            and the text file with atlas classes ('classes.txt').",
+            and the text file with atlas classes ('objectlist.txt').",
     )
     parser.add_argument(
         "--organs_dir_path",
