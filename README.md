@@ -3,7 +3,6 @@
 
 <p float="left">
   <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/animation.gif" width="592" height="480"/>
-  <img src="https://github.com/gorjanradevski/text2atlas/blob/dusan/data/image.png" width="180" height="360"/> 
 </p>
 
 ___
@@ -15,6 +14,10 @@ This repository is the official implementation of [Learning to ground medical te
 ## Requirements
 
 If you are using [Poetry](https://python-poetry.org/), navigating to the project root directory and running `poetry install` will suffice. Otherwise, a `requirements.txt` file is present so you can install all dependencies by running `pip install -r requirements.txt`. However, if you just want to download the trained models or dataset splits, make sure to have [gdown](https://github.com/wkentaro/gdown) installed. If the project dependencies are installed then `gdown` is already present. Otherwise, run `pip install gdown` to install it.
+
+## Datasets and models
+
+Will be released shortly.
 
 ## Reference
 
