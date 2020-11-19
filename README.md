@@ -35,9 +35,9 @@ To create dictionaries with organs info and save them in the `/path/to/organ_jso
 After downloading the training data of the 2020 BioASQ challenge from [BioASQ](http://participants-area.bioasq.org/general_information/Task8a/), you will receive one large json file (10s of GB) that is difficult to work with, split it up into `.ndjson` files and store them in a directory of choice. 
 Then run:
 ```
-poetry run python src/allmesh_dataset.py --all_mesh_path /path/to/dir/with/BioASQ/dataset/ndjsons --dst_dset_path /filepath/under/which/dataset/is/saved --organs_dir_path /path/to/organ_jsons/dir
+poetry run python src/allmesh_dataset.py --all_mesh_path /path/to/dir/with/BioASQ/dataset/ndjsons --organs_dir_path /path/to/organ_jsons/dir --dst_dset_path /filepath/under/which/dataset/is/saved
 ```
-Where `all_mesh_path` is the directory with BioASQ dataset ndjsons, `organs_dir_path` is the path where the aforementioned organ jsons are stored, and `dst_dset_path` is the filepath under which the dataset is saved. This will result in a stored dataset json file, as well as the train, val and test split in the same directory.
+Where `all_mesh_path` is the directory with BioASQ dataset ndjsons, `organs_dir_path` is the path where the aforementioned organ jsons are stored, and `dst_dset_path` is the desired filepath under which the dataset will be saved. This will result in a stored dataset json file, as well as the train, val and test split in the same directory.
 
 ## Reference
 
